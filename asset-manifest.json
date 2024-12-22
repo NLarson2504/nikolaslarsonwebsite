@@ -1,25 +1,25 @@
 {
   "files": {
-    "main.css": "/nikolaslarson.com/static/css/main.d714763b.css",
-    "main.js": "/nikolaslarson.com/static/js/main.a3d22959.js",
-    "static/js/156.0c0f4399.chunk.js": "/nikolaslarson.com/static/js/156.0c0f4399.chunk.js",
-    "static/media/mooslixmobile.png": "/nikolaslarson.com/static/media/mooslixmobile.33f45ac33a16c7ee0d1c.png",
-    "static/media/personalwebsite.png": "/nikolaslarson.com/static/media/personalwebsite.7eee2e320deeab24e1a0.png",
-    "static/media/mooslix.png": "/nikolaslarson.com/static/media/mooslix.f79426558efb22618232.png",
-    "static/media/tarragonmobile.png": "/nikolaslarson.com/static/media/tarragonmobile.de0bb2d145564585bab6.png",
-    "static/media/z9security.png": "/nikolaslarson.com/static/media/z9security.ae2824543d3ce809b661.png",
-    "static/media/tarragonweb.png": "/nikolaslarson.com/static/media/tarragonweb.530e430fba0d9af06e38.png",
-    "static/media/bg-lines.svg": "/nikolaslarson.com/static/media/bg-lines.d6be0ef07dc12c2c4678fd58d6e468fc.svg",
-    "static/media/Nikolas-Larson-Resume.pdf": "/nikolaslarson.com/static/media/Nikolas-Larson-Resume.9a0e8ca7680164374f9e.pdf",
-    "static/media/profilePhoto.jpg": "/nikolaslarson.com/static/media/profilePhoto.293ea02d1ce346447a34.jpg",
-    "static/media/logo.svg": "/nikolaslarson.com/static/media/logo.6ce24c58023cc2f8fd88fe9d219db6c6.svg",
-    "index.html": "/nikolaslarson.com/index.html",
-    "main.d714763b.css.map": "/nikolaslarson.com/static/css/main.d714763b.css.map",
-    "main.a3d22959.js.map": "/nikolaslarson.com/static/js/main.a3d22959.js.map",
-    "156.0c0f4399.chunk.js.map": "/nikolaslarson.com/static/js/156.0c0f4399.chunk.js.map"
+    "main.css": "/static/css/main.d714763b.css",
+    "main.js": "/static/js/main.c071cdd2.js",
+    "static/js/156.0c0f4399.chunk.js": "/static/js/156.0c0f4399.chunk.js",
+    "static/media/mooslixmobile.png": "/static/media/mooslixmobile.33f45ac33a16c7ee0d1c.png",
+    "static/media/personalwebsite.png": "/static/media/personalwebsite.7eee2e320deeab24e1a0.png",
+    "static/media/mooslix.png": "/static/media/mooslix.f79426558efb22618232.png",
+    "static/media/tarragonmobile.png": "/static/media/tarragonmobile.de0bb2d145564585bab6.png",
+    "static/media/z9security.png": "/static/media/z9security.ae2824543d3ce809b661.png",
+    "static/media/tarragonweb.png": "/static/media/tarragonweb.530e430fba0d9af06e38.png",
+    "static/media/bg-lines.svg": "/static/media/bg-lines.d6be0ef07dc12c2c4678fd58d6e468fc.svg",
+    "static/media/Nikolas-Larson-Resume.pdf": "/static/media/Nikolas-Larson-Resume.9a0e8ca7680164374f9e.pdf",
+    "static/media/profilePhoto.jpg": "/static/media/profilePhoto.293ea02d1ce346447a34.jpg",
+    "static/media/logo.svg": "/static/media/logo.6ce24c58023cc2f8fd88fe9d219db6c6.svg",
+    "index.html": "/index.html",
+    "main.d714763b.css.map": "/static/css/main.d714763b.css.map",
+    "main.c071cdd2.js.map": "/static/js/main.c071cdd2.js.map",
+    "156.0c0f4399.chunk.js.map": "/static/js/156.0c0f4399.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.d714763b.css",
-    "static/js/main.a3d22959.js"
+    "static/js/main.c071cdd2.js"
   ]
 }
