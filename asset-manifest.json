@@ -1,25 +1,29 @@
 {
   "files": {
-    "main.css": "/static/css/main.0c34d1ee.css",
-    "main.js": "/static/js/main.6526ff0d.js",
+    "main.css": "/static/css/main.203856fa.css",
+    "main.js": "/static/js/main.9034c336.js",
     "static/js/156.0c0f4399.chunk.js": "/static/js/156.0c0f4399.chunk.js",
+    "static/media/hexapod.jpeg": "/static/media/hexapod.f0eac754aa465949e7d8.jpeg",
     "static/media/mooslixmobile.png": "/static/media/mooslixmobile.33f45ac33a16c7ee0d1c.png",
     "static/media/personalwebsite.png": "/static/media/personalwebsite.7eee2e320deeab24e1a0.png",
     "static/media/mooslix.png": "/static/media/mooslix.f79426558efb22618232.png",
     "static/media/tarragonmobile.png": "/static/media/tarragonmobile.de0bb2d145564585bab6.png",
     "static/media/z9security.png": "/static/media/z9security.ae2824543d3ce809b661.png",
+    "static/media/xpence.png": "/static/media/xpence.bd16684f174c56067ed7.png",
     "static/media/tarragonweb.png": "/static/media/tarragonweb.530e430fba0d9af06e38.png",
     "static/media/bg-lines.svg": "/static/media/bg-lines.d6be0ef07dc12c2c4678fd58d6e468fc.svg",
+    "static/media/hardware.png": "/static/media/hardware.45eb8a8bdaf84d86f903.png",
     "static/media/Nikolas-Larson-Resume.pdf": "/static/media/Nikolas-Larson-Resume.9a0e8ca7680164374f9e.pdf",
     "static/media/profilePhoto.jpg": "/static/media/profilePhoto.293ea02d1ce346447a34.jpg",
     "static/media/logo.svg": "/static/media/logo.6ce24c58023cc2f8fd88fe9d219db6c6.svg",
+    "static/media/NLLogo.svg": "/static/media/NLLogo.a15b88c311ea7750075cfd1585284ba5.svg",
     "index.html": "/index.html",
-    "main.0c34d1ee.css.map": "/static/css/main.0c34d1ee.css.map",
-    "main.6526ff0d.js.map": "/static/js/main.6526ff0d.js.map",
+    "main.203856fa.css.map": "/static/css/main.203856fa.css.map",
+    "main.9034c336.js.map": "/static/js/main.9034c336.js.map",
     "156.0c0f4399.chunk.js.map": "/static/js/156.0c0f4399.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.0c34d1ee.css",
-    "static/js/main.6526ff0d.js"
+    "static/css/main.203856fa.css",
+    "static/js/main.9034c336.js"
   ]
 }
