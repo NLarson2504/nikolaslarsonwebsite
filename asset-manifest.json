@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/static/css/main.d714763b.css",
-    "main.js": "/static/js/main.c071cdd2.js",
+    "main.css": "/static/css/main.0c34d1ee.css",
+    "main.js": "/static/js/main.6526ff0d.js",
     "static/js/156.0c0f4399.chunk.js": "/static/js/156.0c0f4399.chunk.js",
     "static/media/mooslixmobile.png": "/static/media/mooslixmobile.33f45ac33a16c7ee0d1c.png",
     "static/media/personalwebsite.png": "/static/media/personalwebsite.7eee2e320deeab24e1a0.png",
@@ -14,12 +14,12 @@
     "static/media/profilePhoto.jpg": "/static/media/profilePhoto.293ea02d1ce346447a34.jpg",
     "static/media/logo.svg": "/static/media/logo.6ce24c58023cc2f8fd88fe9d219db6c6.svg",
     "index.html": "/index.html",
-    "main.d714763b.css.map": "/static/css/main.d714763b.css.map",
-    "main.c071cdd2.js.map": "/static/js/main.c071cdd2.js.map",
+    "main.0c34d1ee.css.map": "/static/css/main.0c34d1ee.css.map",
+    "main.6526ff0d.js.map": "/static/js/main.6526ff0d.js.map",
     "156.0c0f4399.chunk.js.map": "/static/js/156.0c0f4399.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.d714763b.css",
-    "static/js/main.c071cdd2.js"
+    "static/css/main.0c34d1ee.css",
+    "static/js/main.6526ff0d.js"
   ]
 }
