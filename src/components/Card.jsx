@@ -3,7 +3,7 @@ import {FaGithub, FaInstagram, FaLinkedinIn} from "react-icons/fa";
 
 function Card() {
   return (
-    <div className="md:w-[28rem] xl:w-[32rem] h-full px-16 py-14 flex justify-center items-center">
+    <div className="hidden md:flex md:w-[28rem] xl:w-[32rem] h-full px-16 py-14  justify-center items-center">
       <div className="w-full h-full bg-white/10 backdrop-blur-md rounded-3xl p-8 flex flex-col items-center space-y-6 shadow-lg">
         {/* Profile Photo */}
         <img

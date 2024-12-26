@@ -24,7 +24,7 @@ function Hero() {
           </div>
 
           {/* Buttons */}
-          <div className="flex space-x-4 flex-grow flex items-end pb-28">
+          <div className="flex space-x-4 flex-grow items-end md:pb-28 pb-48">
               <a
                   href={Resume} // Replace with the actual path to your resume file
                   download="Nikolas-Larson-Resume.pdf" // Optional: Customize the downloaded file name

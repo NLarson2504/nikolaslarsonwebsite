@@ -2,9 +2,16 @@ import mooslixImage from "../downloads/mooslix.png"
 import mooslixMobileImage from "../downloads/mooslixmobile.png"
 import personalWebsite from "../downloads/personalwebsite.png"
 
+
 function Projects() {
   // Example project data
   const projectList = [
+    {
+      title: "Mooslix Hardware",
+      description: "An infrared scanner integrating machine learning and image processing algorithms.",
+      link: "",
+      media: "https://via.placeholder.com/400x300?text=Hexapod+Preview", // Example image
+    },
     {
       title: "Mooslix.com",
       description: "A full-stack application that centralizes authentication controls, data insights, and information exports.",

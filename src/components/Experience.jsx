@@ -66,7 +66,7 @@ function Experience() {
             {/* Work Samples */}
             {experience.workSamples.length > 0 && (
               <div className="mt-4">
-                <div className="space-x-2 flex">
+                <div className="space-x-2 flex overflow-auto">
                   {experience.workSamples.map((sample, idx) => (
                     <img
                       key={idx}

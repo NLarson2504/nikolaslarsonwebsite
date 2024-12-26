@@ -18,10 +18,10 @@ function LandingPage() {
 
   return (
     <div
-      className="h-screen w-full bg-[#121212] flex fixed relative overflow-clip"
+      className="h-screen w-full bg-[#121212] flex fixed overflow-y-auto overflow-clip"
       onWheel={handleScroll} // Attach scroll event listener
     >
-      <div className="flex-grow h-full flex z-10">
+      <div className="flex-grow h-full flex-col md:flex-row flex z-10">
         {/* Left Side */}
         <Nav />
         <Card />
@@ -29,7 +29,7 @@ function LandingPage() {
         {/* Right Side */}
         <div
           id="right-section"
-          className="flex-1 h-full px-8 overflow-y-scroll space-y-20"
+          className="flex-1 h-full px-8 overflow-y-scroll overflow-x-clip space-y-20"
         >
           <section id="hero" className={"pt-14"}>
             <Hero />
