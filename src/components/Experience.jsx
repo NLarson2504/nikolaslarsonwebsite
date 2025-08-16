@@ -1,6 +1,5 @@
 import z9Mobile from "../downloads/z9security.png"
 import tarragonMobile from "../downloads/tarragonmobile.png"
-import tarragonWeb from "../downloads/tarragonweb.png"
 
 function Experience() {
   // Example experience data
@@ -13,7 +12,7 @@ function Experience() {
                    "• Developed a mobile application for iOS and Android with Google OAuth 2.0 and Rest API’s in under 3 weeks, reducing inventory-taking duration by 75% for dozens of customers",
       workSamples: [
         { image: tarragonMobile },
-        { image: tarragonWeb },
+        { image: tarragonMobile },
       ],
     },
     {

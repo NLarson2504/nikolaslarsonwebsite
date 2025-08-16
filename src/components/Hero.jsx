@@ -1,7 +1,24 @@
 import Resume from '../downloads/Nikolas-Larson-Resume.pdf'
+import { useEffect, useRef } from 'react';
+import { gsap } from 'gsap';
 
 function Hero() {
+  const titleRefs = useRef([]);
+  const buttonsRef = useRef();
 
+  useEffect(() => {
+    const tl = gsap.timeline();
+    
+    tl.fromTo(titleRefs.current, 
+      { y: 100, opacity: 0 },
+      { y: 0, opacity: 1, duration: 1, stagger: 0.2, ease: "power3.out" }
+    )
+    .fromTo(buttonsRef.current,
+      { y: 50, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.8, ease: "power3.out" },
+      "-=0.3"
+    );
+  }, []);
 
   const handleNavClick = (anchor) => {
     const section = document.querySelector(anchor);
@@ -13,18 +30,27 @@ function Hero() {
   return (
       <div className="w-full h-screen flex flex-col px-8 space-y-8">
           {/* Header */}
-          <div className="text-6xl md:text-8xl font-bold text-white uppercase">
+          <div 
+            ref={el => titleRefs.current[0] = el}
+            className="text-6xl md:text-8xl font-bold text-white uppercase"
+          >
               Software Engineer
           </div>
-          <div className="text-6xl md:text-8xl font-bold text-white uppercase">
+          <div 
+            ref={el => titleRefs.current[1] = el}
+            className="text-6xl md:text-8xl font-bold text-white uppercase"
+          >
               X
           </div>
-          <div className="text-6xl md:text-8xl font-bold text-white uppercase">
+          <div 
+            ref={el => titleRefs.current[2] = el}
+            className="text-6xl md:text-8xl font-bold text-white uppercase"
+          >
               Student
           </div>
 
           {/* Buttons */}
-          <div className="flex space-x-4 flex-grow items-end md:pb-28 pb-48">
+          <div ref={buttonsRef} className="flex space-x-4 flex-grow items-end md:pb-28 pb-48">
               <a
                   href={Resume} // Replace with the actual path to your resume file
                   download="Nikolas-Larson-Resume.pdf" // Optional: Customize the downloaded file name
