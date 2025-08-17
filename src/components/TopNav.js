@@ -23,26 +23,20 @@ const TopNav = ({ currentPage, navigateToPage }) => {
             {/* Centered Navigation Links */}
             <div className="hidden md:flex items-center space-x-2">
               <button 
-                onClick={() => handleNavClick('home')}
-                className="px-3 py-2 rounded-lg text-dark-400 hover:text-white hover:bg-white/10 transition-all duration-200 font-sans text-sm font-medium"
-              >
-                Home
-              </button>
-              <button 
                 onClick={() => handleNavClick('agents')}
-                className="px-3 py-2 rounded-lg text-dark-400 hover:text-white hover:bg-white/10 transition-all duration-200 font-sans text-sm font-medium"
+                className="px-3 py-2 rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-all duration-200 font-sans text-sm font-medium"
               >
                 Agents
               </button>
               <button 
                 onClick={() => handleNavClick('mobile')}
-                className="px-3 py-2 rounded-lg text-dark-400 hover:text-white hover:bg-white/10 transition-all duration-200 font-sans text-sm font-medium"
+                className="px-3 py-2 rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-all duration-200 font-sans text-sm font-medium"
               >
                 Mobile
               </button>
               <button 
                 onClick={() => handleNavClick('design')}
-                className="px-3 py-2 rounded-lg text-dark-400 hover:text-white hover:bg-white/10 transition-all duration-200 font-sans text-sm font-medium"
+                className="px-3 py-2 rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-all duration-200 font-sans text-sm font-medium"
               >
                 Design
               </button>

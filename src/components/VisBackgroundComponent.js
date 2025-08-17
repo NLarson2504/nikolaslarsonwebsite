@@ -11,8 +11,8 @@ const VisBackgroundComponent = ({ children, className = "" }) => {
             135deg,
             transparent,
             transparent 4px,
-            rgba(255, 255, 255, 0.3) 4px,
-            rgba(255, 255, 255, 0.3) 5px
+            rgba(255, 255, 255, 0.5) 4px,
+            rgba(255, 255, 255, 0.5) 5px
           )`
         }}
       />
@@ -25,8 +25,8 @@ const VisBackgroundComponent = ({ children, className = "" }) => {
             135deg,
             transparent,
             transparent 2px,
-            rgba(255, 255, 255, 0.4) 2px,
-            rgba(255, 255, 255, 0.4) 2.5px
+            rgba(255, 255, 255, 0.5) 2px,
+            rgba(255, 255, 255, 0.5) 2.5px
           )`
         }}
       />
