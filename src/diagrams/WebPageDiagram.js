@@ -36,7 +36,8 @@ const WebPageDiagram = ({ className = "" }) => {
       // Calculate staggered start position to maintain spacing illusion
       const baseStagger = (row * 250) + (col * 125); // Increased offsets for better spacing
       const direction = isEvenColumn ? 1 : -1; // Fixed: opposite directions for columns
-      const staggerOffset = direction * baseStagger; // Apply direction to stagger
+      // Use same base stagger for both sides, only direction affects movement
+      const staggerOffset = baseStagger;
       
       // Get the current CSS transform values to preserve layout positioning
       const currentTransform = webpage.style.transform;

@@ -34,7 +34,8 @@ const MobileDiagram = ({ className = "" }) => {
       // Calculate staggered start position to maintain spacing illusion
       const baseStagger = (row * 200) + (col * 100); // Different offsets for rows and columns
       const direction = isEvenColumn ? -1 : 1; // Opposite directions for columns
-      const staggerOffset = direction * baseStagger; // Apply direction to stagger
+      // Use same base stagger for both sides, only direction affects movement
+      const staggerOffset = baseStagger;
       
       // Get the current CSS transform values to preserve layout positioning
       const currentTransform = phone.style.transform;
