@@ -180,7 +180,7 @@ const HoverMenu = ({ activeSection, navigateToPage, isVisible }) => {
       
       <div 
         ref={containerRef}
-        className="bg-dark-800 border border-white/15 rounded-xl p-5 w-[580px] shadow-xl overflow-hidden"
+        className="bg-dark-800 border border-white/15 rounded-xl p-1 w-[580px] shadow-xl overflow-hidden"
         style={{ pointerEvents: isVisible ? 'auto' : 'none' }}
       >
         <div ref={contentRef} className="bg-dark-700 rounded-lg p-4 flex gap-5">
