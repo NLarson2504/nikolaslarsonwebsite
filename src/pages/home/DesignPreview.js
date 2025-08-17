@@ -2,6 +2,7 @@ import React from 'react';
 import { Palette } from 'lucide-react';
 import FeatureContainer from '../../components/FeatureContainer';
 import VisBackgroundComponent from '../../components/VisBackgroundComponent';
+import WebPageDiagram from '../../diagrams/WebPageDiagram';
 
 const DesignPreview = () => {
   return (
@@ -16,10 +17,10 @@ const DesignPreview = () => {
             <FeatureContainer
               categoryIcon={Palette}
               category="Design"
-              title="UI/UX Design & Branding"
-              description="Creating intuitive user interfaces and comprehensive brand identities. From wireframing to high-fidelity prototypes, focusing on user-centered design principles and modern aesthetic trends."
+              title="The world's most flexible design platform"
+              description="The most popular open-source platform for design. Use our platform as your foundation and focus on building the customizations that move the needle."
               link="/design"
-              linkTitle="View Design Work"
+              linkTitle="Get Started"
             />
           </div>
         </div>
@@ -27,15 +28,7 @@ const DesignPreview = () => {
         {/* Right Half - Visual Background */}
         <div className="w-1/2">
           <VisBackgroundComponent className="h-full flex items-center justify-center">
-            <div className="text-center">
-              <div className="text-6xl mb-4 opacity-20">🎨</div>
-              <h3 className="text-2xl font-heading font-bold text-white/30">
-                Creative Design
-              </h3>
-              <p className="text-white/20 font-sans">
-                UI/UX & Brand Identity
-              </p>
-            </div>
+            <WebPageDiagram />
           </VisBackgroundComponent>
         </div>
       </div>
