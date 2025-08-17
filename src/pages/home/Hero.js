@@ -3,10 +3,10 @@ import React from 'react';
 const Hero = () => {
   return (
     <section 
+      id="home"
       className="hero min-h-screen flex items-center justify-center bg-dark-950 text-dark-50 border-t border-white/5"
-      data-scroll-section
     >
-      <div className="text-center max-w-4xl px-4" data-scroll data-scroll-speed="0.5">
+      <div className="text-center max-w-4xl px-4">
         <h1 className="text-5xl md:text-7xl font-heading font-bold mb-6 text-gradient-primary">
           Nikolas Larson
         </h1>

@@ -43,6 +43,7 @@
 }
 
 html {
+  scroll-behavior: smooth;
   background-color: #08090a;
   overflow-x: hidden;
 }
