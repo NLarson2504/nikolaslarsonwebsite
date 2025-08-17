@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import liraLogo from '../assets/icons/liralogo.svg';
 import tallieLogo from '../assets/icons/tallielogo.svg';
+import tarragonLogo from '../assets/icons/tarragonlogo.jpg';
+import campusLMLogo from '../assets/icons/campuslmlogo.png';
+import mooslixLogo from '../assets/icons/mooslixlogo.svg';
 
 const HoverMenu = ({ activeSection, navigateToPage, isVisible }) => {
   const [currentContent, setCurrentContent] = useState(null);
@@ -41,12 +44,12 @@ const HoverMenu = ({ activeSection, navigateToPage, isVisible }) => {
         {
           title: "Tarragon",
           description: "Product Ecosystem in Your Pocket",
-          logo: liraLogo,
+          logo: tarragonLogo,
         },
         {
           title: "CampusLM",
           description: "AI Tools for College Students",
-          logo: tallieLogo,
+          logo: campusLMLogo,
         }
       ],
       items: [
@@ -60,8 +63,16 @@ const HoverMenu = ({ activeSection, navigateToPage, isVisible }) => {
       leftLabel: "Sites",
       rightLabel: "More",
       examples: [
-        { title: "Analytics Dashboard", description: "Data visualization & user insights" },
-        { title: "Design System", description: "Scalable component libraries" }
+        {
+          title: "Mooslix",
+          description: "Biometric Authentication",
+          logo: mooslixLogo,
+        },
+        {
+          title: "Tarragon",
+          description: "Product Ecosystem in Your Pocket",
+          logo: tarragonLogo,
+        },
       ],
       items: [
         { label: "UI/UX Design", page: "ux-design", description: "User interfaces" },

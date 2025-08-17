@@ -1,6 +1,9 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Phone from './Phone';
+
+gsap.registerPlugin(ScrollTrigger);
 
 const MobileDiagram = ({ className = "" }) => {
   const containerRef = useRef();
@@ -23,36 +26,48 @@ const MobileDiagram = ({ className = "" }) => {
   useEffect(() => {
     const phones = phonesRef.current.filter(Boolean);
     
-    // Use the same spacing calculations as the layout for seamless infinite scroll
-    const phoneWidth = 192;
-    const phoneHeight = 400;
-    const horizontalSpacing = Math.min(phoneWidth, phoneHeight) * 0.1;
-    const verticalSpacing = Math.min(phoneWidth, phoneHeight) * 0.05;
-    const effectivePhoneHeight = phoneHeight * 1.0 + verticalSpacing; // Must match the CSS scale
-    
     phones.forEach((phone, index) => {
       const col = parseInt(phone.dataset.col);
       const row = parseInt(phone.dataset.row);
       const isEvenColumn = col % 2 === 0;
       
-      // Calculate travel distance using actual layout spacing for perfect infinite loop
-      const rows = Math.floor(dimensions.height / effectivePhoneHeight) + 4;
-      const totalDistance = rows * effectivePhoneHeight;
+      // Calculate staggered start position to maintain spacing illusion
+      const baseStagger = (row * 200) + (col * 100); // Different offsets for rows and columns
+      const direction = isEvenColumn ? -1 : 1; // Opposite directions for columns
+      const staggerOffset = direction * baseStagger; // Apply direction to stagger
       
-      // Stagger phones within each column
-      const delay = -(row * (60 / rows)); // Distribute delays evenly across duration
+      // Get the current CSS transform values to preserve layout positioning
+      const currentTransform = phone.style.transform;
       
-      // Infinite scroll with proper spacing
-      gsap.fromTo(phone, {
-        y: isEvenColumn ? totalDistance : -totalDistance
-      }, {
-        y: isEvenColumn ? -totalDistance : totalDistance,
-        duration: 60, // Same slow speed as web pages
-        repeat: -1,
-        ease: "none",
-        delay: delay
+      // Set up parallax ScrollTrigger for each phone
+      gsap.set(phone, { 
+        willChange: "transform",
+        force3D: true
       });
+      
+      ScrollTrigger.create({
+        trigger: containerRef.current,
+        start: "top bottom",
+        end: "bottom top",
+        scrub: true,
+        id: `mobile-parallax-${index}`,
+        animation: gsap.fromTo(phone, {
+          transform: `${currentTransform} translateY(${staggerOffset}px)`
+        }, {
+          transform: `${currentTransform} translateY(${staggerOffset + (direction * -300)}px)`,
+          ease: "none",
+          force3D: true
+        })
+      })
     });
+
+    return () => {
+      ScrollTrigger.getAll().forEach(trigger => {
+        if (trigger.vars.id && trigger.vars.id.startsWith('mobile-parallax')) {
+          trigger.kill();
+        }
+      });
+    };
 
   }, [dimensions]);
 
@@ -60,50 +75,42 @@ const MobileDiagram = ({ className = "" }) => {
     const phones = [];
     phonesRef.current = []; // Reset refs
     
-    // Phone dimensions (scaled)
+    // Fixed number of phones for better performance
+    const cols = 2;
+    const totalPhones = 6; // Only 6 phones total
+    
+    // Phone dimensions
     const phoneWidth = 192;
     const phoneHeight = 400;
-    
-    // Calculate spacing - tighter spacing for closer phones
-    const horizontalSpacing = Math.min(phoneWidth, phoneHeight) * 0.1;
-    const verticalSpacing = Math.min(phoneWidth, phoneHeight) * 0.05; // Reduced for closer spacing
-    
-    // Calculate how many phones can fit
-    const phoneScale = 1.0; // Increased from 0.7 to make phones bigger
-    const effectivePhoneWidth = phoneWidth * phoneScale + horizontalSpacing;
-    const effectivePhoneHeight = phoneHeight * phoneScale + verticalSpacing;
-    
-    const cols = 3; // Fixed to 3 columns
-    const rows = Math.floor(dimensions.height / effectivePhoneHeight) + 4; // +4 for infinite scroll buffer
+    const phoneScale = 1.0;
+    const spacing = 120;
     
     // Center the grid
-    const totalWidth = (cols - 1) * effectivePhoneWidth;
-    const totalHeight = (rows - 1) * effectivePhoneHeight;
-    const offsetX = (dimensions.width - totalWidth) / 2;
-    const offsetY = (dimensions.height - totalHeight) / 2 - effectivePhoneHeight; // Start above viewport
+    const startX = (dimensions.width - (cols - 1) * (phoneWidth + spacing)) / 2;
+    const startY = (dimensions.height - phoneHeight) / 2;
     
-    for (let row = 0; row < rows; row++) {
-      for (let col = 0; col < cols; col++) {
-        const x = col * effectivePhoneWidth + offsetX;
-        const y = row * effectivePhoneHeight + offsetY;
-        const index = row * cols + col;
-        
-        phones.push(
-          <div 
-            key={`phone-${row}-${col}`}
-            ref={el => phonesRef.current[index] = el}
-            data-col={col}
-            data-row={row}
-            className="absolute"
-            style={{
-              transform: `translate(${x}px, ${y}px) scale(${phoneScale})`,
-              transformOrigin: 'center center'
-            }}
-          >
-            <Phone size="promax15" imageIndex={index} />
-          </div>
-        );
-      }
+    for (let i = 0; i < totalPhones; i++) {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      
+      const x = startX + col * (phoneWidth + spacing);
+      const y = startY + row * (phoneHeight + spacing) - (row * 200); // Increased vertical stagger
+      
+      phones.push(
+        <div 
+          key={`phone-${i}`}
+          ref={el => phonesRef.current[i] = el}
+          data-col={col}
+          data-row={row}
+          className="absolute"
+          style={{
+            transform: `translate(${x}px, ${y}px) scale(${phoneScale})`,
+            transformOrigin: 'center center'
+          }}
+        >
+          <Phone size="promax15" imageIndex={i} />
+        </div>
+      );
     }
     
     return phones;
@@ -112,7 +119,7 @@ const MobileDiagram = ({ className = "" }) => {
   return (
     <div 
       ref={containerRef}
-      className={`mobile-diagram -ml-64 relative w-full h-full ${className}`}
+      className={`mobile-diagram relative w-full h-full ${className}`}
     >
       <div 
         className="relative w-full h-full overflow-visible"

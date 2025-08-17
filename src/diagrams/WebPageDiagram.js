@@ -1,6 +1,9 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import WebPage from './WebPage';
+
+gsap.registerPlugin(ScrollTrigger);
 
 const WebPageDiagram = ({ className = "" }) => {
   const containerRef = useRef();
@@ -23,34 +26,50 @@ const WebPageDiagram = ({ className = "" }) => {
   useEffect(() => {
     const webpages = webpagesRef.current.filter(Boolean);
     
-    // Use the same spacing calculations as the layout
-    const webpageHeight = 80;
-    const verticalSpacing = 80; // Match the layout spacing to prevent overlap
-    const effectiveWebpageHeight = webpageHeight * 0.8 + verticalSpacing; // Match layout calculation
+    if (webpages.length === 0) return;
     
     webpages.forEach((webpage, index) => {
       const col = parseInt(webpage.dataset.col);
       const row = parseInt(webpage.dataset.row);
       const isEvenColumn = col % 2 === 0;
       
-      // Calculate travel distance using actual layout spacing
-      const rows = Math.floor(dimensions.height / effectiveWebpageHeight) + 4;
-      const totalDistance = rows * effectiveWebpageHeight;
+      // Calculate staggered start position to maintain spacing illusion
+      const baseStagger = (row * 250) + (col * 125); // Increased offsets for better spacing
+      const direction = isEvenColumn ? 1 : -1; // Fixed: opposite directions for columns
+      const staggerOffset = direction * baseStagger; // Apply direction to stagger
       
-      // Stagger webpages within each column
-      const delay = -(row * (60 / rows)); // Distribute delays evenly across duration
+      // Get the current CSS transform values to preserve layout positioning
+      const currentTransform = webpage.style.transform;
       
-      // Infinite scroll with proper spacing
-      gsap.fromTo(webpage, {
-        y: isEvenColumn ? totalDistance : -totalDistance
-      }, {
-        y: isEvenColumn ? -totalDistance : totalDistance,
-        duration: 60, // Same slow speed as mobile
-        repeat: -1,
-        ease: "none",
-        delay: delay
+      // Set up parallax ScrollTrigger for each webpage
+      gsap.set(webpage, { 
+        willChange: "transform",
+        force3D: true
+      });
+      
+      ScrollTrigger.create({
+        trigger: containerRef.current,
+        start: "top bottom",
+        end: "bottom top",
+        scrub: true,
+        id: `webpage-parallax-${index}`,
+        animation: gsap.fromTo(webpage, {
+          transform: `${currentTransform} translateY(${staggerOffset}px)`
+        }, {
+          transform: `${currentTransform} translateY(${staggerOffset + (direction * -400)}px)`,
+          ease: "none",
+          force3D: true
+        })
       });
     });
+
+    return () => {
+      ScrollTrigger.getAll().forEach(trigger => {
+        if (trigger.vars.id && trigger.vars.id.startsWith('webpage-parallax')) {
+          trigger.kill();
+        }
+      });
+    };
 
   }, [dimensions]);
 
@@ -58,49 +77,42 @@ const WebPageDiagram = ({ className = "" }) => {
     const webpages = [];
     webpagesRef.current = []; // Reset refs
     
-    // Webpage dimensions (scaled larger)
-    const webpageWidth = 700; // Increased even more
-    const webpageHeight = 80; // Increased even more
+    // Fixed number of webpages for better performance
+    const cols = 2;
+    const totalWebpages = 4; // Only 4 webpages total
     
-    // Calculate spacing - much closer together but prevent overlap
-    const horizontalSpacing = 5; // Closer columns
-    const verticalSpacing = 80; // Increased to prevent overlap during animation
+    // Webpage dimensions
+    const webpageWidth = 500;
+    const webpageHeight = 300;
+    const webpageScale = 0.8;
+    const spacing = 150;
     
-    // Calculate how many webpages can fit - ONLY 2 COLUMNS
-    const effectiveWebpageWidth = webpageWidth * 0.62 + horizontalSpacing; // Reduced scale to bring columns closer
-    const effectiveWebpageHeight = webpageHeight * 0.8 + verticalSpacing;
+    // Center the grid
+    const startX = (dimensions.width - (cols - 1) * (webpageWidth + spacing)) / 2 - 100;
+    const startY = (dimensions.height - webpageHeight) / 2;
     
-    const cols = 2; // Fixed to 2 columns only
-    const rows = Math.floor(dimensions.height / effectiveWebpageHeight) + 4; // +4 for infinite scroll buffer
-    
-    // Position the grid - moved left
-    const totalWidth = (cols - 1) * effectiveWebpageWidth;
-    const totalHeight = (rows - 1) * effectiveWebpageHeight;
-    const offsetX = (dimensions.width - totalWidth) / 2 - 100; // Moved 100px left
-    const offsetY = (dimensions.height - totalHeight) / 2 - effectiveWebpageHeight; // Start above viewport
-    
-    for (let row = 0; row < rows; row++) {
-      for (let col = 0; col < cols; col++) {
-        const x = col * effectiveWebpageWidth + offsetX;
-        const y = row * effectiveWebpageHeight + offsetY;
-        const index = row * cols + col;
-        
-        webpages.push(
-          <div 
-            key={`webpage-${row}-${col}`}
-            ref={el => webpagesRef.current[index] = el}
-            data-col={col}
-            data-row={row}
-            className="absolute"
-            style={{
-              transform: `translate(${x}px, ${y}px) scale(0.8)`,
-              transformOrigin: 'center center'
-            }}
-          >
-            <WebPage size="xlarge" imageIndex={index} />
-          </div>
-        );
-      }
+    for (let i = 0; i < totalWebpages; i++) {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      
+      const x = startX + col * (webpageWidth + spacing);
+      const y = startY + row * (webpageHeight + spacing) - (row * 150); // Increased vertical stagger
+      
+      webpages.push(
+        <div 
+          key={`webpage-${i}`}
+          ref={el => webpagesRef.current[i] = el}
+          data-col={col}
+          data-row={row}
+          className="absolute"
+          style={{
+            transform: `translate(${x}px, ${y}px) scale(${webpageScale})`,
+            transformOrigin: 'center center'
+          }}
+        >
+          <WebPage size="xlarge" imageIndex={i} />
+        </div>
+      );
     }
     
     return webpages;
@@ -109,7 +121,7 @@ const WebPageDiagram = ({ className = "" }) => {
   return (
     <div 
       ref={containerRef}
-      className={`webpage-diagram relative -ml-96 w-full h-full ${className}`}
+      className={`webpage-diagram relative w-full h-full ${className}`}
     >
       <div 
         className="relative w-full h-full overflow-visible"

@@ -17,6 +17,27 @@
   will-change: transform;
 }
 
+/* Performance optimizations for diagrams */
+.mobile-diagram,
+.webpage-diagram {
+  contain: layout style paint;
+  transform: translateZ(0);
+}
+
+.phone-component,
+.webpage-component {
+  will-change: transform;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* Optimize image rendering */
+.phone-component img,
+.webpage-component img {
+  will-change: auto;
+  image-rendering: optimizeSpeed;
+}
+
 /* CSS Variables for Dark Mode */
 :root {
   --bg-primary: #ffffff;
