@@ -3,6 +3,7 @@ import Hero from './Hero';
 import AgentsPreview from './AgentsPreview';
 import MobilePreview from './MobilePreview';
 import DesignPreview from './DesignPreview';
+import AcademicsPreview from './AcademicsPreview';
 
 const Home = () => {
   return (
@@ -11,6 +12,7 @@ const Home = () => {
       <AgentsPreview />
       <MobilePreview />
       <DesignPreview />
+      <AcademicsPreview />
     </div>
   );
 };

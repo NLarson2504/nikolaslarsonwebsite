@@ -1,23 +1,23 @@
 import React from 'react';
+// import { gsap } from 'gsap';
+// import HeroModules from '../../diagrams/HeroModules';
 
 const Hero = () => {
+
   return (
-    <section 
-      id="home"
-      className="hero min-h-screen flex items-center justify-center bg-dark-950 text-dark-50 border-t border-white/5"
-    >
-      <div className="text-center max-w-4xl px-4">
-        <h1 className="text-5xl md:text-7xl font-heading font-bold mb-6 text-gradient-primary">
-          Nikolas Larson
-        </h1>
-        <p className="text-xl md:text-2xl mb-8 text-dark-300 font-sans">
-          Full Stack Developer & Designer
-        </p>
-        <p className="text-lg md:text-xl max-w-2xl mx-auto text-dark-400 font-sans">
-          Creating innovative digital experiences through code, design, and cutting-edge technology.
-        </p>
-      </div>
-    </section>
+      <section
+          id="home"
+          className="hero min-h-screen mt-10 mx-10 flex items-center relative bg-dark-950 text-dark-50 border-t border-white/5 overflow-hidden"
+      >
+        <div className={"text-white opacity-10 text-[20rem] font-heading font-bold leading-none"}>
+          <div className="leading-none">Nikolas</div>
+          <div className="leading-none -ml-40">Larson</div>
+        </div>
+
+
+        {/* 3D Modules - Overlaying on the right side */}
+        {/* <HeroModules/> */}
+      </section>
   );
 };
 

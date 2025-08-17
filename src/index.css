@@ -143,3 +143,100 @@ code {
   backdrop-filter: blur(10px);
   border: 1px solid rgba(51, 65, 85, 0.3);
 }
+
+/* 3D Module Styles */
+.module-3d {
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.3s ease;
+}
+
+.module-3d::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 8px;
+  right: -8px;
+  bottom: 8px;
+  background: inherit;
+  filter: brightness(1.2);
+  transform: translateZ(-20px);
+  border-radius: inherit;
+  z-index: -1;
+}
+
+.module-3d::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: -8px;
+  right: 8px;
+  bottom: -8px;
+  background: inherit;
+  filter: brightness(0.7);
+  transform: translateZ(-20px) rotateY(-90deg);
+  border-radius: inherit;
+  z-index: -2;
+}
+
+.module-face-top {
+  position: absolute;
+  top: -8px;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background: inherit;
+  filter: brightness(1.3);
+  transform: rotateX(90deg);
+  transform-origin: top;
+  border-radius: inherit;
+}
+
+.module-face-front {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: inherit;
+  border-radius: inherit;
+  z-index: 1;
+}
+
+.module-face-right {
+  position: absolute;
+  top: 0;
+  right: -8px;
+  width: 8px;
+  bottom: 0;
+  background: inherit;
+  filter: brightness(0.8);
+  transform: rotateY(90deg);
+  transform-origin: left;
+  border-radius: inherit;
+}
+
+.modules-stack {
+  width: 400px;
+  height: 400px;
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+@media (max-width: 1024px) {
+  .modules-stack {
+    width: 300px;
+    height: 300px;
+  }
+}
+
+@media (max-width: 768px) {
+  .modules-stack {
+    width: 200px;
+    height: 200px;
+  }
+  
+  .module-3d {
+    transform: scale(0.7);
+  }
+}

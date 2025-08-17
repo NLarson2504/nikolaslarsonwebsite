@@ -1,5 +1,6 @@
 import React from 'react';
 import PageTemplate from '../../components/PageTemplate';
+import MobileDiagram from '../../diagrams/MobileDiagram';
 
 const Mobile = () => {
   return (
@@ -10,6 +11,11 @@ const Mobile = () => {
           Creating exceptional mobile experiences that engage users and drive business growth 
           across iOS and Android platforms.
         </p>
+        
+        {/* Mobile Portfolio Gallery */}
+        <div className="flex justify-center mb-20">
+          <MobileDiagram className="w-full max-w-4xl" />
+        </div>
       </div>
     </PageTemplate>
   );
