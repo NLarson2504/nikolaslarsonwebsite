@@ -54,8 +54,8 @@ const TopNav = ({ currentPage, navigateToPage }) => {
                 onClick={() => handleNavClick('contact')}
                 className={`px-4 py-2 rounded-lg font-sans text-sm font-medium transition-all duration-200 ${
                   currentPage === 'contact'
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-primary-600/10 text-primary-400 hover:bg-primary-600/20 border border-primary-600/20'
+                    ? 'bg-white text-dark-950'
+                    : 'bg-white text-dark-950 hover:bg-gray-100'
                 }`}
               >
                 Contact

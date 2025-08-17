@@ -10,9 +10,9 @@ const VisBackgroundComponent = ({ children, className = "" }) => {
           backgroundImage: `repeating-linear-gradient(
             135deg,
             transparent,
-            transparent 8px,
-            rgba(255, 255, 255, 0.3) 8px,
-            rgba(255, 255, 255, 0.3) 9px
+            transparent 4px,
+            rgba(255, 255, 255, 0.3) 4px,
+            rgba(255, 255, 255, 0.3) 5px
           )`
         }}
       />
@@ -24,9 +24,9 @@ const VisBackgroundComponent = ({ children, className = "" }) => {
           backgroundImage: `repeating-linear-gradient(
             135deg,
             transparent,
-            transparent 4px,
-            rgba(255, 255, 255, 0.4) 4px,
-            rgba(255, 255, 255, 0.4) 4.5px
+            transparent 2px,
+            rgba(255, 255, 255, 0.4) 2px,
+            rgba(255, 255, 255, 0.4) 2.5px
           )`
         }}
       />

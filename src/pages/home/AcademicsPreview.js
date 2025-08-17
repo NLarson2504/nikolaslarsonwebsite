@@ -2,6 +2,7 @@ import React from 'react';
 import { GraduationCap } from 'lucide-react';
 import FeatureContainer from '../../components/FeatureContainer';
 import VisBackgroundComponent from '../../components/VisBackgroundComponent';
+import tempSvg from '../../assets/temp.svg';
 
 const AcademicsPreview = () => {
   return (
@@ -13,15 +14,11 @@ const AcademicsPreview = () => {
         {/* Left Half - Visual Background */}
         <div className="w-1/2">
           <VisBackgroundComponent className="h-full flex items-center justify-center">
-            <div className="text-center">
-              <div className="text-6xl mb-4 opacity-20">🎓</div>
-              <h3 className="text-2xl font-heading font-bold text-white/30">
-                Academic Excellence
-              </h3>
-              <p className="text-white/20 font-sans">
-                Research & Education
-              </p>
-            </div>
+            <img 
+              src={tempSvg} 
+              alt="Academic visualization" 
+              className="w-full h-full object-contain"
+            />
           </VisBackgroundComponent>
         </div>
 

@@ -23,29 +23,31 @@ const MobileDiagram = ({ className = "" }) => {
   useEffect(() => {
     const phones = phonesRef.current.filter(Boolean);
     
-    // Calculate the distance each phone needs to travel for seamless loop
-    const phoneHeight = 325; // scaled phone height
-    const gap = 0; // gap between phones
-    const totalPhoneHeight = phoneHeight + gap;
+    // Use the same spacing calculations as the layout for seamless infinite scroll
+    const phoneWidth = 192;
+    const phoneHeight = 400;
+    const horizontalSpacing = Math.min(phoneWidth, phoneHeight) * 0.1;
+    const verticalSpacing = Math.min(phoneWidth, phoneHeight) * 0.05;
+    const effectivePhoneHeight = phoneHeight * 0.7 + verticalSpacing; // Must match the CSS scale(0.7)
     
     phones.forEach((phone, index) => {
       const col = parseInt(phone.dataset.col);
       const row = parseInt(phone.dataset.row);
       const isEvenColumn = col % 2 === 0;
       
-      // Calculate travel distance to create seamless loop
-      const rows = Math.floor(dimensions.height / (phoneHeight + 150)) + 4;
-      const totalDistance = rows * totalPhoneHeight;
+      // Calculate travel distance using actual layout spacing for perfect infinite loop
+      const rows = Math.floor(dimensions.height / effectivePhoneHeight) + 4;
+      const totalDistance = rows * effectivePhoneHeight;
       
       // Stagger phones within each column
-      const delay = -(row * (30 / rows)); // Distribute delays evenly across duration
+      const delay = -(row * (60 / rows)); // Distribute delays evenly across duration
       
       // Infinite scroll with proper spacing
       gsap.fromTo(phone, {
         y: isEvenColumn ? totalDistance : -totalDistance
       }, {
         y: isEvenColumn ? -totalDistance : totalDistance,
-        duration: 60,
+        duration: 60, // Same slow speed as web pages
         repeat: -1,
         ease: "none",
         delay: delay
@@ -62,9 +64,9 @@ const MobileDiagram = ({ className = "" }) => {
     const phoneWidth = 192;
     const phoneHeight = 400;
     
-    // Calculate spacing - more vertical spacing for carousel effect
-    const horizontalSpacing = Math.min(phoneWidth, phoneHeight) * 0.3;
-    const verticalSpacing = Math.min(phoneWidth, phoneHeight) * 0.8; // Increased vertical spacing
+    // Calculate spacing - tighter spacing for closer phones
+    const horizontalSpacing = Math.min(phoneWidth, phoneHeight) * 0.1;
+    const verticalSpacing = Math.min(phoneWidth, phoneHeight) * 0.05; // Reduced for closer spacing
     
     // Calculate how many phones can fit
     const effectivePhoneWidth = phoneWidth * 0.7 + horizontalSpacing;
