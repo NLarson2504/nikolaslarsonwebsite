@@ -92,8 +92,11 @@ const HorizontalCarousel = ({ className = "" }) => {
     });
 
     // Calculate the scroll distance needed to view all items
-    // We need enough scroll distance to move through the entire carousel
-    const totalScrollNeeded = Math.max(scrollDistance * 2, window.innerHeight * images.length * 0.8);
+    // The ScrollTrigger needs enough distance to complete the horizontal scroll
+    // Plus additional scroll to ensure user sees all images before release
+    const baseScrollNeeded = scrollDistance * 1.5; // 1.5x the horizontal distance
+    const additionalScroll = window.innerHeight * 2; // 2 viewport heights extra
+    const totalScrollNeeded = baseScrollNeeded + additionalScroll;
     
     console.log(`Carousel Debug: ${images.length} images, scrollDistance: ${scrollDistance}, totalScrollNeeded: ${totalScrollNeeded}`);
     
@@ -120,10 +123,12 @@ const HorizontalCarousel = ({ className = "" }) => {
         const currentOffset = progress * scrollDistance;
         const centerPosition = containerWidth / 2;
         
-        // Keep carousel active throughout the entire scroll
-        if (progress < 1 && !isCarouselActive) {
+        // Keep carousel active until we're at least 90% through the ScrollTrigger
+        if (self.progress < 0.9 && !isCarouselActive) {
           setIsCarouselActive(true);
         }
+        
+        console.log(`ScrollTrigger progress: ${self.progress.toFixed(3)}, carousel progress: ${progress.toFixed(3)}`);
         
         // Update progress bar
         if (progressRef.current) {
@@ -157,14 +162,20 @@ const HorizontalCarousel = ({ className = "" }) => {
         });
       },
       onComplete: () => {
-        // Carousel is complete, user can now scroll normally
+        // Carousel animation is complete, but keep locked until user scrolls past
         setShowProgress(false);
-        console.log("Carousel animation complete");
+        console.log("Carousel animation complete - but still locked");
       },
       onLeave: () => {
         // Only allow normal scrolling when user leaves the carousel section
         setIsCarouselActive(false);
         console.log("Left carousel section - normal scrolling enabled");
+      },
+      onLeaveBack: () => {
+        // Handle scrolling back up into the carousel
+        setIsCarouselActive(true);
+        setShowProgress(true);
+        console.log("Re-entered carousel from below");
       }
     });
 
