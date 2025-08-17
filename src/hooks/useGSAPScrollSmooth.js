@@ -40,6 +40,12 @@ const useGSAPScrollSmooth = (currentPage) => {
 
     // Optimized smooth scroll with throttling
     const smoothScroll = (timestamp) => {
+      // Completely disable smooth scroll when carousel is active to prevent conflicts
+      if (document.documentElement.classList.contains('carousel-active')) {
+        smoothScrollRef.current = requestAnimationFrame(smoothScroll);
+        return;
+      }
+      
       const deltaTime = timestamp - scrollData.lastTime;
       
       // Throttle to ~60fps

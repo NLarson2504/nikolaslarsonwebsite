@@ -8,18 +8,18 @@ const MobilePreview = () => {
   return (
     <section 
       id="mobile"
-      className="mobile-preview h-[650px] bg-dark-950 border-t border-white/5"
+      className="mobile-preview h-[650px] md:h-[650px] bg-dark-950 border-t border-white/5"
     >
-      <div className="h-full flex">
-        {/* Left Half - Visual Background */}
-        <div className="w-1/2">
+      <div className="h-full flex flex-col md:flex-row">
+        {/* Visual Background - Left on desktop, Bottom on mobile */}
+        <div className="w-full md:w-1/2 h-1/2 md:h-full">
           <VisBackgroundComponent className="h-full flex items-center justify-center">
             <MobileDiagram className="w-full h-full" />
           </VisBackgroundComponent>
         </div>
 
-        {/* Right Half - Feature Container */}
-        <div className="w-1/2 flex items-center justify-center p-8">
+        {/* Feature Container - Right on desktop, Top on mobile */}
+        <div className="w-full md:w-1/2 h-1/2 md:h-full flex items-center justify-center p-4 md:p-8">
           <div className="max-w-md">
             <FeatureContainer
               categoryIcon={Smartphone}
