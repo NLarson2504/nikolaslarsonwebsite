@@ -1,12 +1,15 @@
-import logo from './logo.svg';
+import React from 'react';
 import './App.css';
-import LandingPage from "./components/LandingPage";
+import Home from './pages/home/Home';
+import useLocomotiveScroll from './hooks/useLocomotiveScroll';
 
 function App() {
+  const { scrollRef } = useLocomotiveScroll();
+
   return (
-      <div className={"w-screen h-screen flex flex-col items-center justify-center fixed"}>
-        <LandingPage/>
-      </div>
+    <div ref={scrollRef} className="App bg-dark-950" data-scroll-container>
+      <Home />
+    </div>
   );
 }
 
