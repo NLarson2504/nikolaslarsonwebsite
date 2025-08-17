@@ -24,9 +24,7 @@ const WebPageDiagram = ({ className = "" }) => {
     const webpages = webpagesRef.current.filter(Boolean);
     
     // Use the same spacing calculations as the layout
-    const webpageWidth = 700;
     const webpageHeight = 80;
-    const horizontalSpacing = 20;
     const verticalSpacing = 80; // Match the layout spacing to prevent overlap
     const effectiveWebpageHeight = webpageHeight * 0.8 + verticalSpacing; // Match layout calculation
     
@@ -65,11 +63,11 @@ const WebPageDiagram = ({ className = "" }) => {
     const webpageHeight = 80; // Increased even more
     
     // Calculate spacing - much closer together but prevent overlap
-    const horizontalSpacing = 20; // Very small fixed spacing
+    const horizontalSpacing = 5; // Closer columns
     const verticalSpacing = 80; // Increased to prevent overlap during animation
     
     // Calculate how many webpages can fit - ONLY 2 COLUMNS
-    const effectiveWebpageWidth = webpageWidth * 0.8 + horizontalSpacing;
+    const effectiveWebpageWidth = webpageWidth * 0.62 + horizontalSpacing; // Reduced scale to bring columns closer
     const effectiveWebpageHeight = webpageHeight * 0.8 + verticalSpacing;
     
     const cols = 2; // Fixed to 2 columns only
