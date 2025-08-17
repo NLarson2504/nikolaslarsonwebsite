@@ -97,7 +97,7 @@ const WebPageDiagram = ({ className = "" }) => {
               transformOrigin: 'center center'
             }}
           >
-            <WebPage size="xlarge" />
+            <WebPage size="xlarge" imageIndex={index} />
           </div>
         );
       }

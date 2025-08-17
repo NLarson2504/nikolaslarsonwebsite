@@ -6,6 +6,7 @@ import Mobile from './pages/mobile/Mobile';
 import Design from './pages/design/Design';
 import Contact from './pages/contact/Contact';
 import TopNav from './components/TopNav';
+import Footer from './components/Footer';
 
 function App() {
   // Initialize from URL path
@@ -60,6 +61,7 @@ function App() {
     <div className="App bg-dark-950">
       <TopNav currentPage={currentPage} navigateToPage={navigateToPage} />
       {renderPage()}
+      <Footer />
     </div>
   );
 }
