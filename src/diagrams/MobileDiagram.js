@@ -28,7 +28,7 @@ const MobileDiagram = ({ className = "" }) => {
     const phoneHeight = 400;
     const horizontalSpacing = Math.min(phoneWidth, phoneHeight) * 0.1;
     const verticalSpacing = Math.min(phoneWidth, phoneHeight) * 0.05;
-    const effectivePhoneHeight = phoneHeight * 0.7 + verticalSpacing; // Must match the CSS scale(0.7)
+    const effectivePhoneHeight = phoneHeight * 1.0 + verticalSpacing; // Must match the CSS scale
     
     phones.forEach((phone, index) => {
       const col = parseInt(phone.dataset.col);
@@ -69,10 +69,11 @@ const MobileDiagram = ({ className = "" }) => {
     const verticalSpacing = Math.min(phoneWidth, phoneHeight) * 0.05; // Reduced for closer spacing
     
     // Calculate how many phones can fit
-    const effectivePhoneWidth = phoneWidth * 0.7 + horizontalSpacing;
-    const effectivePhoneHeight = phoneHeight * 0.7 + verticalSpacing;
+    const phoneScale = 1.0; // Increased from 0.7 to make phones bigger
+    const effectivePhoneWidth = phoneWidth * phoneScale + horizontalSpacing;
+    const effectivePhoneHeight = phoneHeight * phoneScale + verticalSpacing;
     
-    const cols = Math.floor(dimensions.width / effectivePhoneWidth) + 2;
+    const cols = 3; // Fixed to 3 columns
     const rows = Math.floor(dimensions.height / effectivePhoneHeight) + 4; // +4 for infinite scroll buffer
     
     // Center the grid
@@ -95,7 +96,7 @@ const MobileDiagram = ({ className = "" }) => {
             data-row={row}
             className="absolute"
             style={{
-              transform: `translate(${x}px, ${y}px) scale(0.7)`,
+              transform: `translate(${x}px, ${y}px) scale(${phoneScale})`,
               transformOrigin: 'center center'
             }}
           >
@@ -111,7 +112,7 @@ const MobileDiagram = ({ className = "" }) => {
   return (
     <div 
       ref={containerRef}
-      className={`mobile-diagram relative w-full h-full ${className}`}
+      className={`mobile-diagram -ml-64 relative w-full h-full ${className}`}
     >
       <div 
         className="relative w-full h-full overflow-visible"

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import emailjs from 'emailjs-com';
 import PageTemplate from '../../components/PageTemplate';
 
 const Contact = () => {
@@ -9,30 +10,56 @@ const Contact = () => {
     message: ''
   });
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState(null); // 'success', 'error', or null
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
+    // Clear status when user starts typing again
+    if (submitStatus) {
+      setSubmitStatus(null);
+    }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle form submission here
-    console.log('Form submitted:', formData);
+    setIsSubmitting(true);
+    setSubmitStatus(null);
+
+    try {
+      const result = await emailjs.sendForm(
+        'service_3amebrj',    // Your EmailJS Service ID
+        'template_q126lg4',   // Your EmailJS Template ID
+        e.target,
+        'zjHsV_tywr2_0qK9O'  // Your EmailJS User ID
+      );
+
+      console.log('EmailJS result:', result.text);
+      setSubmitStatus('success');
+      
+      // Reset form after successful submission
+      setFormData({
+        name: '',
+        email: '',
+        subject: '',
+        message: ''
+      });
+
+    } catch (error) {
+      console.error('EmailJS error:', error.text);
+      setSubmitStatus('error');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <PageTemplate className="contact-page">
-      <div className="max-w-4xl mx-auto px-4 py-20">
-        <div className="text-center mb-16">
-          <h1 className="text-5xl font-heading font-bold mb-6 text-dark-50">Get In Touch</h1>
-          <p className="text-xl text-dark-300 max-w-2xl mx-auto font-sans">
-            Have a project in mind? Let's discuss how we can work together to bring your ideas to life.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-12">
+      <div className="flex h-full">
+        <div className="flex-1 p-8">
           {/* Contact Info */}
           <div className="space-y-8">
             <div>
@@ -93,9 +120,33 @@ const Contact = () => {
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Contact Form */}
-          <div className="bg-dark-900 p-8 rounded-2xl border border-dark-700">
+        {/* Contact Form - Right Side Full Height */}
+        <div className="w-96 h-full flex flex-col p-8">
+            {/* Success/Error Messages */}
+            {submitStatus === 'success' && (
+              <div className="mb-6 p-4 bg-success-600/10 border border-success-600/20 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <svg className="w-5 h-5 text-success-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <p className="text-success-300 font-sans">Message sent successfully! I'll get back to you soon.</p>
+                </div>
+              </div>
+            )}
+
+            {submitStatus === 'error' && (
+              <div className="mb-6 p-4 bg-red-600/10 border border-red-600/20 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <svg className="w-5 h-5 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-red-300 font-sans">Failed to send message. Please try again or contact me directly.</p>
+                </div>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-dark-200 mb-2 font-sans">
@@ -163,12 +214,26 @@ const Contact = () => {
 
               <button
                 type="submit"
-                className="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 font-sans"
+                disabled={isSubmitting}
+                className={`w-full font-medium py-3 px-6 rounded-lg transition-all duration-200 font-sans flex items-center justify-center space-x-2 ${
+                  isSubmitting 
+                    ? 'bg-primary-700 cursor-not-allowed' 
+                    : 'bg-primary-600 hover:bg-primary-700'
+                } text-white`}
               >
-                Send Message
+                {isSubmitting ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Sending...</span>
+                  </>
+                ) : (
+                  <span>Send Message</span>
+                )}
               </button>
             </form>
-          </div>
         </div>
       </div>
     </PageTemplate>
