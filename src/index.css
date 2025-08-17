@@ -2,12 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Locomotive Scroll CSS */
-@import 'locomotive-scroll/dist/locomotive-scroll.css';
+/* GSAP Smooth Scroll Styles */
+.scroll-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  z-index: 0;
+}
 
-/* Locomotive Scroll Overrides */
-.c-scrollbar {
-  display: none !important;
+.scroll-content {
+  will-change: transform;
 }
 
 /* CSS Variables for Dark Mode */

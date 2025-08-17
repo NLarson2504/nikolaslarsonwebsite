@@ -100,7 +100,7 @@ const MobileDiagram = ({ className = "" }) => {
               transformOrigin: 'center center'
             }}
           >
-            <Phone size="promax15" />
+            <Phone size="promax15" imageIndex={index} />
           </div>
         );
       }

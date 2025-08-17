@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
+import liraLogo from '../assets/icons/liralogo.svg';
+import tallieLogo from '../assets/icons/tallielogo.svg';
 
 const HoverMenu = ({ activeSection, navigateToPage, isVisible }) => {
   const [currentContent, setCurrentContent] = useState(null);
@@ -13,14 +15,17 @@ const HoverMenu = ({ activeSection, navigateToPage, isVisible }) => {
     agents: {
       leftLabel: "Agents",
       rightLabel: "Implementations",
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-        </svg>
-      ),
       examples: [
-        { title: "ChatGPT Interface", description: "Conversational AI with context memory" },
-        { title: "Support Automation", description: "AI-powered customer service systems" }
+        { 
+          title: "Lira", 
+          description: "AI Invoice Scanner",
+          logo: liraLogo,
+        },
+        { 
+          title: "Tallie", 
+          description: "Restaurant Analytics Agent",
+          logo: tallieLogo,
+        }
       ],
       items: [
         { label: "Conversational AI", page: "agents", description: "Chat-based solutions" },
@@ -32,14 +37,17 @@ const HoverMenu = ({ activeSection, navigateToPage, isVisible }) => {
     mobile: {
       leftLabel: "Apps",
       rightLabel: "More",
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-        </svg>
-      ),
       examples: [
-        { title: "E-commerce App", description: "Payment integration & user accounts" },
-        { title: "Social Platform", description: "Real-time chat & media sharing" }
+        {
+          title: "Tarragon",
+          description: "Product Ecosystem in Your Pocket",
+          logo: liraLogo,
+        },
+        {
+          title: "CampusLM",
+          description: "AI Tools for College Students",
+          logo: tallieLogo,
+        }
       ],
       items: [
         { label: "iOS Apps", page: "ios", description: "Native Swift" },
@@ -51,11 +59,6 @@ const HoverMenu = ({ activeSection, navigateToPage, isVisible }) => {
     design: {
       leftLabel: "Sites",
       rightLabel: "More",
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4h4a2 2 0 002-2V5z" />
-        </svg>
-      ),
       examples: [
         { title: "Analytics Dashboard", description: "Data visualization & user insights" },
         { title: "Design System", description: "Scalable component libraries" }
@@ -180,27 +183,33 @@ const HoverMenu = ({ activeSection, navigateToPage, isVisible }) => {
       
       <div 
         ref={containerRef}
-        className="bg-dark-800 border border-white/15 rounded-xl p-1 w-[580px] shadow-xl overflow-hidden"
+        className="bg-dark-800 border border-white/15 rounded-xl p-1 w-[800px] shadow-xl overflow-hidden"
         style={{ pointerEvents: isVisible ? 'auto' : 'none' }}
       >
         <div ref={contentRef} className="bg-dark-700 rounded-lg p-4 flex gap-5">
           {/* Left Section - Examples with Icon */}
-          <div className="flex flex-col space-y-4 w-48">
-            <div className="text-white/60 text-sm font-medium text-left">
+          <div className="flex flex-col space-y-4 w-64">
+            <div className="text-white/60 text-sm font-medium text-left pl-2">
               {content.leftLabel}
             </div>
             
-            <div className="space-y-4">
+            <div className="space-y-3">
               {content.examples.map((example, index) => (
-                <div key={index} className="flex gap-3 items-start">
-                  <div className="text-primary-400 flex-shrink-0 mt-0.5">
-                    {content.icon}
+                <div key={index} className="flex p-2 space-x-2 items-center rounded-lg hover:bg-white/10 transition-all duration-200">
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0`}>
+                    {example.logo ? (
+                      <img src={example.logo} alt={example.title} className="w-9 h-9 rounded" />
+                    ) : (
+                      <div className="text-white">
+                        {content.icon}
+                      </div>
+                    )}
                   </div>
-                  <div className="flex flex-col space-y-1">
-                    <div className="text-sm font-medium text-white/80">
+                  <div className="flex flex-col items-start justify-center text-start -space-y-0.5">
+                    <div className="text-sm font-medium text-white/90">
                       {example.title}
                     </div>
-                    <div className="text-xs text-white/50 leading-relaxed">
+                    <div className="text-sm font-medium text-white/60 leading-relaxed line-clamp-1">
                       {example.description}
                     </div>
                   </div>
@@ -214,7 +223,7 @@ const HoverMenu = ({ activeSection, navigateToPage, isVisible }) => {
 
           {/* Right Section - 2x2 Grid */}
           <div className="flex-1">
-            <div className="text-white/60 text-sm font-medium text-left mb-3">
+            <div className="text-white/60 text-sm font-medium text-left mb-3 pl-2">
               {content.rightLabel}
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -222,7 +231,7 @@ const HoverMenu = ({ activeSection, navigateToPage, isVisible }) => {
                 <button
                   key={`${displayContent}-${index}`}
                   onClick={() => navigateToPage(item.page)}
-                  className="text-left px-3 py-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 text-sm focus:outline-none group"
+                  className="text-left px-2 py-3 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 text-sm focus:outline-none group"
                 >
                   <div className="font-medium group-hover:text-white transition-colors text-sm">
                     {item.label}

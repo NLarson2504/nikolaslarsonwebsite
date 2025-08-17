@@ -7,6 +7,8 @@ import Design from './pages/design/Design';
 import Contact from './pages/contact/Contact';
 import TopNav from './components/TopNav';
 import Footer from './components/Footer';
+import useGSAPScrollSmooth from './hooks/useGSAPScrollSmooth';
+import imagePreloader from './utils/imagePreloader';
 
 function App() {
   // Initialize from URL path
@@ -16,6 +18,14 @@ function App() {
   };
 
   const [currentPage, setCurrentPage] = useState(getInitialPage());
+  const { scrollContainerRef, scrollContentRef } = useGSAPScrollSmooth(currentPage);
+
+  // Preload images on app initialization
+  useEffect(() => {
+    imagePreloader.preloadAllImages().catch(error => {
+      console.warn('Failed to preload some images:', error);
+    });
+  }, []);
 
   // Handle browser back/forward
   useEffect(() => {
@@ -37,7 +47,7 @@ function App() {
     window.history.pushState({}, '', url);
     
     // Scroll to top when changing pages
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'instant' });
   };
 
   const renderPage = () => {
@@ -60,8 +70,12 @@ function App() {
   return (
     <div className="App bg-dark-950">
       <TopNav currentPage={currentPage} navigateToPage={navigateToPage} />
-      {renderPage()}
-      <Footer />
+      <div ref={scrollContainerRef} className="scroll-container">
+        <div ref={scrollContentRef} className="scroll-content">
+          {renderPage()}
+          <Footer />
+        </div>
+      </div>
     </div>
   );
 }
