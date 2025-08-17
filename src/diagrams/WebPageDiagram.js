@@ -109,7 +109,7 @@ const WebPageDiagram = ({ className = "" }) => {
   return (
     <div 
       ref={containerRef}
-      className={`webpage-diagram relative w-full h-full ${className}`}
+      className={`webpage-diagram relative -ml-96 w-full h-full ${className}`}
     >
       <div 
         className="relative w-full h-full overflow-visible"
