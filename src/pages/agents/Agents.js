@@ -1,7 +1,10 @@
 import React from 'react';
 import PageTemplate from '../../components/PageTemplate';
+import AgentDetail from '../../components/AgentDetail';
+import { agentsData } from '../../data/projectsData';
 
 const Agents = () => {
+
   return (
     <PageTemplate className="agents-page">
       <div className="max-w-6xl mx-auto px-4 py-20">
@@ -10,6 +13,21 @@ const Agents = () => {
           Leveraging artificial intelligence to create intelligent automation solutions 
           that enhance productivity and drive innovation.
         </p>
+        
+        <div className="grid gap-8 md:gap-12">
+          {agentsData.map((agent, index) => (
+            <AgentDetail
+              key={index}
+              title={agent.title}
+              description={agent.description}
+              features={agent.features}
+              technologies={agent.technologies}
+              status={agent.status}
+              icon={agent.icon}
+              className="max-w-4xl mx-auto"
+            />
+          ))}
+        </div>
       </div>
     </PageTemplate>
   );

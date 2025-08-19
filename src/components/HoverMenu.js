@@ -206,7 +206,11 @@ const HoverMenu = ({ activeSection, navigateToPage, isVisible }) => {
             
             <div className="space-y-3">
               {content.examples.map((example, index) => (
-                <div key={index} className="flex p-2 space-x-2 items-center rounded-lg hover:bg-white/10 transition-all duration-200">
+                <button
+                  key={index} 
+                  onClick={() => navigateToPage(displayContent)}
+                  className="flex p-2 space-x-2 items-center rounded-lg hover:bg-white/10 transition-all duration-200 w-full text-left focus:outline-none group"
+                >
                   <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0`}>
                     {example.logo ? (
                       <img src={example.logo} alt={example.title} className="w-9 h-9 rounded" />
@@ -217,14 +221,14 @@ const HoverMenu = ({ activeSection, navigateToPage, isVisible }) => {
                     )}
                   </div>
                   <div className="flex flex-col items-start justify-center text-start -space-y-0.5">
-                    <div className="text-sm font-medium text-white/90">
+                    <div className="text-sm font-medium text-white/90 group-hover:text-white transition-colors">
                       {example.title}
                     </div>
-                    <div className="text-sm font-medium text-white/60 leading-relaxed line-clamp-1">
+                    <div className="text-sm font-medium text-white/60 leading-relaxed line-clamp-1 group-hover:text-white/80 transition-colors">
                       {example.description}
                     </div>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           </div>
