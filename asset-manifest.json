@@ -1,12 +1,13 @@
 {
   "files": {
-    "main.css": "/static/css/main.68b1c265.css",
-    "main.js": "/static/js/main.25242612.js",
+    "main.css": "/static/css/main.4c049ea7.css",
+    "main.js": "/static/js/main.d9a73e82.js",
     "static/js/156.25c497eb.chunk.js": "/static/js/156.25c497eb.chunk.js",
     "static/media/mooslixmobile1.png": "/static/media/mooslixmobile1.32a9fbecae2c99aa7d18.png",
     "static/media/campuslmlogo.png": "/static/media/campuslmlogo.83e808f06b601d77e2eb.png",
     "static/media/nourished1.png": "/static/media/nourished1.9851f901d60def093148.png",
     "static/media/campuslm1.png": "/static/media/campuslm1.b4291393413201d0adf7.png",
+    "static/media/mooslix1.png": "/static/media/mooslix1.5344c3ce3b1ca9409493.png",
     "static/media/campuslm2.png": "/static/media/campuslm2.40fbcd751da816491352.png",
     "static/media/tarragon1.png": "/static/media/tarragon1.1ab07284d42e557ab4a2.png",
     "static/media/tarragon2.png": "/static/media/tarragon2.ed02d95f79f5d788bf76.png",
@@ -18,12 +19,12 @@
     "static/media/liralogo.svg": "/static/media/liralogo.ee792236790c3efa53d206c7971dac79.svg",
     "index.html": "/index.html",
     "static/media/mooslixlogo.svg": "/static/media/mooslixlogo.64cc6beb6699641db448b865939be22b.svg",
-    "main.68b1c265.css.map": "/static/css/main.68b1c265.css.map",
-    "main.25242612.js.map": "/static/js/main.25242612.js.map",
+    "main.4c049ea7.css.map": "/static/css/main.4c049ea7.css.map",
+    "main.d9a73e82.js.map": "/static/js/main.d9a73e82.js.map",
     "156.25c497eb.chunk.js.map": "/static/js/156.25c497eb.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.68b1c265.css",
-    "static/js/main.25242612.js"
+    "static/css/main.4c049ea7.css",
+    "static/js/main.d9a73e82.js"
   ]
 }
