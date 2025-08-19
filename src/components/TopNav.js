@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { gsap } from 'gsap';
 import HoverMenu from './HoverMenu';
 
 const TopNav = ({ currentPage, navigateToPage }) => {
@@ -6,10 +7,55 @@ const TopNav = ({ currentPage, navigateToPage }) => {
   const [isMenuVisible, setIsMenuVisible] = useState(false);
   const [activeSection, setActiveSection] = useState(null);
   const [hasEverOpened, setHasEverOpened] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const hamburgerLine1Ref = useRef(null);
+  const hamburgerLine2Ref = useRef(null);
 
   const handleNavClick = (page) => {
     navigateToPage(page);
   };
+
+  const handleMobileNavClick = (page) => {
+    navigateToPage(page);
+    setIsMobileMenuOpen(false);
+  };
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  // Animate hamburger to X and back
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      // Transform to X - move lines to center and rotate
+      gsap.to(hamburgerLine1Ref.current, {
+        rotation: 45,
+        y: 3,
+        duration: 0.3,
+        ease: "power2.out"
+      });
+      gsap.to(hamburgerLine2Ref.current, {
+        rotation: -45,
+        y: -3,
+        duration: 0.3,
+        ease: "power2.out"
+      });
+    } else {
+      // Transform back to hamburger
+      gsap.to(hamburgerLine1Ref.current, {
+        rotation: 0,
+        y: 0,
+        duration: 0.3,
+        ease: "power2.out"
+      });
+      gsap.to(hamburgerLine2Ref.current, {
+        rotation: 0,
+        y: 0,
+        duration: 0.3,
+        ease: "power2.out"
+      });
+    }
+  }, [isMobileMenuOpen]);
 
   const handleMouseEnter = () => {
     if (!hasEverOpened) {
@@ -94,15 +140,72 @@ const TopNav = ({ currentPage, navigateToPage }) => {
 
             {/* Mobile menu button */}
             <div className="md:hidden">
-              <button className="text-dark-200 hover:text-dark-50 transition-colors duration-200 focus:outline-none">
+              <button 
+                onClick={toggleMobileMenu}
+                className="text-dark-400 hover:text-dark-300 transition-colors duration-200 focus:outline-none p-1"
+              >
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  <path 
+                    ref={hamburgerLine1Ref}
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M6 9h12" 
+                    style={{ transformOrigin: '12px 12px' }}
+                  />
+                  <path 
+                    ref={hamburgerLine2Ref}
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M6 15h12" 
+                    style={{ transformOrigin: '12px 12px' }}
+                  />
                 </svg>
               </button>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Full-page Mobile Menu */}
+      {isMobileMenuOpen && (
+        <div className="fixed top-16 left-0 right-0 bottom-0 z-[10000] md:hidden">
+          {/* Heavy blur backdrop */}
+          <div className="absolute inset-0 bg-dark-950/80 backdrop-blur-xl"></div>
+          
+          {/* Menu content */}
+          <div className="relative h-full flex flex-col items-center justify-center space-y-12">
+            {/* Navigation links */}
+            <nav className="flex flex-col items-center space-y-8">
+              <button
+                onClick={() => handleMobileNavClick('agents')}
+                className="text-4xl font-medium text-white/90 hover:text-white transition-colors font-sans"
+              >
+                Agents
+              </button>
+              <button
+                onClick={() => handleMobileNavClick('mobile')}
+                className="text-4xl font-medium text-white/90 hover:text-white transition-colors font-sans"
+              >
+                Mobile
+              </button>
+              <button
+                onClick={() => handleMobileNavClick('design')}
+                className="text-4xl font-medium text-white/90 hover:text-white transition-colors font-sans"
+              >
+                Design
+              </button>
+              <button
+                onClick={() => handleMobileNavClick('contact')}
+                className="text-4xl font-medium text-white/90 hover:text-white transition-colors font-sans"
+              >
+                Contact
+              </button>
+            </nav>
+          </div>
+        </div>
+      )}
     </nav>
   );
 };
