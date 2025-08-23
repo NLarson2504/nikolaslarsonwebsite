@@ -96,7 +96,7 @@ const MobileDiagram = ({ className = "" }) => {
       const row = Math.floor(i / cols);
       
       const x = startX + col * (phoneWidth + spacing);
-      const columnOffset = col === 0 ? -4can you make 50 : 0; // Left column starts higher
+      const columnOffset = col === 0 ? -450 : 0; // Left column starts higher
       const y = startY + row * (phoneHeight + verticalSpacing) - (row * 100) + columnOffset;
       
       phones.push(
