@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/static/css/main.92e2d3e6.css",
-    "main.js": "/static/js/main.7c034220.js",
+    "main.js": "/static/js/main.d85c6a90.js",
     "static/js/156.25c497eb.chunk.js": "/static/js/156.25c497eb.chunk.js",
     "static/media/mooslixmobile1.png": "/static/media/mooslixmobile1.32a9fbecae2c99aa7d18.png",
     "static/media/campuslmlogo.png": "/static/media/campuslmlogo.83e808f06b601d77e2eb.png",
@@ -21,11 +21,11 @@
     "index.html": "/index.html",
     "static/media/mooslixlogo.svg": "/static/media/mooslixlogo.64cc6beb6699641db448b865939be22b.svg",
     "main.92e2d3e6.css.map": "/static/css/main.92e2d3e6.css.map",
-    "main.7c034220.js.map": "/static/js/main.7c034220.js.map",
+    "main.d85c6a90.js.map": "/static/js/main.d85c6a90.js.map",
     "156.25c497eb.chunk.js.map": "/static/js/156.25c497eb.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.92e2d3e6.css",
-    "static/js/main.7c034220.js"
+    "static/js/main.d85c6a90.js"
   ]
 }
