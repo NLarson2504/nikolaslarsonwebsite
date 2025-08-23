@@ -83,8 +83,9 @@ const MobileDiagram = ({ className = "" }) => {
     // Phone dimensions
     const phoneWidth = 192;
     const phoneHeight = 400;
-    const phoneScale = 1.0;
+    const phoneScale = 1.2;
     const spacing = 120;
+    const verticalSpacing = 60; // Much closer vertical spacing
     
     // Center the grid
     const startX = (dimensions.width - (cols - 1) * (phoneWidth + spacing)) / 2;
@@ -95,7 +96,8 @@ const MobileDiagram = ({ className = "" }) => {
       const row = Math.floor(i / cols);
       
       const x = startX + col * (phoneWidth + spacing);
-      const y = startY + row * (phoneHeight + spacing) - (row * 200); // Increased vertical stagger
+      const columnOffset = col === 0 ? -4can you make 50 : 0; // Left column starts higher
+      const y = startY + row * (phoneHeight + verticalSpacing) - (row * 100) + columnOffset;
       
       phones.push(
         <div 

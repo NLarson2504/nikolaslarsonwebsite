@@ -16,6 +16,30 @@ const useGSAPScrollSmooth = (currentPage) => {
   useEffect(() => {
     if (!scrollContainerRef.current || !scrollContentRef.current) return;
 
+    // Check if device is mobile
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                     window.innerWidth <= 768;
+
+    // If mobile, disable smooth scroll and return early
+    if (isMobile) {
+      const container = scrollContainerRef.current;
+      const content = scrollContentRef.current;
+      
+      // Reset to normal scroll behavior for mobile
+      gsap.set(container, {
+        position: 'static',
+        height: 'auto',
+        overflow: 'visible'
+      });
+      
+      gsap.set(content, {
+        transform: 'none'
+      });
+      
+      document.body.style.height = '';
+      return;
+    }
+
     const container = scrollContainerRef.current;
     const content = scrollContentRef.current;
     const scrollData = scrollDataRef.current;

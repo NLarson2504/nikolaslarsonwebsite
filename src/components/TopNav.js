@@ -142,14 +142,14 @@ const TopNav = ({ currentPage, navigateToPage }) => {
             <div className="md:hidden">
               <button 
                 onClick={toggleMobileMenu}
-                className="text-dark-400 hover:text-dark-300 transition-colors duration-200 focus:outline-none p-1"
+                className="text-white opacity-25 transition-colors duration-200 focus:outline-none p-1"
               >
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path 
                     ref={hamburgerLine1Ref}
                     strokeLinecap="round" 
                     strokeLinejoin="round" 
-                    strokeWidth={2} 
+                    strokeWidth={1.5}
                     d="M6 9h12" 
                     style={{ transformOrigin: '12px 12px' }}
                   />
@@ -157,7 +157,7 @@ const TopNav = ({ currentPage, navigateToPage }) => {
                     ref={hamburgerLine2Ref}
                     strokeLinecap="round" 
                     strokeLinejoin="round" 
-                    strokeWidth={2} 
+                    strokeWidth={1.5}
                     d="M6 15h12" 
                     style={{ transformOrigin: '12px 12px' }}
                   />
