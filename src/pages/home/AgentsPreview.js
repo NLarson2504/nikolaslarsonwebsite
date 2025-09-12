@@ -16,8 +16,8 @@ const AgentsPreview = () => {
             <FeatureContainer
               categoryIcon={Bot}
               category="AI Agents"
-              title="Intelligent Automation Solutions"
-              description="Building sophisticated AI agents that understand context, make decisions, and automate complex workflows. From customer service bots to data analysis assistants, creating intelligent systems that enhance productivity."
+              title="Intelligent Business Automation"
+              description="Developing AI agents that transform manual workflows into automated systems. From invoice processing to conversational analytics, creating intelligent solutions that understand context and deliver actionable insights."
               link="/agents"
               linkTitle="Explore AI Agents"
             />

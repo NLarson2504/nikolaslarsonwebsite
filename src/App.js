@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
+
 import Home from './pages/home/Home';
 import Agents from './pages/agents/Agents';
 import Mobile from './pages/mobile/Mobile';
@@ -9,74 +11,38 @@ import TopNav from './components/TopNav';
 import Footer from './components/Footer';
 import useGSAPScrollSmooth from './hooks/useGSAPScrollSmooth';
 import imagePreloader from './utils/imagePreloader';
+import AgentDetail from "./components/AgentDetail";
 
 function App() {
-  // Initialize from URL path
-  const getInitialPage = () => {
-    const path = window.location.pathname.replace('/', '') || 'home';
-    return ['home', 'agents', 'mobile', 'design', 'contact'].includes(path) ? path : 'home';
-  };
+  const { scrollContainerRef, scrollContentRef } = useGSAPScrollSmooth();
 
-  const [currentPage, setCurrentPage] = useState(getInitialPage());
-  const { scrollContainerRef, scrollContentRef } = useGSAPScrollSmooth(currentPage);
-
-  // Preload images on app initialization
+  // Preload images once
   useEffect(() => {
     imagePreloader.preloadAllImages().catch(error => {
       console.warn('Failed to preload some images:', error);
     });
   }, []);
 
-  // Handle browser back/forward
-  useEffect(() => {
-    const handlePopState = () => {
-      const path = window.location.pathname.replace('/', '') || 'home';
-      if (['home', 'agents', 'mobile', 'design', 'contact'].includes(path)) {
-        setCurrentPage(path);
-      }
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
-
-  // Update URL when page changes
-  const navigateToPage = (page) => {
-    setCurrentPage(page);
-    const url = page === 'home' ? '/' : `/${page}`;
-    window.history.pushState({}, '', url);
-    
-    // Scroll to top when changing pages
-    window.scrollTo({ top: 0, behavior: 'instant' });
-  };
-
-  const renderPage = () => {
-    switch (currentPage) {
-      case 'home':
-        return <Home />;
-      case 'agents':
-        return <Agents />;
-      case 'mobile':
-        return <Mobile />;
-      case 'design':
-        return <Design />;
-      case 'contact':
-        return <Contact />;
-      default:
-        return <Home />;
-    }
-  };
-
   return (
-    <div className="App bg-dark-950">
-      <TopNav currentPage={currentPage} navigateToPage={navigateToPage} />
-      <div ref={scrollContainerRef} className="scroll-container">
-        <div ref={scrollContentRef} className="scroll-content">
-          {renderPage()}
-          <Footer />
+    <Router>
+      <div className="App bg-dark-950">
+        <TopNav />
+        <div ref={scrollContainerRef} className="scroll-container">
+          <div ref={scrollContentRef} className="scroll-content">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/agents" element={<Agents />} />
+              <Route path="/agents/:id" element={<AgentDetail />} />
+              <Route path="/mobile" element={<Mobile />} />
+              <Route path="/design" element={<Design />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="*" element={<Home />} /> {/* fallback */}
+            </Routes>
+            <Footer />
+          </div>
         </div>
       </div>
-    </div>
+    </Router>
   );
 }
 

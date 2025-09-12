@@ -17,8 +17,8 @@ const DesignPreview = () => {
             <FeatureContainer
               categoryIcon={Palette}
               category="Design"
-              title="The world's most flexible design platform"
-              description="The most popular open-source platform for design. Use our platform as your foundation and focus on building the customizations that move the needle."
+              title="Modern Web Experiences"
+              description="Crafting scalable web applications with modern frameworks and thoughtful design. From AI-powered platforms to e-commerce solutions, building digital experiences that are both beautiful and functional."
               link="/design"
               linkTitle="Get Started"
             />

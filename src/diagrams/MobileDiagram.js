@@ -77,8 +77,8 @@ const MobileDiagram = ({ className = "" }) => {
     phonesRef.current = []; // Reset refs
     
     // Fixed number of phones for better performance
-    const cols = 2;
-    const totalPhones = 6; // Only 6 phones total
+    const cols = 3;
+    const totalPhones = 9; // 3 columns x 3 rows
     
     // Phone dimensions
     const phoneWidth = 192;
@@ -96,7 +96,7 @@ const MobileDiagram = ({ className = "" }) => {
       const row = Math.floor(i / cols);
       
       const x = startX + col * (phoneWidth + spacing);
-      const columnOffset = col === 0 ? -450 : 0; // Left column starts higher
+      const columnOffset = col === 0 ? -450 : col === 1 ? -225 : -450; // Staggered heights: left highest, middle medium, right lowest
       const y = startY + row * (phoneHeight + verticalSpacing) - (row * 100) + columnOffset;
       
       phones.push(

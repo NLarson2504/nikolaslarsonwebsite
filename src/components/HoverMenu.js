@@ -23,18 +23,20 @@ const HoverMenu = ({ activeSection, navigateToPage, isVisible }) => {
           title: "Lira", 
           description: "AI Invoice Scanner",
           logo: liraLogo,
+          page: "agents/lira"
         },
         { 
           title: "Tallie", 
           description: "Restaurant Analytics Agent",
           logo: tallieLogo,
+          page: "agents/tallie"
         }
       ],
       items: [
-        { label: "Conversational AI", page: "agents", description: "Chat-based solutions" },
-        { label: "Task Automation", page: "automation", description: "AI workflows" },
-        { label: "Custom Models", page: "models", description: "Tailored AI" },
-        { label: "Integration", page: "integration", description: "Connect systems" }
+        { label: "Conversational AI", page: "agents#chatai", description: "Chat-based solutions" },
+        { label: "Task Automation", page: "agents#actionai", description: "AI workflows" },
+        { label: "Custom Models", page: "agents#assistants", description: "Tailored AI" },
+        { label: "Integration", page: "agents#integration", description: "Connect systems" }
       ]
     },
     mobile: {
@@ -45,18 +47,20 @@ const HoverMenu = ({ activeSection, navigateToPage, isVisible }) => {
           title: "Tarragon",
           description: "Product Ecosystem in Your Pocket",
           logo: tarragonLogo,
+          page: "apps/tarragon"
         },
         {
           title: "CampusLM",
           description: "AI Tools for College Students",
           logo: campusLMLogo,
+          page: "apps/campuslm"
         }
       ],
       items: [
-        { label: "iOS Apps", page: "ios", description: "Native Swift" },
-        { label: "Android Apps", page: "android", description: "Kotlin & Java" },
-        { label: "React Native", page: "react-native", description: "Cross-platform" },
-        { label: "App Store", page: "aso", description: "Optimization" }
+        { label: "iOS Apps", page: "apps#ios", description: "Native Swift" },
+        { label: "Android Apps", page: "apps#android", description: "Kotlin & Java" },
+        { label: "React Native", page: "apps#reactnative", description: "Cross-platform" },
+        { label: "App Store", page: "apps#appstore", description: "Optimization" }
       ]
     },
     design: {
@@ -67,18 +71,20 @@ const HoverMenu = ({ activeSection, navigateToPage, isVisible }) => {
           title: "Mooslix",
           description: "Biometric Authentication",
           logo: mooslixLogo,
+          page: "sites/mooslix"
         },
         {
           title: "Tarragon",
           description: "Product Ecosystem in Your Pocket",
           logo: tarragonLogo,
+          page: "sites/tarragon"
         },
       ],
       items: [
-        { label: "UI/UX Design", page: "ux-design", description: "User interfaces" },
-        { label: "Prototyping", page: "prototyping", description: "Interactive mockups" },
-        { label: "Design Systems", page: "design-systems", description: "Frameworks" },
-        { label: "Brand Identity", page: "branding", description: "Visual development" }
+        { label: "UI/UX Design", page: "sites#design", description: "User interfaces" },
+        { label: "Prototyping", page: "sites#prototyping", description: "Interactive mockups" },
+        { label: "Design Systems", page: "sites#system", description: "Frameworks" },
+        { label: "Brand Identity", page: "sites#branding", description: "Visual development" }
       ]
     }
   };
@@ -208,7 +214,7 @@ const HoverMenu = ({ activeSection, navigateToPage, isVisible }) => {
               {content.examples.map((example, index) => (
                 <button
                   key={index} 
-                  onClick={() => navigateToPage(displayContent)}
+                  onClick={() => navigateToPage(example.page)}
                   className="flex p-2 space-x-2 items-center rounded-lg hover:bg-white/10 transition-all duration-200 w-full text-left focus:outline-none group"
                 >
                   <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0`}>

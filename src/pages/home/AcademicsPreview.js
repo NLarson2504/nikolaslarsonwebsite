@@ -28,8 +28,8 @@ const AcademicsPreview = () => {
             <FeatureContainer
               categoryIcon={GraduationCap}
               category="Academics"
-              title="Research & Educational Projects"
-              description="Academic research in computer science, machine learning, and software engineering. Contributing to educational initiatives, publishing research papers, and mentoring students in technology fields."
+              title="Research & Innovation"
+              description="Exploring the intersection of machine learning and practical applications. Leading technical teams, advancing computer science research, and mentoring the next generation of developers through hands-on learning."
               link="/academics"
               linkTitle="View Academic Work"
             />
