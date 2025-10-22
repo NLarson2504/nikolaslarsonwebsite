@@ -56,17 +56,17 @@ const Contact = () => {
 
   return (
     <PageTemplate className="contact-page">
-      <div className="flex h-screen pt-16"> {/* pt-16 accounts for navbar */}
-        
+      <div className="flex min-h-screen pt-16"> {/* pt-16 accounts for navbar */}
+
         {/* Left Half - Visualization Container */}
-        <div className="w-1/2 h-full">
+        <div className="w-1/2">
           <VisBackgroundComponent className="h-full bg-gradient-to-br from-dark-900/80 to-dark-800/80">
             <ContactDiagram />
           </VisBackgroundComponent>
         </div>
 
         {/* Right Half - Contact Form */}
-        <div className="w-1/2 h-full flex flex-col justify-center px-16 py-12">
+        <div className="w-1/2 flex flex-col justify-center px-16 py-12">
             {/* Success/Error Messages */}
             {submitStatus === 'success' && (
               <div className="mb-8">

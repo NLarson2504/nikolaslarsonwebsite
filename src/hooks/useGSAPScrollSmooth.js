@@ -16,26 +16,29 @@ const useGSAPScrollSmooth = (currentPage) => {
   useEffect(() => {
     if (!scrollContainerRef.current || !scrollContentRef.current) return;
 
+    // Scroll to top when page changes
+    window.scrollTo(0, 0);
+
     // Check if device is mobile
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
                      window.innerWidth <= 768;
 
     // If mobile, disable smooth scroll and return early
     if (isMobile) {
       const container = scrollContainerRef.current;
       const content = scrollContentRef.current;
-      
+
       // Reset to normal scroll behavior for mobile
       gsap.set(container, {
         position: 'static',
         height: 'auto',
         overflow: 'visible'
       });
-      
+
       gsap.set(content, {
         transform: 'none'
       });
-      
+
       document.body.style.height = '';
       return;
     }
@@ -43,6 +46,10 @@ const useGSAPScrollSmooth = (currentPage) => {
     const container = scrollContainerRef.current;
     const content = scrollContentRef.current;
     const scrollData = scrollDataRef.current;
+
+    // Reset scroll position for smooth scroll
+    scrollData.current = 0;
+    scrollData.target = 0;
 
     // Set up scroll container
     gsap.set(container, {
@@ -54,13 +61,21 @@ const useGSAPScrollSmooth = (currentPage) => {
       overflow: 'hidden'
     });
 
+    // Reset content position when page changes
+    gsap.set(content, {
+      transform: 'translate3d(0, 0, 0)',
+      force3D: true
+    });
+
     // Calculate content height and set body height
     const updateHeight = () => {
       const contentHeight = content.scrollHeight;
       document.body.style.height = `${contentHeight}px`;
     };
 
+    // Update height immediately and after a small delay to ensure DOM is ready
     updateHeight();
+    setTimeout(updateHeight, 100);
 
     // Optimized smooth scroll with throttling
     const smoothScroll = (timestamp) => {
