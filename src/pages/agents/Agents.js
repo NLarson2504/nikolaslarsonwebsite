@@ -1,19 +1,35 @@
 import React from 'react';
 import PageTemplate from '../../components/PageTemplate';
 import AgentDetail from '../../components/AgentDetail';
+import VisBackgroundComponent from '../../components/VisBackgroundComponent';
 import { agentsData } from '../../data/projectsData';
+import { ReactComponent as AgentsIllustration } from '../../assets/images/Agents.svg';
 
 const Agents = () => {
 
   return (
     <PageTemplate className="agents-page">
+      {/* Full Page Landing Section */}
+      <div className="flex min-h-screen">
+        {/* Left Half - Title and Description */}
+        <div className="w-1/2 flex flex-col justify-center px-16 py-12">
+          <h1 className="text-6xl font-heading font-bold mb-8 text-dark-50">AI Agents</h1>
+          <p className="text-2xl text-dark-300 font-sans leading-relaxed">
+            Leveraging artificial intelligence to create intelligent automation solutions
+            that enhance productivity and drive innovation.
+          </p>
+        </div>
+
+        {/* Right Half - Visualization with Striped Background */}
+        <div className="w-1/2">
+          <VisBackgroundComponent className="h-full bg-gradient-to-br from-dark-900/80 to-dark-800/80">
+            <AgentsIllustration className="w-full h-full" style={{ maxWidth: 'none', width: '80%', height: '80%' }} />
+          </VisBackgroundComponent>
+        </div>
+      </div>
+
+      {/* Projects Section */}
       <div className="max-w-6xl mx-auto px-4 py-20">
-        <h1 className="text-5xl font-heading font-bold text-center mb-12 text-dark-50">AI Agents</h1>
-        <p className="text-xl text-center text-dark-300 mb-16 max-w-3xl mx-auto font-sans">
-          Leveraging artificial intelligence to create intelligent automation solutions 
-          that enhance productivity and drive innovation.
-        </p>
-        
         <div className="grid gap-8 md:gap-12">
           {agentsData.map((agent, index) => (
             <AgentDetail

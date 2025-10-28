@@ -2,6 +2,7 @@ import React from 'react';
 import { Bot } from 'lucide-react';
 import FeatureContainer from '../../components/FeatureContainer';
 import VisBackgroundComponent from '../../components/VisBackgroundComponent';
+import tempSvg from "../../assets/images/Agents.svg";
 
 const AgentsPreview = () => {
   return (
@@ -27,6 +28,11 @@ const AgentsPreview = () => {
         {/* Visual Background - Right on desktop, Top on mobile */}
         <div className="w-full md:w-1/2 h-1/2 md:h-full">
           <VisBackgroundComponent className="h-full">
+            <img
+                src={tempSvg}
+                alt="Academic visualization"
+                className="w-full h-full object-contain"
+            />
           </VisBackgroundComponent>
         </div>
       </div>

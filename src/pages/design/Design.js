@@ -1,19 +1,35 @@
 import React from 'react';
 import PageTemplate from '../../components/PageTemplate';
 import SiteDetail from '../../components/SiteDetail';
+import VisBackgroundComponent from '../../components/VisBackgroundComponent';
 import { sitesData } from '../../data/projectsData';
+import { ReactComponent as DesignIllustration } from '../../assets/images/DesignIllustration.svg';
 
 const Design = () => {
 
   return (
     <PageTemplate className="design-page">
-      <div className="max-w-6xl mx-auto px-4 py-20">
-        <h1 className="text-5xl font-heading font-bold text-center mb-12 text-dark-50">Web Design & Development</h1>
-        <p className="text-xl text-center text-dark-300 mb-16 max-w-3xl mx-auto font-sans">
-          Creating beautiful, functional, and user-centered digital experiences 
-          that drive engagement and deliver results.
-        </p>
+      {/* Full Page Landing Section */}
+      <div className="flex min-h-screen">
+        {/* Left Half - Title and Description */}
+        <div className="w-1/2 flex flex-col justify-center px-16 py-12">
+          <h1 className="text-6xl font-heading font-bold mb-8 text-dark-50">Web Design & Development</h1>
+          <p className="text-2xl text-dark-300 font-sans leading-relaxed">
+            Creating beautiful, functional, and user-centered digital experiences
+            that drive engagement and deliver results.
+          </p>
+        </div>
 
+        {/* Right Half - Visualization with Striped Background */}
+        <div className="w-1/2">
+          <VisBackgroundComponent className="h-full bg-gradient-to-br from-dark-900/80 to-dark-800/80">
+            <DesignIllustration className="w-full h-full" style={{ maxWidth: 'none', width: '80%', height: '80%' }} />
+          </VisBackgroundComponent>
+        </div>
+      </div>
+
+      {/* Projects Section */}
+      <div className="max-w-6xl mx-auto px-4 py-20">
         {/* Sites Details */}
         <div className="grid gap-8 md:gap-12 mb-20">
           {sitesData.map((site, index) => (
@@ -39,28 +55,28 @@ const Design = () => {
             Design Philosophy
           </h2>
           <p className="text-xl text-dark-300 mb-12 font-sans">
-            Every design decision is made with purpose, considering user needs, 
+            Every design decision is made with purpose, considering user needs,
             business goals, and technical constraints to deliver exceptional experiences.
           </p>
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center">
               <h3 className="text-xl font-heading font-bold text-dark-50 mb-4">User-Centered</h3>
               <p className="text-dark-300">
-                Research-driven designs that prioritize user needs and behaviors 
+                Research-driven designs that prioritize user needs and behaviors
                 to create intuitive experiences.
               </p>
             </div>
             <div className="text-center">
               <h3 className="text-xl font-heading font-bold text-dark-50 mb-4">Responsive</h3>
               <p className="text-dark-300">
-                Adaptive layouts that work seamlessly across all devices 
+                Adaptive layouts that work seamlessly across all devices
                 and screen sizes.
               </p>
             </div>
             <div className="text-center">
               <h3 className="text-xl font-heading font-bold text-dark-50 mb-4">Performance</h3>
               <p className="text-dark-300">
-                Optimized designs that load fast and provide smooth 
+                Optimized designs that load fast and provide smooth
                 interactions for better user satisfaction.
               </p>
             </div>

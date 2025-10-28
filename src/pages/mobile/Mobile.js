@@ -2,19 +2,35 @@ import React from 'react';
 import PageTemplate from '../../components/PageTemplate';
 import MobileDetail from '../../components/MobileDetail';
 import MobileDiagram from '../../diagrams/MobileDiagram';
+import VisBackgroundComponent from '../../components/VisBackgroundComponent';
 import { mobileAppsData } from '../../data/projectsData';
+import { ReactComponent as MobileIllustration } from '../../assets/images/Mobile.svg';
 
 const Mobile = () => {
 
   return (
     <PageTemplate className="mobile-page">
+      {/* Full Page Landing Section */}
+      <div className="flex min-h-screen">
+        {/* Left Half - Title and Description */}
+        <div className="w-1/2 flex flex-col justify-center px-16 py-12">
+          <h1 className="text-6xl font-heading font-bold mb-8 text-dark-50">Mobile Development</h1>
+          <p className="text-2xl text-dark-300 font-sans leading-relaxed">
+            Creating exceptional mobile experiences that engage users and drive business growth
+            across iOS and Android platforms.
+          </p>
+        </div>
+
+        {/* Right Half - Visualization with Striped Background */}
+        <div className="w-1/2">
+          <VisBackgroundComponent className="h-full bg-gradient-to-br from-dark-900/80 to-dark-800/80">
+            <MobileIllustration className="w-full h-full" style={{ maxWidth: 'none', width: '100%', height: '100%' }} />
+          </VisBackgroundComponent>
+        </div>
+      </div>
+
+      {/* Mobile Portfolio Section */}
       <div className="max-w-6xl mx-auto px-4 py-20">
-        <h1 className="text-5xl font-heading font-bold text-center mb-12 text-dark-50">Mobile Development</h1>
-        <p className="text-xl text-center text-dark-300 mb-16 max-w-3xl mx-auto font-sans">
-          Creating exceptional mobile experiences that engage users and drive business growth 
-          across iOS and Android platforms.
-        </p>
-        
         {/* Mobile Portfolio Gallery */}
         <div className="flex justify-center mb-20">
           <MobileDiagram className="w-full max-w-4xl" />

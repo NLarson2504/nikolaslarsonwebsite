@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import emailjs from 'emailjs-com';
 import PageTemplate from '../../components/PageTemplate';
 import VisBackgroundComponent from '../../components/VisBackgroundComponent';
-import ContactDiagram from '../../diagrams/ContactDiagram';
+import { ReactComponent as ContactIllustration } from '../../assets/images/Contact.svg';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -61,7 +61,7 @@ const Contact = () => {
         {/* Left Half - Visualization Container */}
         <div className="w-1/2">
           <VisBackgroundComponent className="h-full bg-gradient-to-br from-dark-900/80 to-dark-800/80">
-            <ContactDiagram />
+            <ContactIllustration className="w-full h-full" style={{ maxWidth: 'none', width: '80%', height: '80%' }} />
           </VisBackgroundComponent>
         </div>
 

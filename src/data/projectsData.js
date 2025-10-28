@@ -20,48 +20,49 @@ import mooslixWebImage from '../assets/images/web/mooslix1.png';
 export const agentsData = [
   {
     title: "Lira",
-    description: "An intelligent invoice scanning and processing agent that uses advanced OCR and machine learning to extract, categorize, and organize financial data from invoices automatically. Lira reduces manual data entry by 95% and integrates seamlessly with popular accounting software.",
+    description: "An intelligent multi-agent invoice processing system that automates vendor invoice handling for restaurant groups. Combining OCR, LLM-based parsing, and algorithmic matching, LIRA transforms manual invoice entry workflows—reducing processing time from 15-30 minutes to under 60 seconds per invoice.",
     features: [
-      "Advanced OCR with 99.2% accuracy",
-      "Automatic data extraction and validation",
-      "Smart categorization and tagging",
-      "Integration with QuickBooks, Xero, and SAP",
-      "Real-time fraud detection",
-      "Multi-language support (15+ languages)"
+      "Multi-agent orchestration with specialized processing services",
+      "GPT-4o-mini powered structured data extraction",
+      "Intelligent product matching with GPT-4 fallback for edge cases",
+      "Google Cloud Vision API for OCR processing",
+      "Hybrid algorithmic + AI matching (exact, fuzzy, and intelligent)",
+      "Email-to-invoice automation with wildcard routing",
+      "Confidence scoring and audit trail for transparency"
     ],
     technologies: [
-      "Python",
-      "TensorFlow", 
-      "OpenCV",
-      "FastAPI",
+      "Ruby on Rails",
+      "OpenAI GPT-4o-mini",
+      "OpenAI GPT-4",
+      "Google Cloud Vision API",
+      "Google Cloud Storage",
       "PostgreSQL",
-      "Redis",
-      "Docker"
+      "SendGrid"
     ],
     status: "Production",
     icon: liraLogo
   },
   {
     title: "Tallie",
-    description: "A comprehensive restaurant analytics agent that provides real-time insights into customer behavior, menu optimization, and operational efficiency. Tallie helps restaurant owners make data-driven decisions to increase profitability and customer satisfaction.",
+    description: "A conversational AI analytics agent for restaurant operations that provides intelligent query routing and real-time insights. Using a multi-agent orchestration pattern, Tallie routes user queries to specialized agents—combining GPT-based intent classification with action and reasoning agents for comprehensive data analysis.",
     features: [
-      "Real-time sales and inventory tracking",
-      "Customer sentiment analysis from reviews",
-      "Dynamic menu pricing optimization",
-      "Staff performance analytics",
-      "Predictive demand forecasting",
-      "Automated supplier cost comparison"
+      "GPT-3.5 powered intent classification and query routing",
+      "GPT-4 reasoning agent for analysis and insights",
+      "Specialized action agent for data retrieval and navigation",
+      "Server-Sent Events (SSE) for real-time streaming responses",
+      "Invoice PDF analysis in conversational context",
+      "Multi-agent orchestration for complex queries",
+      "Natural language interface to operational data"
     ],
     technologies: [
-      "Node.js",
-      "React",
-      "MongoDB",
-      "Redis",
-      "Socket.io",
-      "Chart.js",
-      "AWS Lambda"
+      "Ruby on Rails",
+      "OpenAI GPT-3.5",
+      "OpenAI GPT-4",
+      "Server-Sent Events (SSE)",
+      "PostgreSQL",
+      "Active Storage"
     ],
-    status: "Beta Testing",
+    status: "Production",
     icon: tallieLogo
   }
 ];
