@@ -29,30 +29,34 @@ const TopNav = ({ currentPage, navigateToPage }) => {
     if (isMobileMenuOpen) {
       // Transform to X - move lines to center and rotate
       gsap.to(hamburgerLine1Ref.current, {
+        attr: { d: "M6 12h12" },
         rotation: 45,
-        y: 3,
         duration: 0.3,
-        ease: "power2.out"
+        ease: "power2.out",
+        svgOrigin: "12 12"
       });
       gsap.to(hamburgerLine2Ref.current, {
+        attr: { d: "M6 12h12" },
         rotation: -45,
-        y: -3,
         duration: 0.3,
-        ease: "power2.out"
+        ease: "power2.out",
+        svgOrigin: "12 12"
       });
     } else {
       // Transform back to hamburger
       gsap.to(hamburgerLine1Ref.current, {
+        attr: { d: "M6 9h12" },
         rotation: 0,
-        y: 0,
         duration: 0.3,
-        ease: "power2.out"
+        ease: "power2.out",
+        svgOrigin: "12 12"
       });
       gsap.to(hamburgerLine2Ref.current, {
+        attr: { d: "M6 15h12" },
         rotation: 0,
-        y: 0,
         duration: 0.3,
-        ease: "power2.out"
+        ease: "power2.out",
+        svgOrigin: "12 12"
       });
     }
   }, [isMobileMenuOpen]);
@@ -140,26 +144,24 @@ const TopNav = ({ currentPage, navigateToPage }) => {
 
             {/* Mobile menu button */}
             <div className="md:hidden">
-              <button 
+              <button
                 onClick={toggleMobileMenu}
                 className="text-white opacity-25 transition-colors duration-200 focus:outline-none p-1"
               >
                 <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path 
+                  <path
                     ref={hamburgerLine1Ref}
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                     strokeWidth={1.5}
-                    d="M6 9h12" 
-                    style={{ transformOrigin: '12px 12px' }}
+                    d="M6 9h12"
                   />
-                  <path 
+                  <path
                     ref={hamburgerLine2Ref}
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                     strokeWidth={1.5}
-                    d="M6 15h12" 
-                    style={{ transformOrigin: '12px 12px' }}
+                    d="M6 15h12"
                   />
                 </svg>
               </button>
