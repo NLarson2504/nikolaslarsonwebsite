@@ -12,7 +12,7 @@ const Design = () => {
       {/* Full Page Landing Section */}
       <div className="flex flex-col md:flex-row min-h-screen">
         {/* Left Half - Title and Description */}
-        <div className="w-full md:w-1/2 flex flex-col justify-center px-4 md:px-16 py-12">
+        <div className="w-full md:w-1/2 flex flex-col justify-center px-4 md:px-16 pt-24 pb-12 md:py-12">
           <h1 className="text-4xl md:text-6xl font-heading font-bold mb-6 md:mb-8 text-dark-50">Web Design & Development</h1>
           <p className="text-lg md:text-2xl text-dark-300 font-sans leading-relaxed">
             Creating beautiful, functional, and user-centered digital experiences
