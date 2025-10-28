@@ -29,7 +29,7 @@ const Agents = () => {
       </div>
 
       {/* Projects Section */}
-      <div className="max-w-6xl mx-auto px-4 py-20">
+      <div className="max-w-6xl mx-auto px-4 pt-8 pb-20 -mt-80 md:mt-0 md:py-20">
         <div className="grid gap-8 md:gap-12">
           {agentsData.map((agent, index) => (
             <AgentDetail

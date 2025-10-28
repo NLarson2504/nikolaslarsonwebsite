@@ -30,7 +30,7 @@ const Mobile = () => {
       </div>
 
       {/* Mobile Portfolio Section */}
-      <div className="max-w-6xl mx-auto px-4 py-20">
+      <div className="max-w-6xl mx-auto px-4 pt-8 pb-20 -mt-80 md:mt-0 md:py-20">
         {/* Mobile Portfolio Gallery */}
         <div className="flex justify-center mb-20">
           <MobileDiagram className="w-full max-w-4xl" />

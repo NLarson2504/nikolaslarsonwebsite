@@ -29,7 +29,7 @@ const Design = () => {
       </div>
 
       {/* Projects Section */}
-      <div className="max-w-6xl mx-auto px-4 py-20">
+      <div className="max-w-6xl mx-auto px-4 pt-0 pb-20 -mt-80 md:mt-0 md:py-20">
         {/* Sites Details */}
         <div className="grid gap-8 md:gap-12 mb-20">
           {sitesData.map((site, index) => (
