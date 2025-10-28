@@ -10,18 +10,18 @@ const Design = () => {
   return (
     <PageTemplate className="design-page">
       {/* Full Page Landing Section */}
-      <div className="flex min-h-screen">
+      <div className="flex flex-col md:flex-row min-h-screen">
         {/* Left Half - Title and Description */}
-        <div className="w-1/2 flex flex-col justify-center px-16 py-12">
-          <h1 className="text-6xl font-heading font-bold mb-8 text-dark-50">Web Design & Development</h1>
-          <p className="text-2xl text-dark-300 font-sans leading-relaxed">
+        <div className="w-full md:w-1/2 flex flex-col justify-center px-4 md:px-16 py-12">
+          <h1 className="text-4xl md:text-6xl font-heading font-bold mb-6 md:mb-8 text-dark-50">Web Design & Development</h1>
+          <p className="text-lg md:text-2xl text-dark-300 font-sans leading-relaxed">
             Creating beautiful, functional, and user-centered digital experiences
             that drive engagement and deliver results.
           </p>
         </div>
 
         {/* Right Half - Visualization with Striped Background */}
-        <div className="w-1/2">
+        <div className="w-full md:w-1/2 min-h-[300px] md:min-h-0">
           <VisBackgroundComponent className="h-full bg-gradient-to-br from-dark-900/80 to-dark-800/80">
             <DesignIllustration className="w-full h-full" style={{ maxWidth: 'none', width: '80%', height: '80%' }} />
           </VisBackgroundComponent>
