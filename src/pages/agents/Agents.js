@@ -2,10 +2,12 @@ import React from 'react';
 import PageTemplate from '../../components/PageTemplate';
 import AgentDetail from '../../components/AgentDetail';
 import VisBackgroundComponent from '../../components/VisBackgroundComponent';
-import { agentsData } from '../../data/projectsData';
+import CollectionState from '../../components/CollectionState';
+import useProjects from '../../hooks/useProjects';
 import { ReactComponent as AgentsIllustration } from '../../assets/images/Agents.svg';
 
 const Agents = () => {
+  const { data: agentsData, loading, error } = useProjects('agent');
 
   return (
     <PageTemplate className="agents-page">
@@ -30,16 +32,22 @@ const Agents = () => {
 
       {/* Projects Section */}
       <div className="max-w-6xl mx-auto px-4 pt-8 pb-20 -mt-80 md:mt-0 md:py-20">
+        <CollectionState
+          loading={loading}
+          error={error}
+          isEmpty={agentsData.length === 0}
+          label="agents"
+        />
         <div className="grid gap-8 md:gap-12">
-          {agentsData.map((agent, index) => (
+          {agentsData.map((agent) => (
             <AgentDetail
-              key={index}
+              key={agent.id}
               title={agent.title}
               description={agent.description}
               features={agent.features}
               technologies={agent.technologies}
               status={agent.status}
-              icon={agent.icon}
+              icon={agent.icon || agent.brand?.logo}
               className="max-w-4xl mx-auto"
             />
           ))}

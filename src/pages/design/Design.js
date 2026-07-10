@@ -2,10 +2,12 @@ import React from 'react';
 import PageTemplate from '../../components/PageTemplate';
 import SiteDetail from '../../components/SiteDetail';
 import VisBackgroundComponent from '../../components/VisBackgroundComponent';
-import { sitesData } from '../../data/projectsData';
+import CollectionState from '../../components/CollectionState';
+import useProjects from '../../hooks/useProjects';
 import { ReactComponent as DesignIllustration } from '../../assets/images/DesignIllustration.svg';
 
 const Design = () => {
+  const { data: sitesData, loading, error } = useProjects('site');
 
   return (
     <PageTemplate className="design-page">
@@ -31,13 +33,19 @@ const Design = () => {
       {/* Projects Section */}
       <div className="max-w-6xl mx-auto px-4 pt-0 pb-20 -mt-80 md:mt-0 md:py-20">
         {/* Sites Details */}
+        <CollectionState
+          loading={loading}
+          error={error}
+          isEmpty={sitesData.length === 0}
+          label="sites"
+        />
         <div className="grid gap-8 md:gap-12 mb-20">
-          {sitesData.map((site, index) => (
+          {sitesData.map((site) => (
             <SiteDetail
-              key={index}
+              key={site.id}
               title={site.title}
               description={site.description}
-              url={site.url}
+              url={site.url || site.brand?.url}
               repositoryUrl={site.repositoryUrl}
               image={site.image}
               features={site.features}

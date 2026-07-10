@@ -3,10 +3,12 @@ import PageTemplate from '../../components/PageTemplate';
 import MobileDetail from '../../components/MobileDetail';
 import MobileDiagram from '../../diagrams/MobileDiagram';
 import VisBackgroundComponent from '../../components/VisBackgroundComponent';
-import { mobileAppsData } from '../../data/projectsData';
+import CollectionState from '../../components/CollectionState';
+import useProjects from '../../hooks/useProjects';
 import { ReactComponent as MobileIllustration } from '../../assets/images/Mobile.svg';
 
 const Mobile = () => {
+  const { data: mobileAppsData, loading, error } = useProjects('app');
 
   return (
     <PageTemplate className="mobile-page">
@@ -37,10 +39,16 @@ const Mobile = () => {
         </div>
 
         {/* Mobile Apps Details */}
+        <CollectionState
+          loading={loading}
+          error={error}
+          isEmpty={mobileAppsData.length === 0}
+          label="apps"
+        />
         <div className="grid gap-8 md:gap-12">
-          {mobileAppsData.map((app, index) => (
+          {mobileAppsData.map((app) => (
             <MobileDetail
-              key={index}
+              key={app.id}
               title={app.title}
               description={app.description}
               platform={app.platform}
@@ -49,7 +57,7 @@ const Mobile = () => {
               technologies={app.technologies}
               appStoreUrl={app.appStoreUrl}
               playStoreUrl={app.playStoreUrl}
-              icon={app.icon}
+              icon={app.icon || app.brand?.logo}
               className="max-w-4xl mx-auto"
             />
           ))}
