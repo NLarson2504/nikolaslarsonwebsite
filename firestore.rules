@@ -1,19 +1,28 @@
 rules_version = '2';
 
-// Portfolio site rules: the public site reads project data, nobody writes from
-// the client. Edit content in the Firebase console, or seed via
-// scripts/seedFirestore.js (Admin SDK bypasses these rules).
+// Portfolio site rules:
+//  - Anyone can READ project/brand content (the public site needs it).
+//  - Only allow-listed admin emails can WRITE (create/update/delete), via the
+//    admin UI after Google sign-in.
+// Keep the admin email list in sync with ADMIN_EMAILS in src/lib/adminAuth.js.
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Public, read-only content that powers the Agents / Apps / Design pages.
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.lower() in [
+          'nickolars123@gmail.com'
+        ];
+    }
+
     match /brands/{brandId} {
       allow read: if true;
-      allow write: if false;
+      allow write: if isAdmin();
     }
     match /projects/{projectId} {
       allow read: if true;
-      allow write: if false;
+      allow write: if isAdmin();
     }
 
     // Deny everything else by default.

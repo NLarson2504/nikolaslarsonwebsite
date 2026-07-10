@@ -8,6 +8,7 @@ import Apps from './pages/apps/Apps';
 import Web from './pages/web/Web';
 import Contact from './pages/contact/Contact';
 import CaseStudyPage from './components/caseStudy/CaseStudyPage';
+import Admin from './pages/admin/Admin';
 import TopNav from './components/TopNav';
 import Footer from './components/Footer';
 import useGSAPScrollSmooth from './hooks/useGSAPScrollSmooth';
@@ -42,6 +43,7 @@ function AppContent() {
             <Route path="/web" element={<Web />} />
             <Route path="/web/:slug" element={<CaseStudyPage type="site" backTo="/web" backLabel="All web work" />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/admin" element={<Admin />} />
             {/* Redirects from the old section names */}
             <Route path="/mobile" element={<Navigate to="/apps" replace />} />
             <Route path="/design" element={<Navigate to="/web" replace />} />

@@ -1,10 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
-import liraLogo from '../assets/icons/liralogo.svg';
-import tallieLogo from '../assets/icons/tallielogo.svg';
-import tarragonLogo from '../assets/icons/tarragonlogo.jpg';
-import campusLMLogo from '../assets/icons/campuslmlogo.png';
-import mooslixLogo from '../assets/icons/mooslixlogo.svg';
+import useTopProjects from '../hooks/useTopProjects';
 
 const HoverMenu = ({ activeSection, navigateToPage, isVisible }) => {
   const [currentContent, setCurrentContent] = useState(null);
@@ -12,82 +8,63 @@ const HoverMenu = ({ activeSection, navigateToPage, isVisible }) => {
   const contentRef = useRef(null);
   const containerRef = useRef(null);
 
+  // Top-2 highest-priority projects per section, live from Firestore.
+  const { topBySection } = useTopProjects(2);
+
   const navOrder = ['agents', 'apps', 'web'];
-  
-  const menuContent = {
+
+  // Static labels + right-column links; the `examples` are injected live below.
+  const menuMeta = {
     agents: {
-      leftLabel: "Agents",
-      rightLabel: "Implementations",
-      examples: [
-        { 
-          title: "Lira", 
-          description: "AI Invoice Scanner",
-          logo: liraLogo,
-          page: "agents/lira"
-        },
-        { 
-          title: "Tallie", 
-          description: "Restaurant Analytics Agent",
-          logo: tallieLogo,
-          page: "agents/tallie"
-        }
-      ],
+      leftLabel: 'Agents',
+      rightLabel: 'Implementations',
       items: [
-        { label: "Conversational AI", page: "agents#chatai", description: "Chat-based solutions" },
-        { label: "Task Automation", page: "agents#actionai", description: "AI workflows" },
-        { label: "Custom Models", page: "agents#assistants", description: "Tailored AI" },
-        { label: "Integration", page: "agents#integration", description: "Connect systems" }
-      ]
+        { label: 'Conversational AI', page: 'agents#chatai', description: 'Chat-based solutions' },
+        { label: 'Task Automation', page: 'agents#actionai', description: 'AI workflows' },
+        { label: 'Custom Models', page: 'agents#assistants', description: 'Tailored AI' },
+        { label: 'Integration', page: 'agents#integration', description: 'Connect systems' },
+      ],
     },
     apps: {
-      leftLabel: "Apps",
-      rightLabel: "More",
-      examples: [
-        {
-          title: "Tarragon",
-          description: "Product Ecosystem in Your Pocket",
-          logo: tarragonLogo,
-          page: "apps/tarragon"
-        },
-        {
-          title: "CampusLM",
-          description: "AI Tools for College Students",
-          logo: campusLMLogo,
-          page: "apps/campuslm"
-        }
-      ],
+      leftLabel: 'Apps',
+      rightLabel: 'More',
       items: [
-        { label: "iOS Apps", page: "apps#ios", description: "Native Swift" },
-        { label: "Android Apps", page: "apps#android", description: "Kotlin & Java" },
-        { label: "React Native", page: "apps#reactnative", description: "Cross-platform" },
-        { label: "App Store", page: "apps#appstore", description: "Optimization" }
-      ]
+        { label: 'iOS Apps', page: 'apps#ios', description: 'Native Swift' },
+        { label: 'Android Apps', page: 'apps#android', description: 'Kotlin & Java' },
+        { label: 'React Native', page: 'apps#reactnative', description: 'Cross-platform' },
+        { label: 'App Store', page: 'apps#appstore', description: 'Optimization' },
+      ],
     },
     web: {
-      leftLabel: "Web",
-      rightLabel: "More",
-      examples: [
-        {
-          title: "Mooslix",
-          description: "Biometric Authentication",
-          logo: mooslixLogo,
-          page: "web/mooslix"
-        },
-        {
-          title: "Tarragon",
-          description: "Product Ecosystem in Your Pocket",
-          logo: tarragonLogo,
-          page: "web/tarragon"
-        },
-      ],
+      leftLabel: 'Web',
+      rightLabel: 'More',
       items: [
-        { label: "UI/UX Design", page: "web#design", description: "User interfaces" },
-        { label: "Prototyping", page: "web#prototyping", description: "Interactive mockups" },
-        { label: "Design Systems", page: "web#system", description: "Frameworks" },
-        { label: "Brand Identity", page: "web#branding", description: "Visual development" }
-      ]
-    }
+        { label: 'UI/UX Design', page: 'web#design', description: 'User interfaces' },
+        { label: 'Prototyping', page: 'web#prototyping', description: 'Interactive mockups' },
+        { label: 'Design Systems', page: 'web#system', description: 'Frameworks' },
+        { label: 'Brand Identity', page: 'web#branding', description: 'Visual development' },
+      ],
+    },
   };
+
+  // Build the live `examples` (top-2 ranked projects) for each section.
+  const menuContent = Object.fromEntries(
+    navOrder.map((section) => [
+      section,
+      {
+        ...menuMeta[section],
+        examples: (topBySection[section] || []).map((p) => ({
+          title: p.title,
+          description: p.brand?.name || p.category || p.platform || '',
+          logo: p.icon || p.brand?.logo || '',
+          // Link to the case study when there is one; otherwise to the section
+          // list so we never land on a "no case study" page. navigateToPage
+          // prepends "/", so strip the leading slash from the path.
+          page: (p.caseStudy ? p.href : `/${section}`).replace(/^\//, ''),
+        })),
+      },
+    ])
+  );
 
   const getSlideDirection = (from, to) => {
     if (!from || !to) return 0;

@@ -1,16 +1,21 @@
 /*
  * Shared seed data for the brands + projects Firestore model.
  *
+ * Source of truth: Notion "Nik's Blocks" (Projects + Experience DBs). Where a
+ * description is verbatim/derived from Notion it's real; anything marked
+ * TODO(content) needs Nik to supply real copy.
+ *
  * Consumed by scripts/seedFirestore.js (Node, firebase-admin) to seed a fresh
- * environment. The initial data has already been written to Firestore.
+ * environment, and by the update script to sync into an existing DB.
  *
  * Images are PUBLIC PATHS served from /public/assets. A brand can span multiple
- * project types — Tarragon owns the Lira/Tallie agents, the app, and the site.
+ * project types — Tarragon spans agents (LIRA, Tallie), the mobile app, and the
+ * web platform; Mooslix is Nik's studio, with apps published under it.
  */
 
 export const brands = {
   tarragon: {
-    name: 'Tarragon',
+    name: 'Tarragon Systems',
     logo: '/assets/icons/tarragonlogo.jpg',
     url: 'https://app.tarragonsystems.com',
   },
@@ -18,11 +23,6 @@ export const brands = {
     name: 'Mooslix',
     logo: '/assets/icons/mooslixlogo.svg',
     url: 'https://mooslix.com',
-  },
-  campuslm: {
-    name: 'CampusLM',
-    logo: '/assets/icons/campuslmlogo.png',
-    url: '',
   },
   nourished: {
     name: 'Nourished Cereal',
@@ -32,24 +32,27 @@ export const brands = {
 };
 
 export const projects = [
-  // Agents — both under the Tarragon brand
+  // ---- Agents (Tarragon Systems) ----------------------------------------
   {
     type: 'agent',
     brandId: 'tarragon',
     order: 0,
     slug: 'lira',
-    title: 'Lira',
+    featured: true,
+    professional: true,
+    status: 'Production',
+    title: 'LIRA',
     description:
-      'An intelligent multi-agent invoice processing system that automates vendor invoice handling for restaurant groups. Combining OCR, LLM-based parsing, and algorithmic matching, LIRA transforms manual invoice entry workflows—reducing processing time from 15-30 minutes to under 60 seconds per invoice.',
+      'An AI-powered invoice processing service built at Tarragon Systems. LIRA ingests vendor invoices through a webhook API inbox, reads and structures them with OCR and LLM parsing, and matches line items against the product catalog — turning a slow manual entry workflow into an automated one.',
     caseStudy: {
       dek:
-        'A multi-agent system that reads, understands, and matches vendor invoices for restaurant groups — replacing a slow manual workflow with OCR, LLM parsing, and confidence-scored product matching.',
-      role: 'AI / Backend Engineer',
+        'An AI invoice-processing service at Tarragon Systems that reads vendor invoices from a webhook API inbox and matches line items to the catalog — replacing manual entry with confidence-scored automation.',
+      role: 'Junior Software Developer — Tarragon Systems',
       featuredImage: '',
       stats: [
-        { value: '30', unit: '→ 60s', label: 'Per-invoice time' },
-        { value: '7', unit: 'svc', label: 'Specialized agents' },
-        { value: '3', unit: 'tier', label: 'Match strategy' },
+        { value: 'Ruby', unit: '', label: 'Backend' },
+        { value: 'OCR', unit: '+ LLM', label: 'Invoice parsing' },
+        { value: 'Webhook', unit: 'API', label: 'Inbox ingestion' },
       ],
       sections: [
         {
@@ -59,7 +62,7 @@ export const projects = [
             {
               type: 'paragraph',
               text:
-                'Restaurant groups process hundreds of vendor invoices a week. Each one arrived as a PDF or a photo, and someone had to key it in line by line — matching every product to the right catalog entry before it could hit the books. Lira automates that end to end.',
+                'Restaurant groups process a steady stream of vendor invoices, and each one had to be keyed in and reconciled against the product catalog by hand. LIRA automates that: invoices arrive through a webhook API inbox, get read and structured automatically, and their line items are matched back to the catalog.',
             },
           ],
         },
@@ -70,13 +73,7 @@ export const projects = [
             {
               type: 'paragraph',
               text:
-                'Manual invoice entry took 15 to 30 minutes per invoice and was the kind of work that’s both tedious and error-prone. Product names never matched the catalog exactly — "tomatoes, roma 25lb" versus "Roma Tomato (case)" — so staff spent most of their time not typing numbers but resolving ambiguity.',
-            },
-            {
-              type: 'quote',
-              text:
-                'The hard part was never OCR. It was deciding, confidently, which of 4,000 catalog items a smudged line on a fax actually refers to.',
-              cite: 'Design note, matching pipeline',
+                'Manual invoice entry is slow and error-prone, and the hard part isn’t reading the numbers — it’s reconciling them. Product names on an invoice rarely match the catalog exactly, so staff spent most of their time resolving ambiguity rather than typing.',
             },
           ],
         },
@@ -87,13 +84,7 @@ export const projects = [
             {
               type: 'paragraph',
               text:
-                'Rather than one giant prompt, Lira uses a multi-agent orchestration: each stage is a specialized service. Cloud Vision handles OCR, a GPT-4o-mini agent extracts structured line items, and a hybrid matcher resolves each item — exact, then fuzzy, then an intelligent GPT-4 fallback for the genuinely ambiguous cases. Every match carries a confidence score and an audit trail, so a human only reviews what the system is unsure about.',
-            },
-            {
-              type: 'image',
-              src: '',
-              caption:
-                'The processing pipeline, from inbound email to a confidence-scored, matched invoice.',
+                'LIRA pairs OCR with LLM-based parsing to pull structured line items out of each invoice, then matches them against the catalog. It’s integrated with a webhook API inbox so invoices flow in automatically, and it fits into broader automation pipelines for fetching, creating, and archiving menu items.',
             },
           ],
         },
@@ -104,7 +95,7 @@ export const projects = [
             {
               type: 'paragraph',
               text:
-                'Invoices arrive by email through wildcard routing — vendors just send to a per-account address. From there the orchestrator fans the work out to the OCR, extraction, and matching agents, then reassembles the result. The three-tier matching strategy keeps cost down: most lines resolve algorithmically, and only the edge cases pay for a large-model call.',
+                'Built in Ruby on the Tarragon Systems backend. The webhook inbox receives invoices, LIRA processes and structures them, and the results feed the catalog and downstream automation — reducing the manual intervention the workflow used to require.',
             },
           ],
         },
@@ -115,50 +106,33 @@ export const projects = [
             {
               type: 'paragraph',
               text:
-                'Processing dropped from 15–30 minutes to under 60 seconds per invoice, with a full audit trail behind every automated decision. The confidence scoring meant the team could trust the automation without giving up oversight — they review exceptions, not everything.',
+                'LIRA turned a manual, per-invoice reconciliation task into an automated pipeline, streamlining operational workflows and cutting the hands-on effort each invoice used to demand.',
             },
           ],
         },
       ],
     },
-    features: [
-      'Multi-agent orchestration with specialized processing services',
-      'GPT-4o-mini powered structured data extraction',
-      'Intelligent product matching with GPT-4 fallback for edge cases',
-      'Google Cloud Vision API for OCR processing',
-      'Hybrid algorithmic + AI matching (exact, fuzzy, and intelligent)',
-      'Email-to-invoice automation with wildcard routing',
-      'Confidence scoring and audit trail for transparency',
-    ],
-    technologies: [
-      'Ruby on Rails',
-      'OpenAI GPT-4o-mini',
-      'OpenAI GPT-4',
-      'Google Cloud Vision API',
-      'Google Cloud Storage',
-      'PostgreSQL',
-      'SendGrid',
-    ],
-    status: 'Production',
-    icon: '/assets/icons/liralogo.svg',
   },
   {
     type: 'agent',
     brandId: 'tarragon',
     order: 1,
-    slug: 'tallie',
-    title: 'Tallie',
+    slug: 'menu-forecasting',
+    featured: true,
+    professional: true,
+    status: 'Production',
+    title: 'Menu Forecasting Engine',
     description:
-      'A conversational AI analytics agent for restaurant operations that provides intelligent query routing and real-time insights. Using a multi-agent orchestration pattern, Tallie routes user queries to specialized agents—combining GPT-based intent classification with action and reasoning agents for comprehensive data analysis.',
+      'A multimodal machine-learning engine for restaurant menu-item demand forecasting at Tarragon Systems. Hyperparameter tuning improved forecasting accuracy (R²) by 53%, translating to over $100,000 in annual savings for customers, with conditional training that updates models based on data patterns.',
     caseStudy: {
       dek:
-        'A conversational analytics agent that routes natural-language questions about restaurant operations to specialized reasoning and action agents, streaming answers back in real time.',
-      role: 'AI / Backend Engineer',
+        'A multimodal ML forecasting engine at Tarragon Systems: a 53% improvement in menu-item prediction accuracy that translated to over $100,000 in annual customer savings.',
+      role: 'Junior Software Developer — Tarragon Systems',
       featuredImage: '',
       stats: [
-        { value: '3', unit: 'agents', label: 'Orchestrated roles' },
-        { value: 'SSE', unit: '', label: 'Streaming responses' },
-        { value: 'PDF', unit: '', label: 'Invoice analysis' },
+        { value: '53', unit: '%', label: 'Accuracy gain (R²)' },
+        { value: '$100', unit: 'K+', label: 'Annual savings' },
+        { value: 'Multi', unit: 'modal', label: 'ML engine' },
       ],
       sections: [
         {
@@ -168,7 +142,7 @@ export const projects = [
             {
               type: 'paragraph',
               text:
-                'Operators had the data but not the answers — getting a number meant knowing which report to open. Tallie turns that into a conversation: ask a question in plain language and get an answer, with the reasoning streamed back as it works.',
+                'Restaurants live or die by how well they predict demand. This engine forecasts menu-item demand from multimodal inputs, and tuning it meaningfully improved how accurately the platform could anticipate what each restaurant would sell.',
             },
           ],
         },
@@ -179,7 +153,7 @@ export const projects = [
             {
               type: 'paragraph',
               text:
-                'Operational data was locked behind dashboards and exports. A single "how did food cost trend last month?" required navigating multiple screens, and the answer wasn’t conversational — you couldn’t follow up.',
+                'Inaccurate demand forecasts lead directly to waste and lost sales. The existing model left accuracy on the table, and models needed to stay current as each restaurant’s patterns shifted.',
             },
           ],
         },
@@ -190,18 +164,7 @@ export const projects = [
             {
               type: 'paragraph',
               text:
-                'Tallie uses a multi-agent pattern: a GPT-3.5 classifier routes intent, an action agent retrieves and navigates data, and a GPT-4 reasoning agent produces the analysis. Responses stream over Server-Sent Events so the interface feels immediate, and invoice PDFs can be pulled into the conversation for context.',
-            },
-          ],
-        },
-        {
-          id: 'architecture',
-          heading: 'Architecture',
-          blocks: [
-            {
-              type: 'paragraph',
-              text:
-                'The orchestrator classifies each query, dispatches to the right specialized agent, and streams partial results back to the client. Keeping intent classification on a smaller model and reserving GPT-4 for reasoning balances latency and cost.',
+                'Tuned hyperparameters on the multimodal engine to lift forecasting accuracy (R²) by 53%, and implemented conditional training so models update intelligently based on data patterns rather than on a fixed schedule.',
             },
           ],
         },
@@ -212,201 +175,145 @@ export const projects = [
             {
               type: 'paragraph',
               text:
-                'A natural-language interface to operational data that answers complex, multi-step questions in one place — with the analysis streamed live rather than delivered as a static report.',
+                'The accuracy improvement translated into over $100,000 in annual savings for customers — better forecasts meaning less waste and fewer missed sales — with context-aware retraining keeping the models current.',
             },
           ],
         },
       ],
     },
-    features: [
-      'GPT-3.5 powered intent classification and query routing',
-      'GPT-4 reasoning agent for analysis and insights',
-      'Specialized action agent for data retrieval and navigation',
-      'Server-Sent Events (SSE) for real-time streaming responses',
-      'Invoice PDF analysis in conversational context',
-      'Multi-agent orchestration for complex queries',
-      'Natural language interface to operational data',
-    ],
-    technologies: [
-      'Ruby on Rails',
-      'OpenAI GPT-3.5',
-      'OpenAI GPT-4',
-      'Server-Sent Events (SSE)',
-      'PostgreSQL',
-      'Active Storage',
-    ],
-    status: 'Production',
-    icon: '/assets/icons/tallielogo.svg',
   },
 
-  // Apps
+  // ---- Apps -------------------------------------------------------------
   {
     type: 'app',
     brandId: 'tarragon',
     order: 0,
-    slug: 'tarragon',
-    title: 'Tarragon',
+    slug: 'tarragon-mobile',
+    featured: true,
+    professional: true,
+    status: 'Active - Maintained',
+    title: 'Tarragon Systems',
     description:
-      'A comprehensive product ecosystem mobile application that connects users with curated products, reviews, and recommendations. Tarragon provides a seamless shopping experience with AI-powered product discovery and personalized recommendations.',
+      'The Tarragon Systems mobile app for iOS and Android, built from the ground up. Extends the Tarragon platform to mobile, bringing its operational tooling to phones and tablets.',
     platform: 'iOS & Android',
-    screenshots: [
-      '/assets/images/mobile/tarragon1.png',
-      '/assets/images/mobile/tarragon2.png',
-      '/assets/images/mobile/tarragon3.png',
-    ],
+    screenshots: [],
     features: [
-      'AI-powered product recommendations',
-      'Augmented reality product preview',
-      'Social shopping and reviews',
-      'One-click checkout with multiple payment options',
-      'Real-time inventory tracking',
-      'Personalized wishlist and favorites',
+      'Built from the ground up for iOS and Android',
+      'Extends the Tarragon platform to mobile',
+      'Published on the App Store and Google Play',
     ],
-    technologies: [
-      'React Native',
-      'TypeScript',
-      'Redux Toolkit',
-      'Firebase',
-      'Stripe API',
-      'ARKit/ARCore',
-      'Node.js Backend',
-    ],
-    appStoreUrl: 'https://apps.apple.com/app/tarragon',
-    playStoreUrl: 'https://play.google.com/store/apps/tarragon',
+    technologies: [],
+    appStoreUrl: 'https://apps.apple.com/app/tarragon-systems',
+    playStoreUrl: '',
     icon: '/assets/icons/tarragonlogo.jpg',
   },
   {
     type: 'app',
-    brandId: 'campuslm',
+    brandId: 'mooslix',
     order: 1,
-    slug: 'campuslm',
-    title: 'CampusLM',
+    slug: 'middapp',
+    featured: false,
+    professional: false,
+    status: 'Active - Maintained',
+    title: 'MiddApp',
     description:
-      'An AI-powered study companion designed specifically for college students. CampusLM offers personalized study plans, intelligent note-taking, and collaborative learning tools to help students succeed academically.',
-    platform: 'iOS & Android',
-    screenshots: [
-      '/assets/images/mobile/campuslm1.png',
-      '/assets/images/mobile/campuslm2.png',
-      '/assets/images/mobile/campuslm3.png',
-      '/assets/images/mobile/campuslm4.png',
-    ],
-    features: [
-      'AI-generated study plans and schedules',
-      'Smart note-taking with OCR recognition',
-      'Collaborative study groups and chat',
-      'Grade tracking and GPA calculator',
-      'Assignment and deadline reminders',
-      'Integration with popular LMS platforms',
-    ],
-    technologies: [
-      'Flutter',
-      'Dart',
-      'SQLite',
-      'Firebase Auth',
-      'Google Cloud ML',
-      'Canvas API',
-      'Push Notifications',
-    ],
-    appStoreUrl: 'https://apps.apple.com/app/campuslm',
-    playStoreUrl: 'https://play.google.com/store/apps/campuslm',
+      'An iOS app published under the Mooslix studio. TODO(content): add a real description.',
+    platform: 'iOS',
+    screenshots: [],
+    features: [],
+    technologies: [],
+    appStoreUrl: 'https://apps.apple.com/app/midd-app',
+    playStoreUrl: '',
     icon: '/assets/icons/campuslmlogo.png',
   },
-
-  // Sites
   {
-    type: 'site',
+    type: 'app',
     brandId: 'mooslix',
-    order: 0,
-    slug: 'mooslix',
-    title: 'Mooslix',
+    order: 2,
+    slug: 'dailypaws',
+    featured: false,
+    professional: false,
+    status: 'Not Active',
+    endDate: '2026-03-16',
+    title: 'DailyPaws',
     description:
-      'A cutting-edge biometric authentication platform that provides secure, passwordless login solutions for enterprise applications. Mooslix combines facial recognition, fingerprint scanning, and voice authentication to create a seamless and highly secure user experience.',
-    url: 'https://mooslix.com',
-    repositoryUrl: 'https://github.com/mooslix/platform',
-    image: '/assets/images/web/mooslix1.png',
+      'A preventive pet-health monitoring app that turns everyday owner observations into early-warning signals. Short daily check-ins feed an algorithm trained on each pet’s personal baseline — adjusted for breed, age, and context — so it flags meaningful deviations instead of noisy one-off changes, helping owners decide when a vet visit is warranted.',
+    platform: 'iOS',
+    screenshots: [],
     features: [
-      'Multi-factor biometric authentication',
-      'Real-time fraud detection and prevention',
-      'Enterprise-grade security compliance',
-      'Seamless API integration',
-      'Advanced analytics dashboard',
-      'Cross-platform compatibility',
+      'Short daily check-ins that build a personal health baseline',
+      'Baseline adjusted for breed, age, and context',
+      'Flags meaningful deviations, not noisy one-off changes',
+      'Vet-ready reports to arrive prepared',
+      'Decision support — not diagnosis',
     ],
-    technologies: [
-      'React',
-      'Node.js',
-      'TypeScript',
-      'PostgreSQL',
-      'WebRTC',
-      'TensorFlow.js',
-      'AWS Lambda',
-      'Docker',
-    ],
-    category: 'Enterprise Security',
-    status: 'Live',
+    technologies: [],
+    appStoreUrl: '',
+    playStoreUrl: '',
+    icon: '',
   },
+
+  // ---- Web --------------------------------------------------------------
   {
     type: 'site',
     brandId: 'tarragon',
-    order: 1,
+    order: 0,
     slug: 'tarragon-web',
-    title: 'Tarragon Web Platform',
+    featured: true,
+    professional: true,
+    title: 'Tarragon Systems Platform',
     description:
-      'The web companion to the Tarragon mobile application, featuring a comprehensive product catalog, advanced search capabilities, and seamless cross-platform synchronization. The platform provides merchants with powerful tools to manage their products and analytics.',
+      'The Tarragon Systems web platform. Established and refined the application’s design philosophy — a cohesive, modern interface extending consistently across navigation, editing, updating, and creating actions.',
     url: 'https://app.tarragonsystems.com',
-    repositoryUrl: 'https://github.com/tarragon/web-platform',
+    repositoryUrl: '',
     image: '/assets/images/web/tarragon2.png',
     features: [
-      'Dynamic product catalog with advanced filtering',
-      'Real-time inventory management',
-      'Merchant dashboard and analytics',
-      'Cross-platform synchronization',
-      'Advanced search with AI recommendations',
-      'Responsive design for all devices',
+      'Cohesive design philosophy across the whole app',
+      'Consistent editing, updating, and creating flows',
+      'Modern, sleek interface',
     ],
-    technologies: [
-      'Next.js',
-      'React',
-      'TypeScript',
-      'Prisma',
-      'PostgreSQL',
-      'Redis',
-      'Vercel',
-      'Stripe',
-    ],
-    category: 'E-commerce Platform',
+    technologies: [],
+    category: 'Web Platform',
     status: 'Live',
+  },
+  {
+    type: 'site',
+    brandId: 'mooslix',
+    order: 1,
+    slug: 'mooslix-biometrics',
+    featured: false,
+    professional: false,
+    title: 'Mooslix Biometrics',
+    description:
+      'A web application focused on biometric solutions, providing secure and efficient biometric authentication. Built to address the growing need for reliable identity verification, with integration capabilities for organizations enhancing their security infrastructure.',
+    url: 'https://mooslix.com',
+    repositoryUrl: '',
+    image: '/assets/images/web/mooslix1.png',
+    features: [
+      'Secure biometric authentication',
+      'Reliable identity verification',
+      'Integration capabilities for organizations',
+    ],
+    technologies: [],
+    category: 'Security',
+    status: 'Idea',
   },
   {
     type: 'site',
     brandId: 'nourished',
     order: 2,
     slug: 'nourished',
+    featured: false,
+    professional: false,
     title: 'Nourished Cereal',
     description:
-      'A holistic wellness platform that connects users with certified nutritionists, fitness trainers, and wellness coaches. The platform features personalized meal planning, workout routines, and progress tracking to help users achieve their health goals.',
+      'TODO(content): add a real description for Nourished Cereal from Notion / Nik.',
     url: 'https://nourishedcereal.com',
     repositoryUrl: '',
     image: '/assets/images/web/nourished1.png',
-    features: [
-      'Personalized nutrition and fitness plans',
-      'Video consultations with certified professionals',
-      'Progress tracking and analytics',
-      'Social community features',
-      'Meal planning and shopping lists',
-      'Integration with fitness wearables',
-    ],
-    technologies: [
-      'Vue.js',
-      'Nuxt.js',
-      'Node.js',
-      'MongoDB',
-      'Socket.io',
-      'Stripe',
-      'WebRTC',
-      'AWS S3',
-    ],
-    category: 'Health & Wellness',
+    features: [],
+    technologies: [],
+    category: 'Web',
     status: 'Live',
   },
 ];

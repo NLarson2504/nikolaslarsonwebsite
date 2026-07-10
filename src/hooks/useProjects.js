@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { sortByPriority } from '../utils/projectPriority';
 
 /**
  * Loads projects of a given type from the single `projects` collection and
@@ -41,14 +42,13 @@ const useProjects = (type) => {
         );
         if (!active) return;
 
-        const projects = projectsSnap.docs
-          .map((d) => {
-            const project = { id: d.id, ...d.data() };
-            return { ...project, brand: brandsById[project.brandId] || null };
-          })
-          .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+        const projects = projectsSnap.docs.map((d) => {
+          const project = { id: d.id, ...d.data() };
+          return { ...project, brand: brandsById[project.brandId] || null };
+        });
 
-        setData(projects);
+        // Rank by weighted priority (importance), not insertion order.
+        setData(sortByPriority(projects));
       } catch (err) {
         if (!active) return;
         console.error(`Failed to load "${type}" projects from Firestore:`, err);
