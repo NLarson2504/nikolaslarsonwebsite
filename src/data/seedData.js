@@ -205,7 +205,7 @@ export const projects = [
     technologies: [],
     appStoreUrl: 'https://apps.apple.com/app/tarragon-systems',
     playStoreUrl: '',
-    icon: '/assets/icons/tarragonlogo.jpg',
+    icon: '/assets/icons/tarragonapp.png',
   },
   {
     type: 'app',
@@ -224,7 +224,7 @@ export const projects = [
     technologies: [],
     appStoreUrl: 'https://apps.apple.com/app/midd-app',
     playStoreUrl: '',
-    icon: '/assets/icons/campuslmlogo.png',
+    icon: '/assets/icons/middapp.png',
   },
   {
     type: 'app',
@@ -250,7 +250,7 @@ export const projects = [
     technologies: [],
     appStoreUrl: '',
     playStoreUrl: '',
-    icon: '',
+    icon: '/assets/icons/dailypaws.png',
   },
 
   // ---- Web --------------------------------------------------------------

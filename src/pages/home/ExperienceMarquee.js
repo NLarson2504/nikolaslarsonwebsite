@@ -34,7 +34,7 @@ const companies = [
   {
     name: 'Z9 Security',
     logo: '/assets/icons/z9.png',
-    logoScale: 1.25,
+    logoScale: 1.45,
     role: 'Software Intern',
     blurb:
       'An access-control company building open, cloud-managed platforms for modern building security and physical access.',
