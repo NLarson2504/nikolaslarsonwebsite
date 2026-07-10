@@ -12,7 +12,7 @@ const HoverMenu = ({ activeSection, navigateToPage, isVisible }) => {
   const contentRef = useRef(null);
   const containerRef = useRef(null);
 
-  const navOrder = ['agents', 'mobile', 'design'];
+  const navOrder = ['agents', 'apps', 'web'];
   
   const menuContent = {
     agents: {
@@ -39,7 +39,7 @@ const HoverMenu = ({ activeSection, navigateToPage, isVisible }) => {
         { label: "Integration", page: "agents#integration", description: "Connect systems" }
       ]
     },
-    mobile: {
+    apps: {
       leftLabel: "Apps",
       rightLabel: "More",
       examples: [
@@ -63,28 +63,28 @@ const HoverMenu = ({ activeSection, navigateToPage, isVisible }) => {
         { label: "App Store", page: "apps#appstore", description: "Optimization" }
       ]
     },
-    design: {
-      leftLabel: "Sites",
+    web: {
+      leftLabel: "Web",
       rightLabel: "More",
       examples: [
         {
           title: "Mooslix",
           description: "Biometric Authentication",
           logo: mooslixLogo,
-          page: "sites/mooslix"
+          page: "web/mooslix"
         },
         {
           title: "Tarragon",
           description: "Product Ecosystem in Your Pocket",
           logo: tarragonLogo,
-          page: "sites/tarragon"
+          page: "web/tarragon"
         },
       ],
       items: [
-        { label: "UI/UX Design", page: "sites#design", description: "User interfaces" },
-        { label: "Prototyping", page: "sites#prototyping", description: "Interactive mockups" },
-        { label: "Design Systems", page: "sites#system", description: "Frameworks" },
-        { label: "Brand Identity", page: "sites#branding", description: "Visual development" }
+        { label: "UI/UX Design", page: "web#design", description: "User interfaces" },
+        { label: "Prototyping", page: "web#prototyping", description: "Interactive mockups" },
+        { label: "Design Systems", page: "web#system", description: "Frameworks" },
+        { label: "Brand Identity", page: "web#branding", description: "Visual development" }
       ]
     }
   };

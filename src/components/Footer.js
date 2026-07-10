@@ -27,13 +27,13 @@ const Footer = () => {
                 </a>
               </li>
               <li>
-                <a href="/mobile" className="text-dark-300 hover:text-white transition-colors duration-200 text-sm font-sans">
-                  Mobile Development
+                <a href="/apps" className="text-dark-300 hover:text-white transition-colors duration-200 text-sm font-sans">
+                  Apps
                 </a>
               </li>
               <li>
-                <a href="/design" className="text-dark-300 hover:text-white transition-colors duration-200 text-sm font-sans">
-                  Design & UX
+                <a href="/web" className="text-dark-300 hover:text-white transition-colors duration-200 text-sm font-sans">
+                  Web
                 </a>
               </li>
               <li>

@@ -19,7 +19,7 @@ const DesignPreview = () => {
               category="Design"
               title="Modern Web Experiences"
               description="Crafting scalable web applications with modern frameworks and thoughtful design. From AI-powered platforms to e-commerce solutions, building digital experiences that are both beautiful and functional."
-              link="/design"
+              link="/web"
               linkTitle="Get Started"
             />
           </div>

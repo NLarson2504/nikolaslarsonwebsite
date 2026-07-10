@@ -3,19 +3,20 @@ import PageTemplate from '../../components/PageTemplate';
 import SiteDetail from '../../components/SiteDetail';
 import VisBackgroundComponent from '../../components/VisBackgroundComponent';
 import CollectionState from '../../components/CollectionState';
+import ProjectCardLink from '../../components/ProjectCardLink';
 import useProjects from '../../hooks/useProjects';
 import { ReactComponent as DesignIllustration } from '../../assets/images/DesignIllustration.svg';
 
-const Design = () => {
+const Web = () => {
   const { data: sitesData, loading, error } = useProjects('site');
 
   return (
-    <PageTemplate className="design-page">
+    <PageTemplate className="web-page">
       {/* Full Page Landing Section */}
       <div className="flex flex-col md:flex-row min-h-screen">
         {/* Left Half - Title and Description */}
         <div className="w-full md:w-1/2 flex flex-col justify-center px-4 md:px-16 pt-24 pb-12 md:py-12">
-          <h1 className="text-4xl md:text-6xl font-heading font-bold mb-6 md:mb-8 text-dark-50">Web Design & Development</h1>
+          <h1 className="text-4xl md:text-6xl font-heading font-bold mb-6 md:mb-8 text-dark-50">Web</h1>
           <p className="text-lg md:text-2xl text-dark-300 font-sans leading-relaxed">
             Creating beautiful, functional, and user-centered digital experiences
             that drive engagement and deliver results.
@@ -41,19 +42,20 @@ const Design = () => {
         />
         <div className="grid gap-8 md:gap-12 mb-20">
           {sitesData.map((site) => (
-            <SiteDetail
-              key={site.id}
-              title={site.title}
-              description={site.description}
-              url={site.url || site.brand?.url}
-              repositoryUrl={site.repositoryUrl}
-              image={site.image}
-              features={site.features}
-              technologies={site.technologies}
-              category={site.category}
-              status={site.status}
-              className="max-w-4xl mx-auto"
-            />
+            <ProjectCardLink key={site.id} project={site} basePath="/web">
+              <SiteDetail
+                title={site.title}
+                description={site.description}
+                url={site.url || site.brand?.url}
+                repositoryUrl={site.repositoryUrl}
+                image={site.image}
+                features={site.features}
+                technologies={site.technologies}
+                category={site.category}
+                status={site.status}
+                className="max-w-4xl mx-auto"
+              />
+            </ProjectCardLink>
           ))}
         </div>
 
@@ -95,4 +97,4 @@ const Design = () => {
   );
 };
 
-export default Design;
+export default Web;

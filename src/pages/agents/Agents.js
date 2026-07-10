@@ -3,6 +3,7 @@ import PageTemplate from '../../components/PageTemplate';
 import AgentDetail from '../../components/AgentDetail';
 import VisBackgroundComponent from '../../components/VisBackgroundComponent';
 import CollectionState from '../../components/CollectionState';
+import ProjectCardLink from '../../components/ProjectCardLink';
 import useProjects from '../../hooks/useProjects';
 import { ReactComponent as AgentsIllustration } from '../../assets/images/Agents.svg';
 
@@ -40,16 +41,17 @@ const Agents = () => {
         />
         <div className="grid gap-8 md:gap-12">
           {agentsData.map((agent) => (
-            <AgentDetail
-              key={agent.id}
-              title={agent.title}
-              description={agent.description}
-              features={agent.features}
-              technologies={agent.technologies}
-              status={agent.status}
-              icon={agent.icon || agent.brand?.logo}
-              className="max-w-4xl mx-auto"
-            />
+            <ProjectCardLink key={agent.id} project={agent} basePath="/agents">
+              <AgentDetail
+                title={agent.title}
+                description={agent.description}
+                features={agent.features}
+                technologies={agent.technologies}
+                status={agent.status}
+                icon={agent.icon || agent.brand?.logo}
+                className="max-w-4xl mx-auto"
+              />
+            </ProjectCardLink>
           ))}
         </div>
       </div>

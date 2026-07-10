@@ -26,7 +26,7 @@ const MobilePreview = () => {
               category="Mobile Development"
               title="Cross-Platform Mobile Development"
               description="Building native and cross-platform mobile applications that solve real business problems. From inventory management systems to enterprise security solutions, creating intuitive apps that users love."
-              link="/mobile"
+              link="/apps"
               linkTitle="View Mobile Projects"
             />
           </div>

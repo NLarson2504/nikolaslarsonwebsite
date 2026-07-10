@@ -103,19 +103,19 @@ const TopNav = ({ currentPage, navigateToPage }) => {
               >
                 Agents
               </button>
-              <button 
-                onClick={() => handleNavClick('mobile')}
-                onMouseEnter={() => setActiveSection('mobile')}
+              <button
+                onClick={() => handleNavClick('apps')}
+                onMouseEnter={() => setActiveSection('apps')}
                 className="px-3 py-2 rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-all duration-200 font-sans text-sm font-medium focus:outline-none"
               >
-                Mobile
+                Apps
               </button>
-              <button 
-                onClick={() => handleNavClick('design')}
-                onMouseEnter={() => setActiveSection('design')}
+              <button
+                onClick={() => handleNavClick('web')}
+                onMouseEnter={() => setActiveSection('web')}
                 className="px-3 py-2 rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-all duration-200 font-sans text-sm font-medium focus:outline-none"
               >
-                Design
+                Web
               </button>
               
               {/* Hover Menu */}
@@ -187,16 +187,16 @@ const TopNav = ({ currentPage, navigateToPage }) => {
                 Agents
               </button>
               <button
-                onClick={() => handleMobileNavClick('mobile')}
+                onClick={() => handleMobileNavClick('apps')}
                 className="text-4xl font-medium text-white/90 hover:text-white transition-colors font-sans"
               >
-                Mobile
+                Apps
               </button>
               <button
-                onClick={() => handleMobileNavClick('design')}
+                onClick={() => handleMobileNavClick('web')}
                 className="text-4xl font-medium text-white/90 hover:text-white transition-colors font-sans"
               >
-                Design
+                Web
               </button>
               <button
                 onClick={() => handleMobileNavClick('contact')}

@@ -1,17 +1,17 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import './App.css';
 
 import Home from './pages/home/Home';
 import Agents from './pages/agents/Agents';
-import Mobile from './pages/mobile/Mobile';
-import Design from './pages/design/Design';
+import Apps from './pages/apps/Apps';
+import Web from './pages/web/Web';
 import Contact from './pages/contact/Contact';
+import CaseStudyPage from './components/caseStudy/CaseStudyPage';
 import TopNav from './components/TopNav';
 import Footer from './components/Footer';
 import useGSAPScrollSmooth from './hooks/useGSAPScrollSmooth';
 import imagePreloader from './utils/imagePreloader';
-import AgentDetail from "./components/AgentDetail";
 
 function AppContent() {
   const navigate = useNavigate();
@@ -36,10 +36,15 @@ function AppContent() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/agents" element={<Agents />} />
-            <Route path="/agents/:id" element={<AgentDetail />} />
-            <Route path="/mobile" element={<Mobile />} />
-            <Route path="/design" element={<Design />} />
+            <Route path="/agents/:slug" element={<CaseStudyPage type="agent" backTo="/agents" backLabel="All agents" />} />
+            <Route path="/apps" element={<Apps />} />
+            <Route path="/apps/:slug" element={<CaseStudyPage type="app" backTo="/apps" backLabel="All apps" />} />
+            <Route path="/web" element={<Web />} />
+            <Route path="/web/:slug" element={<CaseStudyPage type="site" backTo="/web" backLabel="All web work" />} />
             <Route path="/contact" element={<Contact />} />
+            {/* Redirects from the old section names */}
+            <Route path="/mobile" element={<Navigate to="/apps" replace />} />
+            <Route path="/design" element={<Navigate to="/web" replace />} />
             <Route path="*" element={<Home />} /> {/* fallback */}
           </Routes>
           <Footer />

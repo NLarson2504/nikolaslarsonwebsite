@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
+import smoothScrollState from './smoothScrollState';
 
 const useGSAPScrollSmooth = (currentPage) => {
   const scrollContainerRef = useRef(null);
@@ -25,6 +26,10 @@ const useGSAPScrollSmooth = (currentPage) => {
 
     // If mobile, disable smooth scroll and return early
     if (isMobile) {
+      // Native scrolling on mobile — rails should use plain measurements.
+      smoothScrollState.enabled = false;
+      smoothScrollState.offset = 0;
+
       const container = scrollContainerRef.current;
       const content = scrollContentRef.current;
 
@@ -50,6 +55,11 @@ const useGSAPScrollSmooth = (currentPage) => {
     // Reset scroll position for smooth scroll
     scrollData.current = 0;
     scrollData.target = 0;
+
+    // Publish that smooth scroll is driving, so follow-sticky rails share the
+    // same eased offset instead of snapping to raw scroll.
+    smoothScrollState.enabled = true;
+    smoothScrollState.offset = 0;
 
     // Set up scroll container
     gsap.set(container, {
@@ -102,13 +112,16 @@ const useGSAPScrollSmooth = (currentPage) => {
       // Only update if there's a meaningful difference
       if (Math.abs(diff) > 0.1) {
         scrollData.current += diff * scrollData.ease;
-        
+
         // Use transform3d for hardware acceleration
         gsap.set(content, {
           transform: `translate3d(0, ${-scrollData.current}px, 0)`,
           force3D: true
         });
-        
+
+        // Share the eased offset so rails move in lockstep with the content.
+        smoothScrollState.offset = scrollData.current;
+
         scrollData.isScrolling = true;
       } else {
         // Snap to target when close enough
@@ -118,6 +131,7 @@ const useGSAPScrollSmooth = (currentPage) => {
             transform: `translate3d(0, ${-scrollData.current}px, 0)`,
             force3D: true
           });
+          smoothScrollState.offset = scrollData.current;
           scrollData.isScrolling = false;
         }
       }
@@ -144,6 +158,8 @@ const useGSAPScrollSmooth = (currentPage) => {
       clearTimeout(resizeTimeout);
       window.removeEventListener('resize', handleResize);
       document.body.style.height = '';
+      smoothScrollState.enabled = false;
+      smoothScrollState.offset = 0;
     };
   }, [currentPage]);
 

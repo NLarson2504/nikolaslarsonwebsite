@@ -1,0 +1,24 @@
+rules_version = '2';
+
+// Portfolio site rules: the public site reads project data, nobody writes from
+// the client. Edit content in the Firebase console, or seed via
+// scripts/seedFirestore.js (Admin SDK bypasses these rules).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Public, read-only content that powers the Agents / Apps / Design pages.
+    match /brands/{brandId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /projects/{projectId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Deny everything else by default.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
