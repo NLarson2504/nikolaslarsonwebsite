@@ -196,7 +196,11 @@ export const projects = [
     description:
       'The Tarragon Systems mobile app for iOS and Android, built from the ground up. Extends the Tarragon platform to mobile, bringing its operational tooling to phones and tablets.',
     platform: 'iOS & Android',
-    screenshots: [],
+    screenshots: [
+      '/assets/images/mobile/tarragon1.png',
+      '/assets/images/mobile/tarragon2.png',
+      '/assets/images/mobile/tarragon3.png',
+    ],
     features: [
       'Built from the ground up for iOS and Android',
       'Extends the Tarragon platform to mobile',
@@ -219,7 +223,13 @@ export const projects = [
     description:
       'An iOS app published under the Mooslix studio. TODO(content): add a real description.',
     platform: 'iOS',
-    screenshots: [],
+    screenshots: [
+      '/assets/images/mobile/campuslm1.png',
+      '/assets/images/mobile/campuslm2.png',
+      '/assets/images/mobile/campuslm3.png',
+      '/assets/images/mobile/campuslm4.png',
+      '/assets/images/mobile/mooslixmobile1.png',
+    ],
     features: [],
     technologies: [],
     appStoreUrl: 'https://apps.apple.com/app/midd-app',
