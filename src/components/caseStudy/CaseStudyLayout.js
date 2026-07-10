@@ -24,7 +24,7 @@ const CaseStudyLayout = ({ project, backTo, backLabel }) => {
   const tocRailRef = useFollowSticky({ top: 112 });
 
   return (
-    <div className="bg-dark-950 border-t border-white/5 min-h-screen">
+    <div className="bg-dark-950 border-t border-white/5 min-h-screen text-left">
       <div className="max-w-[72rem] mx-auto px-4 md:px-10 pt-24 md:pt-28 pb-24 grid grid-cols-1 lg:grid-cols-[11rem_minmax(0,42rem)_1fr] lg:gap-x-12">
         {/* Left rail — back link (follow-sticky on desktop) */}
         <aside className="hidden lg:block">
