@@ -77,15 +77,32 @@ const useGSAPScrollSmooth = (currentPage) => {
       force3D: true
     });
 
-    // Calculate content height and set body height
+    // Calculate content height and set body height. The native scrollbar's
+    // range is driven by body height, so it must track the real content height
+    // — otherwise the page can't scroll all the way to the bottom.
     const updateHeight = () => {
       const contentHeight = content.scrollHeight;
       document.body.style.height = `${contentHeight}px`;
     };
 
-    // Update height immediately and after a small delay to ensure DOM is ready
+    // Measure now, and again shortly after in case layout is still settling.
     updateHeight();
-    setTimeout(updateHeight, 100);
+    const initialTimeout = setTimeout(updateHeight, 100);
+
+    // Re-measure whenever the content actually changes size. This is the fix
+    // for the "can't scroll to the bottom until I resize" bug: async Firestore
+    // data and late-loading images grow the content after the initial measure,
+    // and a fixed one-shot measurement misses that. ResizeObserver catches
+    // every reflow.
+    let resizeObserver = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => updateHeight());
+      resizeObserver.observe(content);
+    }
+
+    // Images can load after render and reflow the layout; re-measure on each.
+    const onImageLoad = () => updateHeight();
+    content.addEventListener('load', onImageLoad, true); // capture: catches <img> load
 
     // Optimized smooth scroll with throttling
     const smoothScroll = (timestamp) => {
@@ -156,7 +173,10 @@ const useGSAPScrollSmooth = (currentPage) => {
         cancelAnimationFrame(smoothScrollRef.current);
       }
       clearTimeout(resizeTimeout);
+      clearTimeout(initialTimeout);
       window.removeEventListener('resize', handleResize);
+      if (resizeObserver) resizeObserver.disconnect();
+      content.removeEventListener('load', onImageLoad, true);
       document.body.style.height = '';
       smoothScrollState.enabled = false;
       smoothScrollState.offset = 0;
