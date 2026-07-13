@@ -159,14 +159,15 @@
   display: inline-block;
   will-change: transform, opacity;
 }
-/* small platform label sitting ABOVE the title */
-.aw-info__eyebrow {
-  margin-bottom: 14px;
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #8b929c;
+/* app icon sitting ABOVE the title (replaces the platform label) */
+.aw-info__icon {
+  display: block;
+  width: 60px;
+  height: 60px;
+  border-radius: 15px;
+  object-fit: cover;
+  margin-bottom: 18px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 .aw-info__desc {
   margin-top: 18px;

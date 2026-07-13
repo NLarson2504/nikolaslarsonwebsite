@@ -416,8 +416,12 @@ const AppsWheel = ({ projects }) => {
       <main className="aw-stage">
         <div className="aw-focus">
           <div className="aw-info">
-            {current.platform && (
-              <p className="aw-info__eyebrow">{current.platform}</p>
+            {current.icon && (
+              <img
+                className="aw-info__icon"
+                src={current.icon}
+                alt={`${current.title} icon`}
+              />
             )}
             {/* eslint-disable-next-line jsx-a11y/heading-has-content --
                content is injected as split chars by setName(); aria-label carries

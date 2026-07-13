@@ -135,7 +135,7 @@
 .wg-wheel-scene {
   position: relative;
   flex: 0 0 auto;
-  width: min(58vw, 680px);
+  width: min(62vw, 760px);
   height: 440px;
   perspective: 1600px;
   perspective-origin: 50% 50%;
@@ -214,6 +214,16 @@
   min-width: 0;
   max-width: 420px;
   text-align: left;
+}
+/* site icon (favicon/tab icon) sitting above the eyebrow + title */
+.wg-info__icon {
+  display: block;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  object-fit: cover;
+  margin-bottom: 18px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 .wg-info__eyebrow {
   margin-bottom: 14px;

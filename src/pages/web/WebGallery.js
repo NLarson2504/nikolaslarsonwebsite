@@ -52,7 +52,8 @@ const WebGallery = ({ projects }) => {
     ? Math.round((CARD_H / 2 / Math.tan((Math.PI * STEP) / 360)) * 1.02)
     : 0;
 
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState(0); // live focus (drives the wheel paint)
+  const [settledIndex, setSettledIndex] = useState(0); // debounced (drives info)
   const prevIndexRef = useRef(-1);
 
   const wheelRef = useRef(null);
@@ -266,7 +267,12 @@ const WebGallery = ({ projects }) => {
       return (idx + count) % count;
     };
 
-    const paint = () => {
+    // Above this per-frame speed we skip the expensive blur (animating blur every
+    // frame re-rasterizes each card) and just grayscale, so fast spins stay smooth.
+    const FAST_DEGPS = 55;
+    let lastRot = rotationRef.current;
+
+    const paint = (fast) => {
       const rot = rotationRef.current;
       wheelRef.current.style.transform = `translateZ(${-RADIUS}px) rotateX(${rot}deg)`;
       const focusSlot = Math.round(-rot / CARD_ARC) * SLOTS_PER_CARD;
@@ -283,18 +289,19 @@ const WebGallery = ({ projects }) => {
         // popping from gray to color at the snap. `t` is 0 at front, 1 once a
         // card is a full card-arc away (fully gray/blurred/dim).
         const t = Math.min(1, ad / CARD_ARC);
-        const gray = t; // 0 → full color at front
-        const blur = t * 5; // px
         const opacity = 1 - t * 0.72; // 1 → 0.28
-
         el.style.opacity = String(opacity);
-        // When the front card has settled flat, drop the filter entirely: any
-        // filter (even a ~zero one) forces a rasterized layer the 3D scale then
-        // softens. An empty filter lets it render crisp.
-        el.style.filter =
-          front && ad < 0.4
-            ? ''
-            : `grayscale(${gray}) blur(${blur}px)`;
+
+        if (fast) {
+          // cheap path while spinning: grayscale only, no per-frame blur
+          el.style.filter = `grayscale(${t})`;
+        } else {
+          // When the front card has settled flat, drop the filter entirely: any
+          // filter (even a ~zero one) forces a rasterized layer the 3D scale
+          // then softens. An empty filter lets it render crisp.
+          el.style.filter =
+            front && ad < 0.4 ? '' : `grayscale(${t}) blur(${t * 5}px)`;
+        }
         el.classList.toggle('is-front', front);
       });
     };
@@ -307,7 +314,9 @@ const WebGallery = ({ projects }) => {
         targetRef.current += (snapped - targetRef.current) * 0.12;
       }
       rotationRef.current += (targetRef.current - rotationRef.current) * 0.12;
-      paint();
+      const speed = Math.abs(rotationRef.current - lastRot);
+      lastRot = rotationRef.current;
+      paint(speed > FAST_DEGPS);
 
       const focus = focusedFor(rotationRef.current);
       setIndex((prev) => (prev === focus ? prev : focus));
@@ -327,6 +336,13 @@ const WebGallery = ({ projects }) => {
 
     const bump = (deltaDeg) => {
       targetRef.current += deltaDeg;
+      // Cap how far the target can run ahead so a fast flick's momentum stays
+      // bounded and the eased catch-up never grinds.
+      const MAX_LEAD = CARD_ARC * 2.5;
+      const lead = targetRef.current - rotationRef.current;
+      if (Math.abs(lead) > MAX_LEAD) {
+        targetRef.current = rotationRef.current + Math.sign(lead) * MAX_LEAD;
+      }
       lastIdleRef.current = performance.now();
     };
 
@@ -371,19 +387,32 @@ const WebGallery = ({ projects }) => {
     };
   }, [count, CARD_ARC]);
 
-  // --- react to focused index change: name + tint --------------------------
+  // Debounce the live focus `index` into `settledIndex`: during a fast spin the
+  // index changes for every card that flies past, but we only want the info
+  // panel + the expensive GSAP work to update once the wheel SETTLES.
+  useEffect(() => {
+    if (prevIndexRef.current === -1) {
+      setSettledIndex(index);
+      return undefined;
+    }
+    const id = setTimeout(() => setSettledIndex(index), 130);
+    return () => clearTimeout(id);
+  }, [index]);
+
+  // Run the name reveal + tint crossfade only when the settled card changes.
   useEffect(() => {
     const prev = prevIndexRef.current;
-    setName(projects[index]?.title || '');
-    applyTint(index, prev !== -1);
-    prevIndexRef.current = index;
-  }, [index, projects, setName, applyTint]);
+    setName(projects[settledIndex]?.title || '');
+    applyTint(settledIndex, prev !== -1);
+    prevIndexRef.current = settledIndex;
+  }, [settledIndex, projects, setName, applyTint]);
 
   const hot = (on) => () => {
     if (cursorRef.current) cursorRef.current.classList.toggle('hot', on);
   };
 
-  const current = projects[index] || {};
+  // Info panel reads the DEBOUNCED index so its text/links don't thrash mid-spin.
+  const current = projects[settledIndex] || {};
   const viewUrl = current.url || current.brand?.url || '';
   const hasCaseStudy = Boolean(current.caseStudy);
 
@@ -444,6 +473,13 @@ const WebGallery = ({ projects }) => {
           </div>
 
           <div className="wg-info">
+            {current.icon && (
+              <img
+                className="wg-info__icon"
+                src={current.icon}
+                alt={`${current.title} icon`}
+              />
+            )}
             {current.category && (
               <p className="wg-info__eyebrow">{current.category}</p>
             )}
