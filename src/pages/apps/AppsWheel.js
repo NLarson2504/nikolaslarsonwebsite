@@ -45,7 +45,8 @@ const AppsWheel = ({ projects }) => {
     ? Math.round((CARD_W / 2 / Math.tan((Math.PI * STEP) / 360)) * PEEK)
     : 0;
 
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState(0); // live focus (drives the wheel paint)
+  const [settledIndex, setSettledIndex] = useState(0); // debounced (drives info)
   const prevIndexRef = useRef(-1);
 
   const wheelRef = useRef(null);
@@ -249,7 +250,13 @@ const AppsWheel = ({ projects }) => {
       return (idx + count) % count;
     };
 
-    const paint = () => {
+    // Per-frame angular speed; above this the per-card blur is skipped (blur is
+    // the expensive part — animating it every frame re-rasterizes each card, so
+    // we drop it while spinning fast and let it ease back in once things slow).
+    const FAST_DEGPS = 55; // deg/frame-equivalent threshold
+    let lastRot = rotationRef.current;
+
+    const paint = (fast) => {
       const rot = rotationRef.current;
       wheelRef.current.style.transform = `translateZ(${-RADIUS}px) rotateY(${rot}deg)`;
       const focusSlot = Math.round(-rot / CARD_ARC) * SLOTS_PER_CARD;
@@ -259,20 +266,19 @@ const AppsWheel = ({ projects }) => {
         const ad = Math.abs(delta);
         const front = s === ((focusSlot % totalSlots) + totalSlots) % totalSlots;
 
-        // Color/sharpness ramp smoothly back toward the front over ~one card
-        // arc, so a phone regains color as it turns in.
         const t = Math.min(1, ad / CARD_ARC);
-        const gray = t;
-        const blur = t * 5;
-        // Visibility fades on ABSOLUTE angle (independent of slot density): full
-        // at front, mostly gone by ~90°. With 6 real phones 60° apart this keeps
-        // the front phone plus a soft peek of its two neighbours (~3 on screen).
         const FADE_DEG = 90;
         const opacity = Math.max(0, 1 - (ad / FADE_DEG) ** 1.6);
-
         el.style.opacity = String(opacity);
-        el.style.filter =
-          front && ad < 0.4 ? '' : `grayscale(${gray}) blur(${blur}px)`;
+
+        if (fast) {
+          // Cheap path while spinning: grayscale only, no blur (no per-frame
+          // re-rasterization). Keeps motion smooth.
+          el.style.filter = `grayscale(${t})`;
+        } else {
+          el.style.filter =
+            front && ad < 0.4 ? '' : `grayscale(${t}) blur(${t * 5}px)`;
+        }
         el.classList.toggle('is-front', front);
       });
     };
@@ -284,7 +290,11 @@ const AppsWheel = ({ projects }) => {
         targetRef.current += (snapped - targetRef.current) * 0.12;
       }
       rotationRef.current += (targetRef.current - rotationRef.current) * 0.12;
-      paint();
+
+      const speed = Math.abs(rotationRef.current - lastRot);
+      lastRot = rotationRef.current;
+      paint(speed > FAST_DEGPS);
+
       const focus = focusedFor(rotationRef.current);
       setIndex((prev) => (prev === focus ? prev : focus));
       raf = requestAnimationFrame(loop);
@@ -302,6 +312,14 @@ const AppsWheel = ({ projects }) => {
 
     const bump = (deltaDeg) => {
       targetRef.current += deltaDeg;
+      // Don't let a fast flick queue an enormous spin: cap how far the target
+      // can run ahead of where the wheel currently is, so momentum stays bounded
+      // and the eased catch-up never grinds.
+      const MAX_LEAD = CARD_ARC * 2.5;
+      const lead = targetRef.current - rotationRef.current;
+      if (Math.abs(lead) > MAX_LEAD) {
+        targetRef.current = rotationRef.current + Math.sign(lead) * MAX_LEAD;
+      }
       lastIdleRef.current = performance.now();
     };
 
@@ -347,18 +365,34 @@ const AppsWheel = ({ projects }) => {
     };
   }, [count, CARD_ARC]);
 
+  // Debounce the live focus `index` into `settledIndex`: during a fast spin the
+  // index changes for every phone that flies past, but we only want the info
+  // panel + the expensive GSAP work to update once the wheel SETTLES. First
+  // value applies immediately; subsequent ones wait for a ~130ms quiet period.
+  useEffect(() => {
+    if (prevIndexRef.current === -1) {
+      setSettledIndex(index);
+      return undefined;
+    }
+    const id = setTimeout(() => setSettledIndex(index), 130);
+    return () => clearTimeout(id);
+  }, [index]);
+
+  // Run the name reveal + tint crossfade only when the settled card changes.
   useEffect(() => {
     const prev = prevIndexRef.current;
-    setName(projects[index]?.title || '');
-    applyTint(index, prev !== -1);
-    prevIndexRef.current = index;
-  }, [index, projects, setName, applyTint]);
+    setName(projects[settledIndex]?.title || '');
+    applyTint(settledIndex, prev !== -1);
+    prevIndexRef.current = settledIndex;
+  }, [settledIndex, projects, setName, applyTint]);
 
   const hot = (on) => () => {
     if (cursorRef.current) cursorRef.current.classList.toggle('hot', on);
   };
 
-  const current = projects[index] || {};
+  // Info panel reads the DEBOUNCED index, so its text/links don't thrash while
+  // the wheel spins — it updates once the wheel settles.
+  const current = projects[settledIndex] || {};
   // A live app link, if one exists (App Store preferred, then Play).
   const liveUrl = current.appStoreUrl || current.playStoreUrl || '';
   const liveLabel = current.appStoreUrl
