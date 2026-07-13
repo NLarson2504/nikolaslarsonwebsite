@@ -23,10 +23,10 @@ const NEUTRAL_CORNERS = {
 const AppsWheel = ({ projects }) => {
   const count = projects.length;
 
-  // Pad the ring with faint ghost slats between real phones so a few apps still
-  // read as a round wheel. Kept sparse (~9 facets) so only ~3 are on the visible
-  // front arc at once. Snapping only lands on real apps.
-  const SLOTS_PER_CARD = count > 0 ? Math.max(1, Math.round(9 / count)) : 1;
+  // With enough real apps (6+) the ring reads round on its own, so no ghost-slat
+  // padding is needed — every slot is a real phone. Below that threshold we pad
+  // with faint slats between phones so a sparse ring still looks round.
+  const SLOTS_PER_CARD = count >= 6 ? 1 : count > 0 ? Math.max(1, Math.round(9 / count)) : 1;
   const totalSlots = count * SLOTS_PER_CARD;
   const STEP = totalSlots ? 360 / totalSlots : 0;
   const slots = Array.from({ length: totalSlots }, (_, s) =>
@@ -265,9 +265,9 @@ const AppsWheel = ({ projects }) => {
         const gray = t;
         const blur = t * 5;
         // Visibility fades on ABSOLUTE angle (independent of slot density): full
-        // at front, gone by ~55°. Keeps only the front + its immediate side
-        // neighbours on screen (~3 phones) instead of a whole visible arc.
-        const FADE_DEG = 55;
+        // at front, mostly gone by ~90°. With 6 real phones 60° apart this keeps
+        // the front phone plus a soft peek of its two neighbours (~3 on screen).
+        const FADE_DEG = 90;
         const opacity = Math.max(0, 1 - (ad / FADE_DEG) ** 1.6);
 
         el.style.opacity = String(opacity);
