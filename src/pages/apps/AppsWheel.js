@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { gsap } from 'gsap';
 import './AppsWheel.css';
 
@@ -358,13 +359,14 @@ const AppsWheel = ({ projects }) => {
   };
 
   const current = projects[index] || {};
-  const storeUrl =
-    current.appStoreUrl || current.playStoreUrl || current.brand?.url || '#';
-  const storeLabel = current.appStoreUrl
+  // A live app link, if one exists (App Store preferred, then Play).
+  const liveUrl = current.appStoreUrl || current.playStoreUrl || '';
+  const liveLabel = current.appStoreUrl
     ? 'App Store'
     : current.playStoreUrl
     ? 'Google Play'
-    : 'Learn more';
+    : '';
+  const hasCaseStudy = Boolean(current.caseStudy);
 
   return (
     <div className="aw-root">
@@ -380,23 +382,40 @@ const AppsWheel = ({ projects }) => {
       <main className="aw-stage">
         <div className="aw-focus">
           <div className="aw-info">
+            {current.platform && (
+              <p className="aw-info__eyebrow">{current.platform}</p>
+            )}
             {/* eslint-disable-next-line jsx-a11y/heading-has-content --
                content is injected as split chars by setName(); aria-label carries
                the accessible name. */}
             <h1 className="aw-info__name" ref={nameRef} aria-label={current.title} />
-            {current.platform && (
-              <p className="aw-info__meta">{current.platform}</p>
+            {current.description && (
+              <p className="aw-info__desc">{current.description}</p>
             )}
-            <a
-              className="aw-info__btn"
-              href={storeUrl}
-              target="_blank"
-              rel="noreferrer"
-              onPointerEnter={hot(true)}
-              onPointerLeave={hot(false)}
-            >
-              {storeLabel} <span className="aw-arrow">↗</span>
-            </a>
+            <div className="aw-info__links">
+              {hasCaseStudy && (
+                <Link
+                  className="aw-info__btn aw-info__btn--primary"
+                  to={`/apps/${current.slug}`}
+                  onPointerEnter={hot(true)}
+                  onPointerLeave={hot(false)}
+                >
+                  Case study <span className="aw-arrow">→</span>
+                </Link>
+              )}
+              {liveUrl && (
+                <a
+                  className="aw-info__btn"
+                  href={liveUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  onPointerEnter={hot(true)}
+                  onPointerLeave={hot(false)}
+                >
+                  {liveLabel} <span className="aw-arrow">↗</span>
+                </a>
+              )}
+            </div>
           </div>
 
           <div className="aw-wheel-scene">
@@ -426,13 +445,12 @@ const AppsWheel = ({ projects }) => {
                     }}
                     style={{ transform }}
                   >
-                    <div className="aw-phone__halo" />
                     <div className="aw-phone__frame">
-                      <span className="aw-phone__notch" />
                       {shot ? (
                         <img
                           src={shot}
                           alt={p.title}
+                          crossOrigin="anonymous"
                           onLoad={(e) => samplePick(e.currentTarget, slot.cardIndex)}
                         />
                       ) : (

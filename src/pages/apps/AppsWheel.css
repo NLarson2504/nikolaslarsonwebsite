@@ -124,9 +124,9 @@
 .aw-focus {
   display: flex;
   align-items: center;
-  gap: clamp(28px, 5vw, 80px);
+  gap: clamp(40px, 6vw, 110px);
   width: 100%;
-  max-width: 1100px;
+  max-width: 1320px;
   justify-content: center;
 }
 
@@ -134,10 +134,10 @@
 .aw-info {
   flex: 1 1 auto;
   min-width: 0;
-  max-width: 300px;
+  max-width: 400px;
   text-align: left;
   /* pull the text block hard to the left, toward the viewport edge */
-  transform: translateX(-220px);
+  transform: translateX(-180px);
 }
 .aw-info__name {
   font-family: 'MuseoModerno', sans-serif;
@@ -159,19 +159,38 @@
   display: inline-block;
   will-change: transform, opacity;
 }
-.aw-info__meta {
-  margin-top: 12px;
+/* small platform label sitting ABOVE the title */
+.aw-info__eyebrow {
+  margin-bottom: 14px;
   font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 12px;
-  letter-spacing: 0.08em;
+  font-size: 11px;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: #8b929c;
+}
+.aw-info__desc {
+  margin-top: 18px;
+  max-width: 38ch;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #a8afba;
+  /* keep it tidy — clamp long descriptions */
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.aw-info__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 26px;
 }
 .aw-info__btn {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  margin-top: 26px;
   padding: 11px 18px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 999px;
@@ -181,11 +200,22 @@
   font-size: 12px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  transition: border-color 0.4s, background 0.4s;
+  transition: border-color 0.4s, background 0.4s, color 0.4s;
 }
 .aw-info__btn:hover {
   border-color: rgba(245, 246, 247, 0.5);
   background: rgba(245, 246, 247, 0.06);
+}
+/* primary = the case-study link; filled so it reads as the main action */
+.aw-info__btn--primary {
+  background: #f5f6f7;
+  border-color: #f5f6f7;
+  color: #08090a;
+}
+.aw-info__btn--primary:hover {
+  background: #ffffff;
+  border-color: #ffffff;
+  color: #08090a;
 }
 .aw-arrow { transition: transform 0.4s; }
 .aw-info__btn:hover .aw-arrow { transform: translate(3px, -3px); }
@@ -194,8 +224,10 @@
 .aw-wheel-scene {
   position: relative;
   flex: 0 0 auto;
+  /* match the home-page phone-preview proportions (12rem : 25rem ≈ 1 : 2.083),
+     a touch taller than before */
   width: 290px;
-  height: 600px;
+  height: 620px;
   perspective: 1700px;
   perspective-origin: 50% 50%;
   cursor: grab;
@@ -231,17 +263,6 @@
 .aw-phone.is-front .aw-phone__frame {
   box-shadow: 0 45px 130px rgba(0, 0, 0, 0.65), inset 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
-.aw-phone__notch {
-  position: absolute;
-  top: 8px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 82px;
-  height: 20px;
-  border-radius: 12px;
-  background: #17181a;
-  z-index: 2;
-}
 .aw-phone__frame img {
   width: 100%;
   height: 100%;
@@ -267,16 +288,6 @@
   border-radius: 22px;
   object-fit: cover;
 }
-.aw-phone__halo {
-  position: absolute;
-  z-index: -1;
-  inset: -12% -18%;
-  border-radius: 40px;
-  background: var(--pick-bl, #23262b);
-  filter: blur(60px);
-  opacity: 0.35;
-}
-
 /* ghost slats bridging the arc between phones so the ring reads round */
 .aw-slat {
   border-radius: 34px;

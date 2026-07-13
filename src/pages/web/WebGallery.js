@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { gsap } from 'gsap';
 import './WebGallery.css';
 
@@ -383,7 +384,8 @@ const WebGallery = ({ projects }) => {
   };
 
   const current = projects[index] || {};
-  const viewUrl = current.url || current.brand?.url || '#';
+  const viewUrl = current.url || current.brand?.url || '';
+  const hasCaseStudy = Boolean(current.caseStudy);
 
   return (
     <div className="wg-root">
@@ -429,6 +431,7 @@ const WebGallery = ({ projects }) => {
                       <img
                         src={p.image}
                         alt={p.title}
+                        crossOrigin="anonymous"
                         onLoad={(e) => samplePick(e.currentTarget, slot.cardIndex)}
                       />
                     ) : (
@@ -441,20 +444,40 @@ const WebGallery = ({ projects }) => {
           </div>
 
           <div className="wg-info">
+            {current.category && (
+              <p className="wg-info__eyebrow">{current.category}</p>
+            )}
             {/* eslint-disable-next-line jsx-a11y/heading-has-content --
                content is injected as split chars by setName(); aria-label carries
                the accessible name. */}
             <h1 className="wg-info__name" ref={nameRef} aria-label={current.title} />
-            <a
-              className="wg-info__btn"
-              href={viewUrl}
-              target="_blank"
-              rel="noreferrer"
-              onPointerEnter={hot(true)}
-              onPointerLeave={hot(false)}
-            >
-              View site <span className="wg-arrow">↗</span>
-            </a>
+            {current.description && (
+              <p className="wg-info__desc">{current.description}</p>
+            )}
+            <div className="wg-info__links">
+              {hasCaseStudy && (
+                <Link
+                  className="wg-info__btn wg-info__btn--primary"
+                  to={`/web/${current.slug}`}
+                  onPointerEnter={hot(true)}
+                  onPointerLeave={hot(false)}
+                >
+                  Case study <span className="wg-arrow">→</span>
+                </Link>
+              )}
+              {viewUrl && (
+                <a
+                  className="wg-info__btn"
+                  href={viewUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  onPointerEnter={hot(true)}
+                  onPointerLeave={hot(false)}
+                >
+                  View site <span className="wg-arrow">↗</span>
+                </a>
+              )}
+            </div>
           </div>
         </div>
       </main>

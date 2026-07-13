@@ -123,9 +123,9 @@
 .wg-focus {
   display: flex;
   align-items: center;
-  gap: clamp(28px, 5vw, 72px);
+  gap: clamp(48px, 6vw, 120px);
   width: 100%;
-  max-width: 1100px;
+  max-width: 1360px;
   justify-content: center;
 }
 
@@ -140,6 +140,8 @@
   perspective: 1600px;
   perspective-origin: 50% 50%;
   cursor: grab;
+  /* nudge the wheel a touch left */
+  transform: translateX(-50px);
 }
 .wg-wheel-scene:active { cursor: grabbing; }
 .wg-wheel {
@@ -206,11 +208,20 @@
   background: #0d0e0f;
 }
 
-/* info to the right of the wheel — name + button only */
+/* info to the right of the wheel — eyebrow, name, description, links */
 .wg-info {
   flex: 1 1 auto;
   min-width: 0;
-  max-width: 280px;
+  max-width: 420px;
+  text-align: left;
+}
+.wg-info__eyebrow {
+  margin-bottom: 14px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #8b929c;
 }
 .wg-info__name {
   font-family: 'MuseoModerno', sans-serif;
@@ -236,11 +247,28 @@
   display: inline-block;
   will-change: transform, opacity;
 }
+.wg-info__desc {
+  margin-top: 18px;
+  max-width: 42ch;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #a8afba;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.wg-info__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}
 .wg-info__btn {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  margin-top: 28px;
   padding: 11px 18px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 999px;
@@ -250,11 +278,21 @@
   font-size: 12px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  transition: border-color 0.4s, background 0.4s;
+  transition: border-color 0.4s, background 0.4s, color 0.4s;
 }
 .wg-info__btn:hover {
   border-color: rgba(245, 246, 247, 0.5);
   background: rgba(245, 246, 247, 0.06);
+}
+.wg-info__btn--primary {
+  background: #f5f6f7;
+  border-color: #f5f6f7;
+  color: #08090a;
+}
+.wg-info__btn--primary:hover {
+  background: #ffffff;
+  border-color: #ffffff;
+  color: #08090a;
 }
 .wg-arrow {
   transition: transform 0.4s;
