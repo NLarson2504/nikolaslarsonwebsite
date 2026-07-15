@@ -194,6 +194,10 @@ const projects = [
     description:
       'The Tarragon Systems web platform. Established and refined the application’s design language — a cohesive, modern interface that carries consistently across navigating, editing, updating, and creating.',
     url: 'https://app.tarragonsystems.com',
+    // Login-gated app that can surface real customer data — never live-embed;
+    // the case-study page uses the hand-picked demo screenshot instead.
+    noEmbed: true,
+    noCapture: true,
     repositoryUrl: '',
     image: S('tarragon-web', 1),
     features: [

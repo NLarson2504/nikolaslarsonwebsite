@@ -28,22 +28,22 @@ const NEUTRAL_CORNERS = {
 const WebGallery = ({ projects }) => {
   const count = projects.length;
 
-  // The ring is padded with faint empty "ghost" slats between the real cards so
-  // that even a few projects read as a smoothly-faceted round wheel rather than
-  // a flat polygon. We aim for ~15 total slots; each real project occupies every
-  // SLOTS_PER_CARD-th slot, the rest are slats. Snapping targets only the real
-  // slots. `slots` describes every position on the ring.
-  const SLOTS_PER_CARD = count > 0 ? Math.max(1, Math.round(15 / count)) : 1;
-  const totalSlots = count * SLOTS_PER_CARD;
-  const STEP = totalSlots ? 360 / totalSlots : 0; // degrees between slots (fine)
-  const slots = Array.from({ length: totalSlots }, (_, s) =>
-    s % SLOTS_PER_CARD === 0
-      ? { type: 'card', cardIndex: s / SLOTS_PER_CARD }
-      : { type: 'slat' }
-  );
+  // To keep the drum round with only a few projects, we repeat the real cards
+  // around the ring rather than padding with empty ghost slats — so every facet
+  // shows an actual screenshot and the wheel reads as an infinite loop of the
+  // real work. We aim for ~15 total facets; each project is shown REPEAT times,
+  // and ring position s maps to project (s % count). Focus/snap resolve to a
+  // real project index via modulo, so a duplicate at the front is fine.
+  const REPEAT = count > 0 ? Math.max(1, Math.round(15 / count)) : 1;
+  const totalSlots = count * REPEAT;
+  const STEP = totalSlots ? 360 / totalSlots : 0; // degrees between facets
+  const slots = Array.from({ length: totalSlots }, (_, s) => ({
+    type: 'card',
+    cardIndex: s % count,
+  }));
 
-  // Degrees the wheel turns to advance one real card.
-  const CARD_ARC = SLOTS_PER_CARD * STEP;
+  // Degrees the wheel turns to advance one facet (one card).
+  const CARD_ARC = STEP;
   // Radius sized so every slot (fine STEP apart) tiles edge-to-edge into one
   // continuous cylinder — the faces meet with no gaps, so the ring reads as a
   // true round drum. A small gap factor keeps a hairline seam between facets.
@@ -60,7 +60,7 @@ const WebGallery = ({ projects }) => {
   const ambientRef = useRef(null);
   const cursorRef = useRef(null);
   const nameRef = useRef(null);
-  const slotRefs = useRef([]); // every ring position (cards + ghost slats)
+  const slotRefs = useRef([]); // every ring facet (real cards, repeated)
   const picks = useRef(projects.map(() => ({ ...NEUTRAL_CORNERS })));
 
   // rotation state (degrees). rotationRef eases toward targetRef each frame.
@@ -275,7 +275,8 @@ const WebGallery = ({ projects }) => {
     const paint = (fast) => {
       const rot = rotationRef.current;
       wheelRef.current.style.transform = `translateZ(${-RADIUS}px) rotateX(${rot}deg)`;
-      const focusSlot = Math.round(-rot / CARD_ARC) * SLOTS_PER_CARD;
+      // Front facet is where s*STEP ≡ -rot → s = round(-rot / STEP).
+      const focusSlot = Math.round(-rot / STEP);
       slotRefs.current.forEach((el, s) => {
         if (!el) return;
         // angular distance of this slot from the front (0 = front). Front is at
@@ -326,7 +327,7 @@ const WebGallery = ({ projects }) => {
 
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [count, STEP, RADIUS, CARD_ARC, SLOTS_PER_CARD, totalSlots]);
+  }, [count, STEP, RADIUS, CARD_ARC, totalSlots]);
 
   // --- input: wheel + drag + keys turn the cylinder ------------------------
   useEffect(() => {
@@ -433,22 +434,12 @@ const WebGallery = ({ projects }) => {
             <div className="wg-wheel" ref={wheelRef}>
               {slots.map((slot, s) => {
                 const transform = `rotateX(${s * STEP}deg) translateZ(${RADIUS}px)`;
-                if (slot.type === 'slat') {
-                  return (
-                    <div
-                      key={`slat-${s}`}
-                      className="wg-slat"
-                      ref={(el) => {
-                        slotRefs.current[s] = el;
-                      }}
-                      style={{ transform }}
-                    />
-                  );
-                }
                 const p = projects[slot.cardIndex];
                 return (
+                  // key by ring position s — a project may appear on several
+                  // facets, so its id/slug is not unique across the ring.
                   <div
-                    key={p.id || p.slug || s}
+                    key={s}
                     className="wg-card"
                     ref={(el) => {
                       slotRefs.current[s] = el;

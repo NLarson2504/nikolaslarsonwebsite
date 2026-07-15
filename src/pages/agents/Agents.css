@@ -1,0 +1,290 @@
+/* Agents page — mirrors the Web/Apps landing layout: a text info panel on the
+   left and the "hero" on the right. Here the hero is the agent's frameless
+   terminal render (an ASCII portrait for the profile agent, streaming logs for
+   the real ones). Scoped to .ag-* / .agt-*. */
+
+/* register --ag-glow so GSAP can smoothly tween the footlight intensity during
+   the stage-light crossfade between agents */
+@property --ag-glow {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 1;
+}
+
+.ag-root {
+  position: relative;
+  min-height: 100vh;
+  background: var(--bg, #08090a);
+  color: #f5f6f7;
+  overflow: hidden;
+  /* footlight tint — sampled from the active icon at runtime (neutral default) */
+  --pick-bl: #1f2b45;
+  --pick-br: #1f2b45;
+  --ag-glow: 1;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+/* Footlight glow rising from the bottom, fading out before the navbar — same
+   treatment as the Web/Apps wheels; tinted from the current agent's icon. */
+.ag-ambient {
+  position: absolute;
+  inset: -10% -10% 0 -10%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: calc(0.72 * var(--ag-glow));
+  filter: blur(72px) saturate(1.5);
+  -webkit-mask-image: linear-gradient(to top, #000 0%, #000 18%, transparent 58%);
+  mask-image: linear-gradient(to top, #000 0%, #000 18%, transparent 58%);
+}
+.ag-ambient__c {
+  position: absolute;
+  inset: 0;
+  mix-blend-mode: screen;
+}
+.ag-ambient__bl {
+  background: radial-gradient(90vmax 80vmax at 22% 106%, var(--pick-bl) 0%, transparent 66%);
+}
+.ag-ambient__br {
+  background: radial-gradient(90vmax 80vmax at 82% 106%, var(--pick-br) 0%, transparent 66%);
+}
+
+/* film grain — identical to the wheels */
+.ag-grain {
+  position: absolute;
+  inset: -50%;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.06;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: ag-grain 9s steps(5) infinite;
+}
+@keyframes ag-grain {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-3%, 2%); }
+  50% { transform: translate(2%, -2%); }
+  75% { transform: translate(-2%, 3%); }
+  100% { transform: translate(0, 0); }
+}
+
+.ag-stage {
+  position: relative;
+  z-index: 2;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(80px, 12vh, 130px) clamp(24px, 6vw, 90px) clamp(48px, 8vh, 96px);
+}
+
+/* same flex row + max-width as .aw-focus / .wg-focus */
+.ag-focus {
+  display: flex;
+  align-items: center;
+  gap: clamp(40px, 6vw, 110px);
+  width: 100%;
+  max-width: 1360px;
+  justify-content: center;
+}
+
+/* ---- left info panel — same vocabulary as .aw-info / .wg-info ------------- */
+.ag-info {
+  flex: 0 0 auto;
+  min-width: 0;
+  width: 400px;
+  max-width: 400px;
+  text-align: left;
+}
+.ag-info__icon {
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 15px;
+  object-fit: cover;
+  margin-bottom: 18px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+.ag-info__icon--glyph {
+  background: linear-gradient(145deg, #1b1e24, #101216);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 26px;
+  color: #9fb4d8;
+}
+.ag-info__eyebrow {
+  margin-bottom: 14px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #8b929c;
+}
+.ag-info__name {
+  font-family: 'MuseoModerno', sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+  font-size: clamp(1.9rem, 3.6vw, 3.2rem);
+  color: #f6f8fa;
+  text-align: left;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  min-height: 1.08em; /* reserve line so the reveal doesn't shift layout */
+}
+/* profile/default view: this is the page header, so it's larger */
+.ag-info__name--header {
+  font-size: clamp(2.6rem, 5vw, 4.2rem);
+  margin-bottom: 6px;
+}
+/* split-word reveal scaffolding — mirrors .aw-word / .aw-ch */
+.ag-word {
+  display: inline-block;
+  overflow: hidden;
+  padding: 0.12em 0.02em;
+  margin: -0.12em -0.02em;
+  vertical-align: top;
+}
+.ag-ch {
+  display: inline-block;
+  will-change: transform, opacity;
+}
+.ag-info__desc {
+  margin-top: 18px;
+  max-width: 40ch;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #a8afba;
+}
+.ag-info__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 26px;
+}
+.ag-info__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  color: #f5f6f7;
+  text-decoration: none;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: border-color 0.4s, background 0.4s, color 0.4s;
+}
+.ag-info__btn:hover {
+  border-color: rgba(245, 246, 247, 0.5);
+  background: rgba(245, 246, 247, 0.06);
+}
+.ag-info__btn--primary {
+  background: #f5f6f7;
+  border-color: #f5f6f7;
+  color: #08090a;
+}
+.ag-info__btn--primary:hover {
+  background: #fff;
+  border-color: #fff;
+  color: #08090a;
+}
+.ag-arrow { transition: transform 0.4s; }
+.ag-info__btn:hover .ag-arrow { transform: translate(3px, -3px); }
+
+/* ---- right: the large frameless render (the hero) ------------------------ */
+.ag-render-col {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.agt-render {
+  width: 100%;
+  max-width: 760px;
+  /* fixed hero height so the layout never shifts. The portrait may be taller
+     than this — it's allowed to overflow and is cleanly clipped (with a soft
+     top/bottom fade) rather than shrunk. */
+  height: clamp(440px, 66vh, 640px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  /* feather the top/bottom so an overflowing portrait fades out instead of
+     hard-cutting at the box edge */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 9%,
+    #000 91%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 9%,
+    #000 91%,
+    transparent 100%
+  );
+}
+
+/* ASCII portrait — large; may overflow the hero box (clipped + feathered).
+   Slightly translucent overall so it reads as a soft render, not hard text. */
+.agt-portrait {
+  margin: 0;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: clamp(6px, 0.86vw, 11px);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  white-space: pre;
+  color: #e6ebf1;
+  opacity: 0.82;
+  text-shadow: 0 0 18px rgba(96, 165, 250, 0.14);
+}
+.agt-prow { white-space: pre; }
+/* per-character opacity is set inline; the materialize reveal is JS-driven and
+   ends on the finished portrait (see ProfileRun). */
+.agt-portrait span {
+  display: inline;
+  transition: opacity 0.12s linear;
+}
+
+/* streaming logs — left-aligned block, centered in the hero */
+.agt-log {
+  width: 100%;
+  max-width: 560px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 14px;
+  line-height: 1.65;
+  color: #c6ccd4;
+}
+.agt-line { white-space: pre-wrap; word-break: break-word; }
+.agt-dim { color: #6b7280; }
+.agt-cmd { color: #dfe4ea; }
+.agt-txt { color: #cbd2db; }
+.agt-ok { color: #6ee7a8; }
+.agt-cursor { color: #60a5fa; animation: agt-blink 1s steps(1) infinite; }
+@keyframes agt-blink { 50% { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .agt-cursor { animation: none; }
+}
+
+/* stack on narrow screens: render on top, info below */
+@media (max-width: 900px) {
+  .ag-focus {
+    flex-direction: column-reverse;
+    gap: 32px;
+  }
+  .ag-info {
+    width: 100%;
+    max-width: 88vw;
+  }
+  .agt-render { min-height: 46vh; }
+  .agt-portrait { font-size: clamp(6px, 2.1vw, 11px); }
+}
