@@ -265,9 +265,12 @@ const Agents = () => {
               )}
             </div>
 
-            {/* right: the large, frameless "working" render */}
+            {/* right: the panel deck — agents stacked vertically, the focused
+                one sharp/forward, the others dimmed above and below */}
             <div className="ag-render-col">
-              {current && <AgentTerminal agent={current} />}
+              {count > 0 && (
+                <AgentTerminal agents={items} activeIndex={clampedIndex} />
+              )}
             </div>
           </div>
 

@@ -123,61 +123,108 @@ const stamp = (i) => {
   return `${hh}:${mm}:${ss}`;
 };
 
-const AgentTerminal = ({ agent }) => {
-  const reduceMotion =
-    typeof window !== 'undefined' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  const slug = agent?.slug || '';
+/* ---- one agent's panel. Streams its log only while `active`. -------------- */
+function AgentPanel({ slug, active, reduceMotion }) {
   const script = LOGS[slug] || [];
-
-  // Stream the log lines in; `n` lines shown. The pal is "working" while the
-  // stream is advancing, then rests once the run completes.
-  const [n, setN] = useState(reduceMotion ? script.length : 0);
+  const [n, setN] = useState(reduceMotion || !active ? script.length : 0);
   const timers = useRef([]);
   const logRef = useRef(null);
 
+  // (Re)start the stream whenever this panel becomes the focused one.
   useEffect(() => {
-    setN(reduceMotion ? script.length : 0);
     timers.current.forEach(clearTimeout);
     timers.current = [];
-    if (reduceMotion) return undefined;
+    if (!active) return undefined; // off-focus panels show their full log, static
+    if (reduceMotion) {
+      setN(script.length);
+      return undefined;
+    }
+    setN(0);
     script.forEach((_, i) => {
-      timers.current.push(setTimeout(() => setN(i + 1), 300 + i * 640));
+      timers.current.push(setTimeout(() => setN(i + 1), 320 + i * 640));
     });
     return () => timers.current.forEach(clearTimeout);
-  }, [slug, reduceMotion]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [slug, active, reduceMotion]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // keep the latest line in view as the log fills
   useEffect(() => {
     if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight;
   }, [n]);
 
-  const working = !reduceMotion && n < script.length;
+  const working = active && !reduceMotion && n < script.length;
 
   return (
-    <div className="agt-render">
-      <div className="agt-panel">
-        {/* the little guy perches on the top-left edge of the panel */}
-        <PixelPal slug={slug} working={working} />
-        <div className="agt-panel__bar">
-          <span className="agt-panel__name">{slug || 'agent'}</span>
-        </div>
-        <div className="agt-log" ref={logRef}>
-          {script.slice(0, n).map((line, i) => (
-            <div className="agt-line" key={i}>
-              {line.dim && <span className="agt-dim">{line.dim} </span>}
-              {line.ts && <span className="agt-dim">[{stamp(i)}] </span>}
-              {line.ok && <span className="agt-ok">✓ </span>}
-              <span className={line.dim ? 'agt-cmd' : 'agt-txt'}>{line.text}</span>
-            </div>
-          ))}
-          <div className="agt-line">
-            <span className="agt-dim">$</span>{' '}
-            <span className="agt-cursor">▋</span>
+    <div className="agt-panel">
+      {/* the little guy perches on the top-left edge of the panel */}
+      <PixelPal slug={slug} working={working} />
+      <div className="agt-panel__bar">
+        <span className="agt-panel__name">{slug || 'agent'}</span>
+      </div>
+      <div className="agt-log" ref={logRef}>
+        {script.slice(0, n).map((line, i) => (
+          <div className="agt-line" key={i}>
+            {line.dim && <span className="agt-dim">{line.dim} </span>}
+            {line.ts && <span className="agt-dim">[{stamp(i)}] </span>}
+            {line.ok && <span className="agt-ok">✓ </span>}
+            <span className={line.dim ? 'agt-cmd' : 'agt-txt'}>{line.text}</span>
           </div>
+        ))}
+        <div className="agt-line">
+          <span className="agt-dim">$</span> <span className="agt-cursor">▋</span>
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ---- the deck: agents stacked vertically; the active one is centered and
+ * forward, the rest slide up/down, dimmed to grayscale and pushed back. The
+ * offset wraps so cycling past the ends stays a short vertical move. --------- */
+const AgentTerminal = ({ agents = [], activeIndex = 0 }) => {
+  const reduceMotion =
+    typeof window !== 'undefined' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const count = agents.length;
+
+  // signed shortest offset of index i from the active index, wrapping around
+  // the ring so e.g. last→first reads as +1, not -(count-1).
+  const wrappedOffset = (i) => {
+    let d = i - activeIndex;
+    if (count) {
+      if (d > count / 2) d -= count;
+      if (d < -count / 2) d += count;
+    }
+    return d;
+  };
+
+  return (
+    <div className="agt-deck">
+      {agents.map((a, i) => {
+        const off = wrappedOffset(i);
+        const dist = Math.abs(off);
+        const active = off === 0;
+        // only render near neighbours (prev/current/next); hide the rest
+        const near = dist <= 1;
+        const style = {
+          '--off': off, // signed: direction of the slide
+          '--scale': (1 - Math.min(1, dist) * 0.14).toFixed(3),
+          '--gray': Math.min(1, dist),
+          '--depth': `${-Math.min(2, dist) * 140}px`,
+          zIndex: 10 - dist,
+          opacity: near ? 1 : 0,
+          pointerEvents: active ? 'auto' : 'none',
+        };
+        return (
+          <div
+            key={a.slug}
+            className={`agt-slide${active ? ' is-active' : ''}`}
+            style={style}
+            aria-hidden={!active}
+          >
+            <AgentPanel slug={a.slug} active={active} reduceMotion={reduceMotion} />
+          </div>
+        );
+      })}
     </div>
   );
 };

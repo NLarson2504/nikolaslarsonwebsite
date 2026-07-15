@@ -204,14 +204,36 @@
   align-items: center;
   justify-content: center;
 }
-.agt-render {
+/* the deck — a fixed-height stage the panels slide within, so cycling agents
+   never shifts the surrounding layout */
+.agt-deck {
+  position: relative;
   width: 100%;
   max-width: 560px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /* leave headroom so the pal can perch above the panel's top edge */
-  padding-top: 44px;
+  height: clamp(380px, 56vh, 520px);
+  perspective: 1400px;
+  transform-style: preserve-3d;
+}
+
+/* one agent's slide — absolutely centered, then offset up/down by --off. The
+   focused slide (off 0) is sharp/forward; neighbours slide away, shrink, gray
+   out, and drop back. --off is signed (direction); --scale/--gray/--depth are
+   precomputed in JS from |off| so the CSS stays free of conditionals. */
+.agt-slide {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform-origin: center center;
+  transform: translateY(calc(-50% + var(--off) * 118%))
+    translateZ(var(--depth, 0px)) scale(var(--scale, 1));
+  filter: grayscale(var(--gray, 0));
+  transition: transform 0.62s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.62s ease, opacity 0.5s ease;
+  will-change: transform, filter, opacity;
+}
+.agt-slide.is-active {
+  filter: none;
 }
 
 /* the log panel — a rounded card with a subtle glassy fill + hairline border */
