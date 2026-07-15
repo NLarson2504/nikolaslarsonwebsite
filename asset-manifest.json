@@ -1,8 +1,8 @@
 {
   "files": {
-    "main.css": "/static/css/main.30e96ea9.css",
-    "main.js": "/static/js/main.b6051292.js",
-    "static/js/156.25c497eb.chunk.js": "/static/js/156.25c497eb.chunk.js",
+    "main.css": "/static/css/main.7de2030f.css",
+    "main.js": "/static/js/main.675b54f1.js",
+    "static/js/22.25b1036a.chunk.js": "/static/js/22.25b1036a.chunk.js",
     "static/media/mooslixmobile1.png": "/static/media/mooslixmobile1.32a9fbecae2c99aa7d18.png",
     "static/media/nourished1.png": "/static/media/nourished1.9851f901d60def093148.png",
     "static/media/campuslm1.png": "/static/media/campuslm1.360fce5f20e183b7d203.png",
@@ -15,22 +15,14 @@
     "static/media/campuslm3.png": "/static/media/campuslm3.61148d455ab0d9da908c.png",
     "static/media/nikolaslarson1.png": "/static/media/nikolaslarson1.65935d2367e556b41a7b.png",
     "static/media/Mobile.png": "/static/media/Mobile.9123a41df52a72c7c3ad.png",
-    "static/media/campuslmlogo.png": "/static/media/campuslmlogo.15788eeb752ac52f1dd6.png",
-    "static/media/DesignIllustration.svg": "/static/media/DesignIllustration.8f5cf68e00b686ef9cba5779a0158a3a.svg",
-    "static/media/temp.svg": "/static/media/temp.2e8acf2db958814a5800773c9a291542.svg",
-    "static/media/Agents.svg": "/static/media/Agents.628715b6650e5de8c455813eee9714eb.svg",
     "static/media/Contact.svg": "/static/media/Contact.53a1afba8a919b42eb2da3618d442d40.svg",
-    "static/media/Mobile.svg": "/static/media/Mobile.eb360d767f8bf4a50d081581578d2b21.svg",
-    "static/media/tallielogo.svg": "/static/media/tallielogo.cba908e259259ef4586152f280ff2583.svg",
-    "static/media/liralogo.svg": "/static/media/liralogo.ee792236790c3efa53d206c7971dac79.svg",
     "index.html": "/index.html",
-    "static/media/mooslixlogo.svg": "/static/media/mooslixlogo.64cc6beb6699641db448b865939be22b.svg",
-    "main.30e96ea9.css.map": "/static/css/main.30e96ea9.css.map",
-    "main.b6051292.js.map": "/static/js/main.b6051292.js.map",
-    "156.25c497eb.chunk.js.map": "/static/js/156.25c497eb.chunk.js.map"
+    "main.7de2030f.css.map": "/static/css/main.7de2030f.css.map",
+    "main.675b54f1.js.map": "/static/js/main.675b54f1.js.map",
+    "22.25b1036a.chunk.js.map": "/static/js/22.25b1036a.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.30e96ea9.css",
-    "static/js/main.b6051292.js"
+    "static/css/main.7de2030f.css",
+    "static/js/main.675b54f1.js"
   ]
 }
