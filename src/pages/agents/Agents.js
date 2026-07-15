@@ -10,6 +10,7 @@ import { gsap } from 'gsap';
 import PageTemplate from '../../components/PageTemplate';
 import CollectionState from '../../components/CollectionState';
 import useProjects from '../../hooks/useProjects';
+import useInfoReveal from '../../hooks/useInfoReveal';
 import AgentTerminal from './AgentTerminal';
 import './Agents.css';
 
@@ -80,7 +81,7 @@ const Agents = () => {
   const iconSrc = current?.icon || current?.brand?.logo || '';
 
   const rootRef = useRef(null);
-  const nameRef = useRef(null);
+  const infoRef = useRef(null);
   const stageRef = useRef(null);
   const reduce =
     typeof window !== 'undefined' &&
@@ -131,49 +132,13 @@ const Agents = () => {
     };
   }, [iconSrc, applyTint]);
 
-  // --- GSAP split-word name reveal (mirrors the Web/Apps wheels) ------------
-  const setName = useCallback(
-    (text) => {
-      const el = nameRef.current;
-      if (!el) return;
-      el.innerHTML = '';
-      const spans = [];
-      text.split(/(\s+)/).forEach((token) => {
-        if (/^\s+$/.test(token)) {
-          el.appendChild(document.createTextNode(' '));
-          return;
-        }
-        const word = document.createElement('span');
-        word.className = 'ag-word';
-        token.split('').forEach((ch) => {
-          const span = document.createElement('span');
-          span.className = 'ag-ch';
-          span.textContent = ch;
-          word.appendChild(span);
-          spans.push(span);
-        });
-        el.appendChild(word);
-      });
-      if (reduce) return;
-      gsap.fromTo(
-        spans,
-        { yPercent: 90, opacity: 0 },
-        {
-          yPercent: 0,
-          opacity: 1,
-          duration: 0.7,
-          ease: 'expo.out',
-          stagger: 0.026,
-          delay: 0.1,
-        }
-      );
-    },
-    [reduce]
-  );
-
-  useEffect(() => {
-    setName(current?.title || '');
-  }, [current?.slug, current?.title, setName]);
+  // choreograph the info panel entrance when the focused agent changes
+  useInfoReveal({
+    containerRef: infoRef,
+    prefix: 'ag',
+    title: current?.title || '',
+    revealKey: current?.slug || clampedIndex,
+  });
 
   // --- scroll-hijack cycle: wheel over the stage cycles through the agents,
   // wrapping around at either end (activeIndex is normalized by modulo). ---
@@ -216,7 +181,7 @@ const Agents = () => {
         <main className="ag-stage" ref={stageRef}>
           <div className="ag-focus">
             {/* left info panel — icon, animated name, desc, case-study link */}
-            <div className="ag-info">
+            <div className="ag-info" ref={infoRef}>
               <CollectionState
                 loading={loading}
                 error={error}
@@ -238,14 +203,7 @@ const Agents = () => {
                     </span>
                   )}
 
-                  {/* eslint-disable-next-line jsx-a11y/heading-has-content --
-                     content is injected as split chars by setName(); aria-label
-                     carries the accessible name. */}
-                  <h1
-                    className="ag-info__name"
-                    ref={nameRef}
-                    aria-label={current.title}
-                  />
+                  <h1 className="ag-info__name">{current.title}</h1>
 
                   {current.description && (
                     <p className="ag-info__desc">{current.description}</p>

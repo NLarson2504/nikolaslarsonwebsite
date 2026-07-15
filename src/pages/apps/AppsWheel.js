@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { gsap } from 'gsap';
+import useInfoReveal from '../../hooks/useInfoReveal';
 import './AppsWheel.css';
 
 const NEUTRAL_PICK = '#23262b';
@@ -52,7 +53,7 @@ const AppsWheel = ({ projects }) => {
   const wheelRef = useRef(null);
   const ambientRef = useRef(null);
   const cursorRef = useRef(null);
-  const nameRef = useRef(null);
+  const infoRef = useRef(null);
   const slotRefs = useRef([]);
   const picks = useRef(projects.map(() => ({ ...NEUTRAL_CORNERS })));
 
@@ -199,45 +200,6 @@ const AppsWheel = ({ projects }) => {
     [index, writeTint]
   );
 
-  // --- GSAP split-word name reveal -----------------------------------------
-  const setName = useCallback(
-    (text) => {
-      const el = nameRef.current;
-      if (!el) return;
-      el.innerHTML = '';
-      const spans = [];
-      text.split(/(\s+)/).forEach((token) => {
-        if (/^\s+$/.test(token)) {
-          el.appendChild(document.createTextNode(' '));
-          return;
-        }
-        const word = document.createElement('span');
-        word.className = 'aw-word';
-        token.split('').forEach((ch) => {
-          const span = document.createElement('span');
-          span.className = 'aw-ch';
-          span.textContent = ch;
-          word.appendChild(span);
-          spans.push(span);
-        });
-        el.appendChild(word);
-      });
-      if (reduce) return;
-      gsap.fromTo(
-        spans,
-        { yPercent: 90, opacity: 0 },
-        {
-          yPercent: 0,
-          opacity: 1,
-          duration: 0.7,
-          ease: 'expo.out',
-          stagger: 0.026,
-          delay: 0.1,
-        }
-      );
-    },
-    [reduce]
-  );
 
   // --- the wheel: spin (rotateY), ease/snap, drive focus -------------------
   useEffect(() => {
@@ -378,13 +340,13 @@ const AppsWheel = ({ projects }) => {
     return () => clearTimeout(id);
   }, [index]);
 
-  // Run the name reveal + tint crossfade only when the settled card changes.
+  // Run the tint crossfade only when the settled card changes. The info-panel
+  // entrance (icon/title/desc/button) is choreographed by useInfoReveal below.
   useEffect(() => {
     const prev = prevIndexRef.current;
-    setName(projects[settledIndex]?.title || '');
     applyTint(settledIndex, prev !== -1);
     prevIndexRef.current = settledIndex;
-  }, [settledIndex, projects, setName, applyTint]);
+  }, [settledIndex, applyTint]);
 
   const hot = (on) => () => {
     if (cursorRef.current) cursorRef.current.classList.toggle('hot', on);
@@ -402,6 +364,14 @@ const AppsWheel = ({ projects }) => {
     : '';
   const hasCaseStudy = Boolean(current.caseStudy);
 
+  // choreograph the info panel entrance when the settled app changes
+  useInfoReveal({
+    containerRef: infoRef,
+    prefix: 'aw',
+    title: current.title || '',
+    revealKey: current.slug || settledIndex,
+  });
+
   return (
     <div className="aw-root">
       <div className="aw-ambient" ref={ambientRef}>
@@ -415,7 +385,7 @@ const AppsWheel = ({ projects }) => {
 
       <main className="aw-stage">
         <div className="aw-focus">
-          <div className="aw-info">
+          <div className="aw-info" ref={infoRef}>
             {current.icon && (
               <img
                 className="aw-info__icon"
@@ -423,10 +393,7 @@ const AppsWheel = ({ projects }) => {
                 alt={`${current.title} icon`}
               />
             )}
-            {/* eslint-disable-next-line jsx-a11y/heading-has-content --
-               content is injected as split chars by setName(); aria-label carries
-               the accessible name. */}
-            <h1 className="aw-info__name" ref={nameRef} aria-label={current.title} />
+            <h1 className="aw-info__name">{current.title}</h1>
             {current.description && (
               <p className="aw-info__desc">{current.description}</p>
             )}

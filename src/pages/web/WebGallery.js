@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { gsap } from 'gsap';
+import useInfoReveal from '../../hooks/useInfoReveal';
 import './WebGallery.css';
 
 const NEUTRAL_PICK = '#23262b';
@@ -59,7 +60,7 @@ const WebGallery = ({ projects }) => {
   const wheelRef = useRef(null);
   const ambientRef = useRef(null);
   const cursorRef = useRef(null);
-  const nameRef = useRef(null);
+  const infoRef = useRef(null);
   const slotRefs = useRef([]); // every ring facet (real cards, repeated)
   const picks = useRef(projects.map(() => ({ ...NEUTRAL_CORNERS })));
 
@@ -214,45 +215,6 @@ const WebGallery = ({ projects }) => {
   // Split by WORD (each word an inline-block that never breaks) and animate the
   // chars within. Whole words stay together so multi-word titles wrap cleanly
   // onto separate lines instead of breaking mid-word.
-  const setName = useCallback(
-    (text) => {
-      const el = nameRef.current;
-      if (!el) return;
-      el.innerHTML = '';
-      const spans = [];
-      text.split(/(\s+)/).forEach((token) => {
-        if (/^\s+$/.test(token)) {
-          // preserve the space as a normal break opportunity between words
-          el.appendChild(document.createTextNode(' '));
-          return;
-        }
-        const word = document.createElement('span');
-        word.className = 'wg-word';
-        token.split('').forEach((ch) => {
-          const span = document.createElement('span');
-          span.className = 'wg-ch';
-          span.textContent = ch;
-          word.appendChild(span);
-          spans.push(span);
-        });
-        el.appendChild(word);
-      });
-      if (reduce) return;
-      gsap.fromTo(
-        spans,
-        { yPercent: 90, opacity: 0 },
-        {
-          yPercent: 0,
-          opacity: 1,
-          duration: 0.7,
-          ease: 'expo.out',
-          stagger: 0.026,
-          delay: 0.1,
-        }
-      );
-    },
-    [reduce]
-  );
 
   // --- the wheel: spin the cylinder, ease/snap rotation, drive focus -------
   useEffect(() => {
@@ -403,10 +365,9 @@ const WebGallery = ({ projects }) => {
   // Run the name reveal + tint crossfade only when the settled card changes.
   useEffect(() => {
     const prev = prevIndexRef.current;
-    setName(projects[settledIndex]?.title || '');
     applyTint(settledIndex, prev !== -1);
     prevIndexRef.current = settledIndex;
-  }, [settledIndex, projects, setName, applyTint]);
+  }, [settledIndex, applyTint]);
 
   const hot = (on) => () => {
     if (cursorRef.current) cursorRef.current.classList.toggle('hot', on);
@@ -416,6 +377,14 @@ const WebGallery = ({ projects }) => {
   const current = projects[settledIndex] || {};
   const viewUrl = current.url || current.brand?.url || '';
   const hasCaseStudy = Boolean(current.caseStudy);
+
+  // choreograph the info panel entrance when the settled site changes
+  useInfoReveal({
+    containerRef: infoRef,
+    prefix: 'wg',
+    title: current.title || '',
+    revealKey: current.slug || settledIndex,
+  });
 
   return (
     <div className="wg-root">
@@ -463,7 +432,7 @@ const WebGallery = ({ projects }) => {
             </div>
           </div>
 
-          <div className="wg-info">
+          <div className="wg-info" ref={infoRef}>
             {current.icon && (
               <img
                 className="wg-info__icon"
@@ -474,10 +443,7 @@ const WebGallery = ({ projects }) => {
             {current.category && (
               <p className="wg-info__eyebrow">{current.category}</p>
             )}
-            {/* eslint-disable-next-line jsx-a11y/heading-has-content --
-               content is injected as split chars by setName(); aria-label carries
-               the accessible name. */}
-            <h1 className="wg-info__name" ref={nameRef} aria-label={current.title} />
+            <h1 className="wg-info__name">{current.title}</h1>
             {current.description && (
               <p className="wg-info__desc">{current.description}</p>
             )}
