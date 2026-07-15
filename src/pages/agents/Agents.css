@@ -206,61 +206,75 @@
 }
 .agt-render {
   width: 100%;
-  max-width: 760px;
-  /* fixed hero height so the layout never shifts. The portrait may be taller
-     than this — it's allowed to overflow and is cleanly clipped (with a soft
-     top/bottom fade) rather than shrunk. */
-  height: clamp(440px, 66vh, 640px);
+  max-width: 560px;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
-  /* feather the top/bottom so an overflowing portrait fades out instead of
-     hard-cutting at the box edge */
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    transparent 0,
-    #000 9%,
-    #000 91%,
-    transparent 100%
-  );
-  mask-image: linear-gradient(
-    to bottom,
-    transparent 0,
-    #000 9%,
-    #000 91%,
-    transparent 100%
-  );
+  /* leave headroom so the pal can perch above the panel's top edge */
+  padding-top: 44px;
 }
 
-/* ASCII portrait — large; may overflow the hero box (clipped + feathered).
-   Slightly translucent overall so it reads as a soft render, not hard text. */
-.agt-portrait {
-  margin: 0;
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: clamp(6px, 0.86vw, 11px);
-  line-height: 1;
-  letter-spacing: 0.02em;
-  white-space: pre;
-  color: #e6ebf1;
-  opacity: 0.82;
-  text-shadow: 0 0 18px rgba(96, 165, 250, 0.14);
-}
-.agt-prow { white-space: pre; }
-/* per-character opacity is set inline; the materialize reveal is JS-driven and
-   ends on the finished portrait (see ProfileRun). */
-.agt-portrait span {
-  display: inline;
-  transition: opacity 0.12s linear;
-}
-
-/* streaming logs — left-aligned block, centered in the hero */
-.agt-log {
+/* the log panel — a rounded card with a subtle glassy fill + hairline border */
+.agt-panel {
+  position: relative;
   width: 100%;
-  max-width: 560px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(
+    180deg,
+    rgba(22, 24, 28, 0.66),
+    rgba(12, 13, 16, 0.72)
+  );
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  box-shadow: 0 34px 90px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* title bar with the agent slug */
+.agt-panel__bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 16px 10px 84px; /* left room for the perched pal */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+.agt-panel__name {
   font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 14px;
-  line-height: 1.65;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: #8a929d;
+}
+
+/* the pixel pal, perched standing on the panel's top-left edge */
+.agt-pal {
+  position: absolute;
+  left: 18px;
+  bottom: 100%;
+  /* overlap the border by a few px so it "stands on" the edge */
+  margin-bottom: -6px;
+  width: 80px;
+  height: 80px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.45));
+  transition: filter 0.3s;
+}
+.agt-pal.is-working {
+  filter: drop-shadow(0 0 10px rgba(242, 193, 78, 0.35))
+    drop-shadow(0 4px 6px rgba(0, 0, 0, 0.45));
+}
+
+/* streaming logs — left-aligned inside the panel */
+.agt-log {
+  padding: 16px 18px 18px;
+  height: clamp(300px, 46vh, 420px);
+  overflow: auto;
+  text-align: left;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 13.5px;
+  line-height: 1.7;
   color: #c6ccd4;
 }
 .agt-line { white-space: pre-wrap; word-break: break-word; }
@@ -279,12 +293,11 @@
 @media (max-width: 900px) {
   .ag-focus {
     flex-direction: column-reverse;
-    gap: 32px;
+    gap: 40px;
   }
   .ag-info {
     width: 100%;
     max-width: 88vw;
   }
-  .agt-render { min-height: 46vh; }
-  .agt-portrait { font-size: clamp(6px, 2.1vw, 11px); }
+  .agt-log { height: clamp(240px, 40vh, 360px); }
 }
