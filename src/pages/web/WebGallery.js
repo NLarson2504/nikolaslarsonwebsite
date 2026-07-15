@@ -235,6 +235,7 @@ const WebGallery = ({ projects }) => {
     let lastRot = rotationRef.current;
 
     const paint = (fast) => {
+      if (!wheelRef.current) return; // content may be unmounted behind the loader
       const rot = rotationRef.current;
       wheelRef.current.style.transform = `translateZ(${-RADIUS}px) rotateX(${rot}deg)`;
       // Front facet is where s*STEP ≡ -rot → s = round(-rot / STEP).

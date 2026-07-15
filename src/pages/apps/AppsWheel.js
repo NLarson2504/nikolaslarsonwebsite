@@ -219,6 +219,7 @@ const AppsWheel = ({ projects }) => {
     let lastRot = rotationRef.current;
 
     const paint = (fast) => {
+      if (!wheelRef.current) return; // content may be unmounted behind the loader
       const rot = rotationRef.current;
       wheelRef.current.style.transform = `translateZ(${-RADIUS}px) rotateY(${rot}deg)`;
       const focusSlot = Math.round(-rot / CARD_ARC) * SLOTS_PER_CARD;

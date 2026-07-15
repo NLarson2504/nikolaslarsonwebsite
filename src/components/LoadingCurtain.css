@@ -1,0 +1,103 @@
+/* Marquee "curtain" loader. Three big rows of the page name scroll across a
+   full-screen dark field, sliding in from alternating sides and sweeping out
+   when the page is ready. Scoped to .lc-*. */
+
+.lc-root {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: #08090a;
+  overflow: hidden;
+  /* center the row block both axes */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.lc-rows {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(6px, 1.4vh, 18px);
+}
+
+/* Fixed row height (tied to the type size) so the block's vertical position is
+   stable — the webfont swapping in can't reflow/jump the rows. */
+.lc-row {
+  width: 100%;
+  height: clamp(3rem, 12vw, 9.2rem);
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  white-space: nowrap;
+  will-change: transform, opacity;
+  /* hidden start state in CSS so the first paint is already off-screen — GSAP's
+     fromTo then animates from here, with no top-flash before JS runs. */
+  opacity: 0;
+}
+.lc-track {
+  display: inline-flex;
+  align-items: center;
+  will-change: transform;
+}
+.lc-seg {
+  display: inline-block;
+  font-family: 'MuseoModerno', sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  font-size: clamp(2.6rem, 10vw, 8rem);
+  line-height: 1;
+  padding-right: 0.35em; /* keep the two copies flush for a seamless loop */
+}
+
+/* solid middle row */
+.lc-row--solid .lc-seg {
+  color: #f5f6f7;
+}
+/* outlined top/bottom rows (stroke only) */
+.lc-row--outline .lc-seg {
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgba(245, 246, 247, 0.4);
+  text-stroke: 1.5px rgba(245, 246, 247, 0.4);
+}
+@media (max-width: 640px) {
+  .lc-row--outline .lc-seg {
+    -webkit-text-stroke-width: 1px;
+    text-stroke-width: 1px;
+  }
+}
+
+/* ---- content reveal behind the curtain ----------------------------------
+   Pages wrap their content in a `.lc-content` element and toggle `.is-in`
+   (via the render-prop `revealed`). It starts scaled-down, blurred, and
+   transparent, then eases in once the curtain has swept away. */
+.lc-content {
+  opacity: 0;
+  transform: scale(1.04);
+  filter: blur(14px);
+  will-change: opacity, transform, filter;
+}
+.lc-content.is-in {
+  opacity: 1;
+  transform: scale(1);
+  filter: blur(0);
+  transition: opacity 0.7s ease, transform 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.7s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lc-content {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+  /* no JS enter animation runs — keep the rows visible */
+  .lc-row {
+    opacity: 1;
+  }
+}

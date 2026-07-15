@@ -11,6 +11,7 @@ import PageTemplate from '../../components/PageTemplate';
 import CollectionState from '../../components/CollectionState';
 import useProjects from '../../hooks/useProjects';
 import useInfoReveal from '../../hooks/useInfoReveal';
+import LoadingCurtain from '../../components/LoadingCurtain';
 import AgentTerminal from './AgentTerminal';
 import './Agents.css';
 
@@ -169,8 +170,13 @@ const Agents = () => {
   }, [items.length]);
 
   return (
-    <PageTemplate className="agents-page">
-      <div className="ag-root" ref={rootRef}>
+    <LoadingCurtain loading={loading} label="AGENTS">
+      {(revealed) => (
+        <PageTemplate className="agents-page">
+          <div
+            className={`ag-root lc-content${revealed ? ' is-in' : ''}`}
+            ref={rootRef}
+          >
         {/* footlight glow rising from the bottom, tinted from the icon */}
         <div className="ag-ambient">
           <div className="ag-ambient__c ag-ambient__bl" />
@@ -232,9 +238,11 @@ const Agents = () => {
             </div>
           </div>
 
-        </main>
-      </div>
-    </PageTemplate>
+            </main>
+          </div>
+        </PageTemplate>
+      )}
+    </LoadingCurtain>
   );
 };
 
