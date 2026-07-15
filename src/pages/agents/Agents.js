@@ -254,7 +254,7 @@ const Agents = () => {
                   {hasCaseStudy && (
                     <div className="ag-info__links">
                       <Link
-                        className="ag-info__btn ag-info__btn--primary"
+                        className="ag-info__btn"
                         to={`/agents/${current.slug}`}
                       >
                         Case study <span className="ag-arrow">→</span>
