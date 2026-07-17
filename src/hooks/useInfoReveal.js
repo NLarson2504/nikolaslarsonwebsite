@@ -20,9 +20,19 @@ gsap.registerPlugin(SplitText);
  * @param {React.RefObject} opts.containerRef  wrapper around the info panel
  * @param {string} opts.prefix                 'wg' | 'aw' | 'ag'
  * @param {string} opts.title                  current title text (drives split)
+ * @param {string} [opts.description]           current description text; the hook
+ *   writes this into the desc <p> before splitting. Required for the description
+ *   to update per item — SplitText replaces the <p>'s text node with line spans,
+ *   so React's own {current.description} no longer reaches the DOM.
  * @param {*} opts.revealKey                    change this to replay (e.g. slug)
  */
-export default function useInfoReveal({ containerRef, prefix, title, revealKey }) {
+export default function useInfoReveal({
+  containerRef,
+  prefix,
+  title,
+  description,
+  revealKey,
+}) {
   // keep the live SplitText instances so we can revert (free the DOM) on replay
   const splitsRef = useRef([]);
 
@@ -42,6 +52,12 @@ export default function useInfoReveal({ containerRef, prefix, title, revealKey }
     // Write the title into the heading (it's rendered empty; aria-label carries
     // the accessible name), then split it.
     if (name) name.textContent = title || '';
+
+    // Write the current description too. SplitText replaces this <p>'s text node
+    // with line spans, so React's own {current.description} can't update it after
+    // the first render — the hook must set the text itself each settle, or every
+    // item would keep showing the first item's description.
+    if (desc && description !== undefined) desc.textContent = description || '';
 
     // clean up any previous split before re-splitting
     splitsRef.current.forEach((s) => s.revert());
@@ -114,5 +130,5 @@ export default function useInfoReveal({ containerRef, prefix, title, revealKey }
       splitsRef.current = [];
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [revealKey, title]);
+  }, [revealKey, title, description]);
 }

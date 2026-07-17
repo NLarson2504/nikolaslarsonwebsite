@@ -83,31 +83,7 @@
   100% { transform: translate(0, 0); }
 }
 
-/* lagging dot behind the (still visible) real cursor */
-.wg-cursor {
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 8;
-  pointer-events: none;
-  width: 26px;
-  height: 26px;
-  border: 1px solid rgba(245, 246, 247, 0.5);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  mix-blend-mode: difference;
-  transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-    height 0.5s cubic-bezier(0.16, 1, 0.3, 1), background 0.5s;
-}
-.wg-cursor.hot {
-  width: 78px;
-  height: 78px;
-  background: rgba(245, 246, 247, 0.12);
-  border-color: transparent;
-}
-@media (pointer: coarse) {
-  .wg-cursor { display: none; }
-}
+/* the lagging cursor dot is now a site-wide effect (components/CursorDot) */
 
 /* stage */
 .wg-stage {

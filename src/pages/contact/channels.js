@@ -46,7 +46,7 @@ const CHANNELS = [
       },
     },
     blurb:
-      'Code, commits, and the occasional weekend experiment. The green wall on the right is the real rhythm of it.',
+      'Code, commits, and the occasional weekend experiment. The green wall is the real rhythm of it.',
     url: 'https://github.com/NLarson2504',
     cta: 'Open GitHub',
     tint: '#3fb950',

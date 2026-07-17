@@ -52,7 +52,6 @@ const AppsWheel = ({ projects }) => {
 
   const wheelRef = useRef(null);
   const ambientRef = useRef(null);
-  const cursorRef = useRef(null);
   const infoRef = useRef(null);
   const slotRefs = useRef([]);
   const picks = useRef(projects.map(() => ({ ...NEUTRAL_CORNERS })));
@@ -65,33 +64,6 @@ const AppsWheel = ({ projects }) => {
   const reduce =
     typeof window !== 'undefined' &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  // --- lagging cursor dot --------------------------------------------------
-  useEffect(() => {
-    const cursor = cursorRef.current;
-    if (!cursor) return undefined;
-    let cx = window.innerWidth / 2;
-    let cy = window.innerHeight / 2;
-    let tx = cx;
-    let ty = cy;
-    let raf;
-    const move = (e) => {
-      tx = e.clientX;
-      ty = e.clientY;
-    };
-    const loop = () => {
-      cx += (tx - cx) * 0.09;
-      cy += (ty - cy) * 0.09;
-      cursor.style.transform = `translate(${cx}px,${cy}px) translate(-50%,-50%)`;
-      raf = requestAnimationFrame(loop);
-    };
-    window.addEventListener('pointermove', move);
-    raf = requestAnimationFrame(loop);
-    return () => {
-      window.removeEventListener('pointermove', move);
-      cancelAnimationFrame(raf);
-    };
-  }, []);
 
   const writeTint = useCallback((i) => {
     const corners = picks.current[i] || NEUTRAL_CORNERS;
@@ -349,10 +321,6 @@ const AppsWheel = ({ projects }) => {
     prevIndexRef.current = settledIndex;
   }, [settledIndex, applyTint]);
 
-  const hot = (on) => () => {
-    if (cursorRef.current) cursorRef.current.classList.toggle('hot', on);
-  };
-
   // Info panel reads the DEBOUNCED index, so its text/links don't thrash while
   // the wheel spins — it updates once the wheel settles.
   const current = projects[settledIndex] || {};
@@ -370,6 +338,7 @@ const AppsWheel = ({ projects }) => {
     containerRef: infoRef,
     prefix: 'aw',
     title: current.title || '',
+    description: current.description || '',
     revealKey: current.slug || settledIndex,
   });
 
@@ -382,7 +351,6 @@ const AppsWheel = ({ projects }) => {
         <div className="aw-ambient__c aw-ambient__br" />
       </div>
       <div className="aw-grain" />
-      <div className="aw-cursor" ref={cursorRef} />
 
       <main className="aw-stage">
         <div className="aw-focus">
@@ -403,8 +371,6 @@ const AppsWheel = ({ projects }) => {
                 <Link
                   className="aw-info__btn aw-info__btn--primary"
                   to={`/apps/${current.slug}`}
-                  onPointerEnter={hot(true)}
-                  onPointerLeave={hot(false)}
                 >
                   Case study <span className="aw-arrow">→</span>
                 </Link>
@@ -415,8 +381,6 @@ const AppsWheel = ({ projects }) => {
                   href={liveUrl}
                   target="_blank"
                   rel="noreferrer"
-                  onPointerEnter={hot(true)}
-                  onPointerLeave={hot(false)}
                 >
                   {liveLabel} <span className="aw-arrow">↗</span>
                 </a>
