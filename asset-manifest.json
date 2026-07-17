@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/static/css/main.7de2030f.css",
-    "main.js": "/static/js/main.675b54f1.js",
+    "main.css": "/static/css/main.fd92b03a.css",
+    "main.js": "/static/js/main.0edf37b2.js",
     "static/js/22.25b1036a.chunk.js": "/static/js/22.25b1036a.chunk.js",
     "static/media/mooslixmobile1.png": "/static/media/mooslixmobile1.32a9fbecae2c99aa7d18.png",
     "static/media/nourished1.png": "/static/media/nourished1.9851f901d60def093148.png",
@@ -15,14 +15,13 @@
     "static/media/campuslm3.png": "/static/media/campuslm3.61148d455ab0d9da908c.png",
     "static/media/nikolaslarson1.png": "/static/media/nikolaslarson1.65935d2367e556b41a7b.png",
     "static/media/Mobile.png": "/static/media/Mobile.9123a41df52a72c7c3ad.png",
-    "static/media/Contact.svg": "/static/media/Contact.53a1afba8a919b42eb2da3618d442d40.svg",
     "index.html": "/index.html",
-    "main.7de2030f.css.map": "/static/css/main.7de2030f.css.map",
-    "main.675b54f1.js.map": "/static/js/main.675b54f1.js.map",
+    "main.fd92b03a.css.map": "/static/css/main.fd92b03a.css.map",
+    "main.0edf37b2.js.map": "/static/js/main.0edf37b2.js.map",
     "22.25b1036a.chunk.js.map": "/static/js/22.25b1036a.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.7de2030f.css",
-    "static/js/main.675b54f1.js"
+    "static/css/main.fd92b03a.css",
+    "static/js/main.0edf37b2.js"
   ]
 }
