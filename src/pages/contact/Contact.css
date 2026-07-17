@@ -115,6 +115,8 @@
   border: 0;
   background: none;
   cursor: default;
+  -webkit-tap-highlight-color: transparent; /* no blue tap flash on click */
+  outline: none;
   transform-origin: center center;
   transform: translateY(calc(-50% + var(--off) * 118%))
     translateZ(var(--depth, 0px)) scale(var(--scale, 1));
@@ -122,6 +124,13 @@
   transition: transform 0.62s cubic-bezier(0.22, 1, 0.36, 1),
     filter 0.62s ease, opacity 0.5s ease;
   will-change: transform, filter, opacity;
+}
+.ct-slide:focus {
+  outline: none;
+}
+/* keep a subtle ring for keyboard navigation only (not mouse/touch clicks) */
+.ct-slide:focus-visible .ct-panel {
+  border-color: rgba(255, 255, 255, 0.35);
 }
 .ct-slide.is-active {
   filter: none;
