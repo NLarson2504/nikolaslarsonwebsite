@@ -13,57 +13,74 @@ const HoverMenu = ({ activeSection, navigateToPage, isVisible }) => {
 
   const navOrder = ['agents', 'apps', 'web'];
 
-  // Static labels + right-column links; the `examples` are injected live below.
+  // Static labels; the right-column `items` and left `examples` are built live
+  // below so every link resolves to a real route (the section pages are frozen
+  // cycle-through experiences, so there are no in-page anchors to scroll to).
   const menuMeta = {
-    agents: {
-      leftLabel: 'Agents',
-      rightLabel: 'Implementations',
-      items: [
-        { label: 'Conversational AI', page: 'agents#chatai', description: 'Chat-based solutions' },
-        { label: 'Task Automation', page: 'agents#actionai', description: 'AI workflows' },
-        { label: 'Custom Models', page: 'agents#assistants', description: 'Tailored AI' },
-        { label: 'Integration', page: 'agents#integration', description: 'Connect systems' },
-      ],
-    },
-    apps: {
-      leftLabel: 'Apps',
-      rightLabel: 'More',
-      items: [
-        { label: 'iOS Apps', page: 'apps#ios', description: 'Native Swift' },
-        { label: 'Android Apps', page: 'apps#android', description: 'Kotlin & Java' },
-        { label: 'React Native', page: 'apps#reactnative', description: 'Cross-platform' },
-        { label: 'App Store', page: 'apps#appstore', description: 'Optimization' },
-      ],
-    },
-    web: {
-      leftLabel: 'Web',
-      rightLabel: 'More',
-      items: [
-        { label: 'UI/UX Design', page: 'web#design', description: 'User interfaces' },
-        { label: 'Prototyping', page: 'web#prototyping', description: 'Interactive mockups' },
-        { label: 'Design Systems', page: 'web#system', description: 'Frameworks' },
-        { label: 'Brand Identity', page: 'web#branding', description: 'Visual development' },
-      ],
-    },
+    agents: { leftLabel: 'Agents', rightLabel: 'Explore', viewAll: 'View all agents' },
+    apps: { leftLabel: 'Apps', rightLabel: 'Explore', viewAll: 'View all apps' },
+    web: { leftLabel: 'Web', rightLabel: 'Explore', viewAll: 'View all web work' },
   };
 
-  // Build the live `examples` (top-2 ranked projects) for each section.
+  // Build the live content per section: the top-2 ranked projects on the left,
+  // and a 2x2 grid of real destination links on the right (no fake #anchors, as
+  // the section pages are frozen cycle-through experiences with no anchors to
+  // scroll to). Grid order — top row: section-specific; bottom row: the shared
+  // / more-generic links.
   const menuContent = Object.fromEntries(
-    navOrder.map((section) => [
-      section,
-      {
-        ...menuMeta[section],
-        examples: (topBySection[section] || []).map((p) => ({
-          title: p.title,
-          description: p.brand?.name || p.category || p.platform || '',
-          logo: p.icon || p.brand?.logo || '',
-          // Link to the case study when there is one; otherwise to the section
-          // list so we never land on a "no case study" page. navigateToPage
-          // prepends "/", so strip the leading slash from the path.
-          page: (p.caseStudy ? p.href : `/${section}`).replace(/^\//, ''),
-        })),
-      },
-    ])
+    navOrder.map((section) => {
+      const projects = topBySection[section] || [];
+      // navigateToPage prepends "/", so paths are stored without a leading slash.
+      const strip = (p) => p.replace(/^\//, '');
+      const withCase = projects.filter((p) => p.caseStudy);
+      const featured = withCase[0];
+      const second = withCase[1];
+
+      // Always 4 cells so the 2x2 grid stays full; each one resolves to a real
+      // route. Missing case studies fall back to the section list page.
+      const items = [
+        // top-left: into the collection
+        {
+          label: menuMeta[section].viewAll,
+          page: section,
+          description: 'Browse the full collection',
+        },
+        // top-right: the standout piece
+        {
+          label: 'Featured case study',
+          page: featured ? strip(featured.href) : section,
+          description: featured ? featured.title : 'See the work',
+        },
+        // bottom-left (redundant/generic): another way into the work
+        {
+          label: second ? 'Latest case study' : 'All case studies',
+          page: second ? strip(second.href) : section,
+          description: second ? second.title : 'Deep dives on the builds',
+        },
+        // bottom-right (shared across sections): contact
+        {
+          label: 'Start a project',
+          page: 'contact',
+          description: "Let's build something",
+        },
+      ];
+
+      return [
+        section,
+        {
+          ...menuMeta[section],
+          items,
+          examples: projects.map((p) => ({
+            title: p.title,
+            description: p.brand?.name || p.category || p.platform || '',
+            logo: p.icon || p.brand?.logo || '',
+            // Link to the case study when there is one; otherwise to the section
+            // list so we never land on a "no case study" page.
+            page: strip(p.caseStudy ? p.href : `/${section}`),
+          })),
+        },
+      ];
+    })
   );
 
   const getSlideDirection = (from, to) => {
@@ -219,7 +236,7 @@ const HoverMenu = ({ activeSection, navigateToPage, isVisible }) => {
           {/* Separator Bar */}
           <div className="w-px bg-white/10 self-stretch"></div>
 
-          {/* Right Section - 2x2 Grid */}
+          {/* Right Section - 2x2 grid of real destination links */}
           <div className="flex-1">
             <div className="text-white/60 text-sm font-medium text-left mb-3 pl-2">
               {content.rightLabel}
@@ -234,7 +251,7 @@ const HoverMenu = ({ activeSection, navigateToPage, isVisible }) => {
                   <div className="font-medium group-hover:text-white transition-colors text-sm">
                     {item.label}
                   </div>
-                  <div className="text-xs text-white/50 mt-0.5 group-hover:text-white/70 transition-colors">
+                  <div className="text-xs text-white/50 mt-0.5 group-hover:text-white/70 transition-colors line-clamp-1">
                     {item.description}
                   </div>
                 </button>
