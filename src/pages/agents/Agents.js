@@ -138,6 +138,7 @@ const Agents = () => {
     containerRef: infoRef,
     prefix: 'ag',
     title: current?.title || '',
+    description: current?.description || '',
     revealKey: current?.slug || clampedIndex,
   });
 

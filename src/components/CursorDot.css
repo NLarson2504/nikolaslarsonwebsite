@@ -1,0 +1,38 @@
+/* Site-wide lagging cursor dot — a small filled white dot that eases a frame
+   behind the real cursor, blended with `difference` so it reads on any
+   background. On hover of an interactive element the dot gently grows a touch
+   and softens — a subtle, understated cue rather than a ring or crosshair. */
+.site-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10001; /* above the fixed navbar (9999) and mobile menu (10000);
+                     pointer-events:none keeps it click-through */
+  pointer-events: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f5f6f7;
+  transform: translate(-50%, -50%);
+  mix-blend-mode: difference;
+  opacity: 0; /* revealed once the pointer moves (see .is-visible) */
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    height 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    background 0.3s ease, opacity 0.3s ease;
+}
+.site-cursor.is-visible {
+  opacity: 1;
+}
+
+/* hover: the dot fades away entirely over interactive elements */
+.site-cursor.is-hot {
+  opacity: 0;
+}
+
+/* touch devices have no hovering pointer — hide entirely */
+@media (pointer: coarse) {
+  .site-cursor { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .site-cursor { display: none; }
+}

@@ -1,0 +1,472 @@
+/* Contact page — same stage vocabulary as Agents/Apps/Web: a dark stage with a
+   footlight glow tinted per focused item and film grain, a two-column focus
+   layout. Here the LEFT is a rotating deck of contact channels (LinkedIn /
+   GitHub / Email) and the RIGHT is a bespoke detail panel that reacts to the
+   focused channel. Scoped to .ct-*. */
+
+@property --ct-glow {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 1;
+}
+
+.ct-root {
+  position: relative;
+  min-height: 100vh;
+  background: var(--bg, #08090a);
+  color: #f5f6f7;
+  overflow: hidden;
+  --pick-bl: #1f2b45;
+  --pick-br: #1f2b45;
+  --ct-glow: 1;
+}
+
+/* footlight glow rising from the bottom, tinted from the focused channel */
+.ct-ambient {
+  position: absolute;
+  inset: -10% -10% 0 -10%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: calc(0.72 * var(--ct-glow));
+  filter: blur(72px) saturate(1.5);
+  -webkit-mask-image: linear-gradient(to top, #000 0%, #000 18%, transparent 58%);
+  mask-image: linear-gradient(to top, #000 0%, #000 18%, transparent 58%);
+}
+.ct-ambient__c {
+  position: absolute;
+  inset: 0;
+  mix-blend-mode: screen;
+}
+.ct-ambient__bl {
+  background: radial-gradient(90vmax 80vmax at 22% 106%, var(--pick-bl) 0%, transparent 66%);
+}
+.ct-ambient__br {
+  background: radial-gradient(90vmax 80vmax at 82% 106%, var(--pick-br) 0%, transparent 66%);
+}
+
+/* film grain — identical treatment to the other pages */
+.ct-grain {
+  position: absolute;
+  inset: -50%;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.06;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: ct-grain 9s steps(5) infinite;
+}
+@keyframes ct-grain {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-3%, 2%); }
+  50% { transform: translate(2%, -2%); }
+  75% { transform: translate(-2%, 3%); }
+  100% { transform: translate(0, 0); }
+}
+
+.ct-stage {
+  position: relative;
+  z-index: 2;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(80px, 12vh, 130px) clamp(24px, 6vw, 90px) clamp(48px, 8vh, 96px);
+  outline: none;
+}
+
+.ct-focus {
+  display: flex;
+  align-items: center;
+  gap: clamp(40px, 6vw, 110px);
+  width: 100%;
+  max-width: 1360px;
+  justify-content: center;
+}
+
+/* ---- left column: the rotating channel deck ------------------------------ */
+.ct-deck-col {
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: 480px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* the deck — a fixed-height stage the cards slide within, so cycling never
+   shifts the surrounding layout. Sized like the agents' terminal deck. */
+.ct-deck {
+  position: relative;
+  width: 100%;
+  height: clamp(340px, 50vh, 460px);
+  perspective: 1400px;
+  transform-style: preserve-3d;
+}
+
+/* one channel's slide — absolutely centered, offset up/down by --off; the
+   focused one is sharp/forward, neighbours shrink, gray out and drop back */
+.ct-slide {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: default;
+  -webkit-tap-highlight-color: transparent; /* no blue tap flash on click */
+  outline: none;
+  transform-origin: center center;
+  transform: translateY(calc(-50% + var(--off) * 118%))
+    translateZ(var(--depth, 0px)) scale(var(--scale, 1));
+  filter: grayscale(var(--gray, 0));
+  transition: transform 0.62s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.62s ease, opacity 0.5s ease;
+  will-change: transform, filter, opacity;
+}
+.ct-slide:focus {
+  outline: none;
+}
+/* keep a subtle ring for keyboard navigation only (not mouse/touch clicks) */
+.ct-slide:focus-visible .ct-panel {
+  border-color: rgba(255, 255, 255, 0.35);
+}
+.ct-slide.is-active {
+  filter: none;
+  cursor: pointer;
+}
+
+/* the channel panel — a full terminal-style card matching .agt-panel: glassy
+   fill, hairline border, title bar + body. */
+.ct-panel {
+  position: relative;
+  width: 100%;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(180deg, rgba(22, 24, 28, 0.66), rgba(12, 13, 16, 0.72));
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  box-shadow: 0 34px 90px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+.ct-slide.is-active .ct-panel {
+  transition: border-color 0.3s;
+}
+.ct-slide.is-active .ct-panel:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+/* title bar with the brand dot, channel name, and handle */
+.ct-panel__bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+.ct-panel__dot {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #f5f6f7;
+  background: color-mix(in srgb, var(--brand) 26%, #14171c);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand) 55%, transparent);
+}
+.ct-panel__name {
+  font-family: 'MuseoModerno', sans-serif;
+  font-weight: 700;
+  font-size: 0.98rem;
+  color: #f6f8fa;
+}
+.ct-panel__handle {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11.5px;
+  color: #8a929d;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 45%;
+}
+.ct-panel__body {
+  padding: 20px;
+  height: clamp(240px, 34vh, 340px);
+  overflow: auto;
+  text-align: left;
+}
+
+/* the profile card inside a panel body (GitHub / LinkedIn / Email) */
+.ct-pcard {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.ct-pcard__head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.ct-pcard__avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+.ct-pcard__brand {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  font-size: 26px;
+  color: #f5f6f7;
+  background: color-mix(in srgb, var(--brand) 28%, #14171c);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand) 55%, transparent);
+}
+.ct-pcard__id {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.ct-pcard__name {
+  font-family: 'MuseoModerno', sans-serif;
+  font-weight: 700;
+  font-size: 1.25rem;
+  letter-spacing: -0.01em;
+  color: #f6f8fa;
+}
+.ct-pcard__login {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12.5px;
+  color: #8a929d;
+}
+.ct-pcard__bio {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: #c6ccd4;
+}
+.ct-pcard__stats {
+  display: flex;
+  gap: 20px;
+  padding-top: 4px;
+}
+.ct-pcard__stat {
+  display: flex;
+  flex-direction: column;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8b929c;
+}
+.ct-pcard__stat strong {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #f6f8fa;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.ct-pcard__meta {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11.5px;
+  color: #6b7280;
+}
+
+/* ---- right column: the reactive detail panel ----------------------------- */
+.ct-detail {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 560px;
+  text-align: left;
+}
+.ct-info__name {
+  font-family: 'MuseoModerno', sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+  font-size: clamp(2.2rem, 4.4vw, 3.4rem);
+  color: #f6f8fa;
+  min-height: 1.08em; /* reserve the line so the reveal doesn't shift layout */
+}
+.ct-info__desc {
+  margin-top: 16px;
+  max-width: 46ch;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.98rem;
+  line-height: 1.6;
+  color: #a8afba;
+}
+.ct-detail__body {
+  margin-top: 26px;
+}
+.ct-info__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 26px;
+}
+.ct-info__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  color: #f5f6f7;
+  text-decoration: none;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: border-color 0.4s, background 0.4s, color 0.4s;
+}
+.ct-info__btn:hover {
+  border-color: rgba(245, 246, 247, 0.5);
+  background: rgba(245, 246, 247, 0.06);
+}
+.ct-arrow { transition: transform 0.4s; display: inline-block; }
+.ct-info__btn:hover .ct-arrow { transform: translate(3px, -3px); }
+
+/* ---- GitHub contribution grid -------------------------------------------- */
+.ct-gh__grid {
+  display: grid;
+  grid-template-columns: repeat(20, 1fr);
+  grid-auto-flow: column;
+  grid-template-rows: repeat(7, 1fr);
+  gap: 4px;
+  max-width: 420px;
+}
+.ct-gh__cell {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+.ct-gh__legend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 14px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  color: #6b7280;
+}
+.ct-gh__key {
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+}
+
+/* ---- LinkedIn / generic-link key-value detail ---------------------------- */
+.ct-linkedin {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.ct-linkedin__row {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+.ct-linkedin__k {
+  flex: 0 0 96px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8b929c;
+}
+.ct-linkedin__v {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.98rem;
+  color: #d4d9e0;
+}
+
+/* ---- Email: the contact form -------------------------------------------- */
+.ct-form {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  max-width: 460px;
+}
+.ct-form__note {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.03em;
+}
+.ct-form__note--ok { color: #6ee7a8; }
+.ct-form__note--err { color: #f4a4a4; }
+.ct-field { display: flex; flex-direction: column; }
+.ct-field__label {
+  margin-bottom: 8px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #8b929c;
+}
+.ct-field__input {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 8px 2px;
+  color: #f5f6f7;
+  font-family: 'Inter', sans-serif;
+  font-size: 1.05rem;
+  transition: border-color 0.3s;
+}
+.ct-field__input::placeholder { color: #5b616b; }
+.ct-field__input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.5);
+}
+.ct-field__input--area { resize: none; line-height: 1.6; }
+.ct-form__btn {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  padding: 12px 22px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  background: transparent;
+  color: #f5f6f7;
+  cursor: pointer;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: border-color 0.3s, background 0.3s;
+}
+.ct-form__btn:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.05);
+}
+.ct-form__btn.is-busy { opacity: 0.5; cursor: not-allowed; }
+.ct-form__btn:hover .ct-arrow { transform: translateX(3px); }
+
+/* ---- responsive: stack, deck on top -------------------------------------- */
+@media (max-width: 900px) {
+  .ct-focus {
+    flex-direction: column;
+    gap: 48px;
+  }
+  .ct-deck-col,
+  .ct-detail {
+    width: 100%;
+    max-width: 88vw;
+  }
+  .ct-gh__grid { grid-template-columns: repeat(20, 1fr); }
+}

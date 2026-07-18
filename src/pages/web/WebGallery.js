@@ -59,7 +59,6 @@ const WebGallery = ({ projects }) => {
 
   const wheelRef = useRef(null);
   const ambientRef = useRef(null);
-  const cursorRef = useRef(null);
   const infoRef = useRef(null);
   const slotRefs = useRef([]); // every ring facet (real cards, repeated)
   const picks = useRef(projects.map(() => ({ ...NEUTRAL_CORNERS })));
@@ -73,33 +72,6 @@ const WebGallery = ({ projects }) => {
   const reduce =
     typeof window !== 'undefined' &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  // --- lagging cursor dot (real cursor stays visible) ----------------------
-  useEffect(() => {
-    const cursor = cursorRef.current;
-    if (!cursor) return undefined;
-    let cx = window.innerWidth / 2;
-    let cy = window.innerHeight / 2;
-    let tx = cx;
-    let ty = cy;
-    let raf;
-    const move = (e) => {
-      tx = e.clientX;
-      ty = e.clientY;
-    };
-    const loop = () => {
-      cx += (tx - cx) * 0.09;
-      cy += (ty - cy) * 0.09;
-      cursor.style.transform = `translate(${cx}px,${cy}px) translate(-50%,-50%)`;
-      raf = requestAnimationFrame(loop);
-    };
-    window.addEventListener('pointermove', move);
-    raf = requestAnimationFrame(loop);
-    return () => {
-      window.removeEventListener('pointermove', move);
-      cancelAnimationFrame(raf);
-    };
-  }, []);
 
   // Swap the four corner tints into CSS vars.
   const writeTint = useCallback((i) => {
@@ -370,10 +342,6 @@ const WebGallery = ({ projects }) => {
     prevIndexRef.current = settledIndex;
   }, [settledIndex, applyTint]);
 
-  const hot = (on) => () => {
-    if (cursorRef.current) cursorRef.current.classList.toggle('hot', on);
-  };
-
   // Info panel reads the DEBOUNCED index so its text/links don't thrash mid-spin.
   const current = projects[settledIndex] || {};
   const viewUrl = current.url || current.brand?.url || '';
@@ -384,6 +352,7 @@ const WebGallery = ({ projects }) => {
     containerRef: infoRef,
     prefix: 'wg',
     title: current.title || '',
+    description: current.description || '',
     revealKey: current.slug || settledIndex,
   });
 
@@ -396,7 +365,6 @@ const WebGallery = ({ projects }) => {
         <div className="wg-ambient__c wg-ambient__br" />
       </div>
       <div className="wg-grain" />
-      <div className="wg-cursor" ref={cursorRef} />
 
       <main className="wg-stage">
         <div className="wg-focus">
@@ -453,8 +421,6 @@ const WebGallery = ({ projects }) => {
                 <Link
                   className="wg-info__btn wg-info__btn--primary"
                   to={`/web/${current.slug}`}
-                  onPointerEnter={hot(true)}
-                  onPointerLeave={hot(false)}
                 >
                   Case study <span className="wg-arrow">→</span>
                 </Link>
@@ -465,8 +431,6 @@ const WebGallery = ({ projects }) => {
                   href={viewUrl}
                   target="_blank"
                   rel="noreferrer"
-                  onPointerEnter={hot(true)}
-                  onPointerLeave={hot(false)}
                 >
                   View site <span className="wg-arrow">↗</span>
                 </a>

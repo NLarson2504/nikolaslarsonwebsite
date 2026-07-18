@@ -11,6 +11,7 @@ import CaseStudyPage from './components/caseStudy/CaseStudyPage';
 import Admin from './pages/admin/Admin';
 import TopNav from './components/TopNav';
 import Footer from './components/Footer';
+import CursorDot from './components/CursorDot';
 import useGSAPScrollSmooth from './hooks/useGSAPScrollSmooth';
 import imagePreloader from './utils/imagePreloader';
 
@@ -31,6 +32,7 @@ function AppContent() {
 
   return (
     <div className="App bg-dark-950">
+      <CursorDot />
       <TopNav currentPage={getCurrentPage()} navigateToPage={navigateToPage} />
       <div ref={scrollContainerRef} className="scroll-container">
         <div ref={scrollContentRef} className="scroll-content">
