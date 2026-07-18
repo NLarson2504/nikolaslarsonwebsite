@@ -2,6 +2,7 @@ import React from 'react';
 import { Bot } from 'lucide-react';
 import FeatureContainer from '../../components/FeatureContainer';
 import VisBackgroundComponent from '../../components/VisBackgroundComponent';
+import AgentsDiagram from '../../diagrams/AgentsDiagram';
 
 const AgentsPreview = () => {
   return (
@@ -16,8 +17,8 @@ const AgentsPreview = () => {
             <FeatureContainer
               categoryIcon={Bot}
               category="AI Agents"
-              title="Intelligent Automation Solutions"
-              description="Building sophisticated AI agents that understand context, make decisions, and automate complex workflows. From customer service bots to data analysis assistants, creating intelligent systems that enhance productivity."
+              title="Intelligent Business Automation"
+              description="Developing AI agents that transform manual workflows into automated systems. From invoice processing to conversational analytics, creating intelligent solutions that understand context and deliver actionable insights."
               link="/agents"
               linkTitle="Explore AI Agents"
             />
@@ -26,7 +27,8 @@ const AgentsPreview = () => {
 
         {/* Visual Background - Right on desktop, Top on mobile */}
         <div className="w-full md:w-1/2 h-1/2 md:h-full">
-          <VisBackgroundComponent className="h-full">
+          <VisBackgroundComponent className="h-full flex items-center justify-center">
+            <AgentsDiagram className="w-full h-full" />
           </VisBackgroundComponent>
         </div>
       </div>

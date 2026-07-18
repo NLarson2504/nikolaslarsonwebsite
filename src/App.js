@@ -1,82 +1,73 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import './App.css';
+
 import Home from './pages/home/Home';
 import Agents from './pages/agents/Agents';
-import Mobile from './pages/mobile/Mobile';
-import Design from './pages/design/Design';
+import Apps from './pages/apps/Apps';
+import Web from './pages/web/Web';
 import Contact from './pages/contact/Contact';
+import CaseStudyPage from './components/caseStudy/CaseStudyPage';
+import Admin from './pages/admin/Admin';
 import TopNav from './components/TopNav';
 import Footer from './components/Footer';
 import useGSAPScrollSmooth from './hooks/useGSAPScrollSmooth';
 import imagePreloader from './utils/imagePreloader';
 
-function App() {
-  // Initialize from URL path
-  const getInitialPage = () => {
-    const path = window.location.pathname.replace('/', '') || 'home';
-    return ['home', 'agents', 'mobile', 'design', 'contact'].includes(path) ? path : 'home';
+function AppContent() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const navigateToPage = (page) => {
+    navigate(`/${page === 'home' ? '' : page}`);
   };
 
-  const [currentPage, setCurrentPage] = useState(getInitialPage());
-  const { scrollContainerRef, scrollContentRef } = useGSAPScrollSmooth(currentPage);
+  const getCurrentPage = () => {
+    const path = location.pathname.slice(1);
+    return path === '' ? 'home' : path.split('/')[0];
+  };
 
-  // Preload images on app initialization
+  const { scrollContainerRef, scrollContentRef } = useGSAPScrollSmooth(getCurrentPage());
+
+  return (
+    <div className="App bg-dark-950">
+      <TopNav currentPage={getCurrentPage()} navigateToPage={navigateToPage} />
+      <div ref={scrollContainerRef} className="scroll-container">
+        <div ref={scrollContentRef} className="scroll-content">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/agents" element={<Agents />} />
+            <Route path="/agents/:slug" element={<CaseStudyPage type="agent" backTo="/agents" backLabel="All agents" />} />
+            <Route path="/apps" element={<Apps />} />
+            <Route path="/apps/:slug" element={<CaseStudyPage type="app" backTo="/apps" backLabel="All apps" />} />
+            <Route path="/web" element={<Web />} />
+            <Route path="/web/:slug" element={<CaseStudyPage type="site" backTo="/web" backLabel="All web work" />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/admin" element={<Admin />} />
+            {/* Redirects from the old section names */}
+            <Route path="/mobile" element={<Navigate to="/apps" replace />} />
+            <Route path="/design" element={<Navigate to="/web" replace />} />
+            <Route path="*" element={<Home />} /> {/* fallback */}
+          </Routes>
+          <Footer />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  // Preload images once
   useEffect(() => {
     imagePreloader.preloadAllImages().catch(error => {
       console.warn('Failed to preload some images:', error);
     });
   }, []);
 
-  // Handle browser back/forward
-  useEffect(() => {
-    const handlePopState = () => {
-      const path = window.location.pathname.replace('/', '') || 'home';
-      if (['home', 'agents', 'mobile', 'design', 'contact'].includes(path)) {
-        setCurrentPage(path);
-      }
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
-
-  // Update URL when page changes
-  const navigateToPage = (page) => {
-    setCurrentPage(page);
-    const url = page === 'home' ? '/' : `/${page}`;
-    window.history.pushState({}, '', url);
-    
-    // Scroll to top when changing pages
-    window.scrollTo({ top: 0, behavior: 'instant' });
-  };
-
-  const renderPage = () => {
-    switch (currentPage) {
-      case 'home':
-        return <Home />;
-      case 'agents':
-        return <Agents />;
-      case 'mobile':
-        return <Mobile />;
-      case 'design':
-        return <Design />;
-      case 'contact':
-        return <Contact />;
-      default:
-        return <Home />;
-    }
-  };
-
   return (
-    <div className="App bg-dark-950">
-      <TopNav currentPage={currentPage} navigateToPage={navigateToPage} />
-      <div ref={scrollContainerRef} className="scroll-container">
-        <div ref={scrollContentRef} className="scroll-content">
-          {renderPage()}
-          <Footer />
-        </div>
-      </div>
-    </div>
+    <Router>
+      <AppContent />
+    </Router>
   );
 }
 

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
+import smoothScrollState from './smoothScrollState';
 
 const useGSAPScrollSmooth = (currentPage) => {
   const scrollContainerRef = useRef(null);
@@ -16,9 +17,49 @@ const useGSAPScrollSmooth = (currentPage) => {
   useEffect(() => {
     if (!scrollContainerRef.current || !scrollContentRef.current) return;
 
+    // Scroll to top when page changes
+    window.scrollTo(0, 0);
+
+    // Check if device is mobile
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                     window.innerWidth <= 768;
+
+    // If mobile, disable smooth scroll and return early
+    if (isMobile) {
+      // Native scrolling on mobile — rails should use plain measurements.
+      smoothScrollState.enabled = false;
+      smoothScrollState.offset = 0;
+
+      const container = scrollContainerRef.current;
+      const content = scrollContentRef.current;
+
+      // Reset to normal scroll behavior for mobile
+      gsap.set(container, {
+        position: 'static',
+        height: 'auto',
+        overflow: 'visible'
+      });
+
+      gsap.set(content, {
+        transform: 'none'
+      });
+
+      document.body.style.height = '';
+      return;
+    }
+
     const container = scrollContainerRef.current;
     const content = scrollContentRef.current;
     const scrollData = scrollDataRef.current;
+
+    // Reset scroll position for smooth scroll
+    scrollData.current = 0;
+    scrollData.target = 0;
+
+    // Publish that smooth scroll is driving, so follow-sticky rails share the
+    // same eased offset instead of snapping to raw scroll.
+    smoothScrollState.enabled = true;
+    smoothScrollState.offset = 0;
 
     // Set up scroll container
     gsap.set(container, {
@@ -30,13 +71,38 @@ const useGSAPScrollSmooth = (currentPage) => {
       overflow: 'hidden'
     });
 
-    // Calculate content height and set body height
+    // Reset content position when page changes
+    gsap.set(content, {
+      transform: 'translate3d(0, 0, 0)',
+      force3D: true
+    });
+
+    // Calculate content height and set body height. The native scrollbar's
+    // range is driven by body height, so it must track the real content height
+    // — otherwise the page can't scroll all the way to the bottom.
     const updateHeight = () => {
       const contentHeight = content.scrollHeight;
       document.body.style.height = `${contentHeight}px`;
     };
 
+    // Measure now, and again shortly after in case layout is still settling.
     updateHeight();
+    const initialTimeout = setTimeout(updateHeight, 100);
+
+    // Re-measure whenever the content actually changes size. This is the fix
+    // for the "can't scroll to the bottom until I resize" bug: async Firestore
+    // data and late-loading images grow the content after the initial measure,
+    // and a fixed one-shot measurement misses that. ResizeObserver catches
+    // every reflow.
+    let resizeObserver = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => updateHeight());
+      resizeObserver.observe(content);
+    }
+
+    // Images can load after render and reflow the layout; re-measure on each.
+    const onImageLoad = () => updateHeight();
+    content.addEventListener('load', onImageLoad, true); // capture: catches <img> load
 
     // Optimized smooth scroll with throttling
     const smoothScroll = (timestamp) => {
@@ -63,13 +129,16 @@ const useGSAPScrollSmooth = (currentPage) => {
       // Only update if there's a meaningful difference
       if (Math.abs(diff) > 0.1) {
         scrollData.current += diff * scrollData.ease;
-        
+
         // Use transform3d for hardware acceleration
         gsap.set(content, {
           transform: `translate3d(0, ${-scrollData.current}px, 0)`,
           force3D: true
         });
-        
+
+        // Share the eased offset so rails move in lockstep with the content.
+        smoothScrollState.offset = scrollData.current;
+
         scrollData.isScrolling = true;
       } else {
         // Snap to target when close enough
@@ -79,6 +148,7 @@ const useGSAPScrollSmooth = (currentPage) => {
             transform: `translate3d(0, ${-scrollData.current}px, 0)`,
             force3D: true
           });
+          smoothScrollState.offset = scrollData.current;
           scrollData.isScrolling = false;
         }
       }
@@ -103,8 +173,13 @@ const useGSAPScrollSmooth = (currentPage) => {
         cancelAnimationFrame(smoothScrollRef.current);
       }
       clearTimeout(resizeTimeout);
+      clearTimeout(initialTimeout);
       window.removeEventListener('resize', handleResize);
+      if (resizeObserver) resizeObserver.disconnect();
+      content.removeEventListener('load', onImageLoad, true);
       document.body.style.height = '';
+      smoothScrollState.enabled = false;
+      smoothScrollState.offset = 0;
     };
   }, [currentPage]);
 

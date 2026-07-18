@@ -1,0 +1,323 @@
+/* Grellier-style Web gallery — scoped styles (all wg-*).
+   Single full-viewport stage; grayscale-first, a grainy multi-corner gradient
+   tinted per-region from the current screenshot, film grain, and a lagging
+   cursor dot behind the real cursor. */
+
+.wg-root {
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg, #08090a);
+  color: #f5f6f7;
+  /* per-corner picked tints (top-left, top-right, bottom-left, bottom-right) */
+  --pick-tl: #23262b;
+  --pick-tr: #23262b;
+  --pick-bl: #23262b;
+  --pick-br: #23262b;
+  /* dragging the wheel should never blue-highlight the screenshots or labels */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+.wg-root img {
+  -webkit-user-drag: none;
+  user-drag: none;
+  -webkit-touch-callout: none;
+}
+
+/* Footlights: the tints rise from the BOTTOM edge and fade upward, dying out
+   well before the navbar. Left/right washes carry the corresponding side's
+   picked tint; each is its own screen-blended layer so where they overlap the
+   light ADDS (like stage footlights crossing) into one continuous field rather
+   than isolated blobs. A vertical mask fades the whole thing to nothing by ~55%
+   height so the top of the page (and the nav) stays clean dark.
+   Opacity/scale are driven by GSAP for the stage-light crossfade on change. */
+.wg-ambient {
+  position: absolute;
+  inset: -10% -10% 0 -10%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.75;
+  filter: blur(72px) saturate(1.55);
+  will-change: opacity, transform;
+  -webkit-mask-image: linear-gradient(to top, #000 0%, #000 18%, transparent 58%);
+  mask-image: linear-gradient(to top, #000 0%, #000 18%, transparent 58%);
+}
+.wg-ambient__c {
+  position: absolute;
+  inset: 0;
+  mix-blend-mode: screen;
+}
+/* origins sit just below the bottom edge so the brightest band is along the
+   floor and light spills upward */
+.wg-ambient__bl {
+  background: radial-gradient(90vmax 80vmax at 10% 104%, var(--pick-bl) 0%, transparent 66%);
+}
+.wg-ambient__br {
+  background: radial-gradient(90vmax 80vmax at 90% 104%, var(--pick-br) 0%, transparent 66%);
+}
+/* the top-sampled tints still contribute, but low and centered, feeding the mix
+   from the floor rather than glowing at the top */
+.wg-ambient__tl {
+  background: radial-gradient(80vmax 70vmax at 32% 108%, var(--pick-tl) 0%, transparent 62%);
+}
+.wg-ambient__tr {
+  background: radial-gradient(80vmax 70vmax at 68% 108%, var(--pick-tr) 0%, transparent 62%);
+}
+
+.wg-grain {
+  position: absolute;
+  inset: -50%;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.06;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: wg-grain 9s steps(5) infinite;
+}
+@keyframes wg-grain {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-3%, 2%); }
+  50% { transform: translate(2%, -2%); }
+  75% { transform: translate(-2%, 3%); }
+  100% { transform: translate(0, 0); }
+}
+
+/* lagging dot behind the (still visible) real cursor */
+.wg-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 8;
+  pointer-events: none;
+  width: 26px;
+  height: 26px;
+  border: 1px solid rgba(245, 246, 247, 0.5);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  mix-blend-mode: difference;
+  transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    height 0.5s cubic-bezier(0.16, 1, 0.3, 1), background 0.5s;
+}
+.wg-cursor.hot {
+  width: 78px;
+  height: 78px;
+  background: rgba(245, 246, 247, 0.12);
+  border-color: transparent;
+}
+@media (pointer: coarse) {
+  .wg-cursor { display: none; }
+}
+
+/* stage */
+.wg-stage {
+  position: relative;
+  z-index: 2;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 clamp(24px, 6vw, 90px);
+}
+
+.wg-focus {
+  display: flex;
+  align-items: center;
+  gap: clamp(48px, 6vw, 120px);
+  width: 100%;
+  max-width: 1360px;
+  justify-content: center;
+}
+
+/* 3D wheel: a perspective scene holding a preserve-3d cylinder. Cards are laid
+   out around a horizontal axis (rotateX) at ±RADIUS depth; JS spins the cylinder
+   and dims/blurs the cards away from the front. */
+.wg-wheel-scene {
+  position: relative;
+  flex: 0 0 auto;
+  width: min(62vw, 760px);
+  height: 440px;
+  perspective: 1600px;
+  perspective-origin: 50% 50%;
+  cursor: grab;
+  /* nudge the wheel a touch left */
+  transform: translateX(-50px);
+}
+.wg-wheel-scene:active { cursor: grabbing; }
+.wg-wheel {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.wg-card,
+.wg-slat {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  backface-visibility: hidden;
+}
+.wg-card {
+  overflow: hidden;
+  background: #0d0e0f;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+}
+/* The focused card is flat to the camera and carries no filter — keep it on the
+   plain compositor path so it rasterizes crisp (no forced blurry filter layer). */
+.wg-card.is-front {
+  box-shadow: 0 40px 120px rgba(0, 0, 0, 0.6);
+}
+.wg-card.is-front img {
+  image-rendering: auto;
+}
+/* Ghost slats: faint dark facets that bridge the arc between real cards so the
+   ring reads as a smooth round drum rather than a sparse polygon. They never
+   take focus and are non-interactive. */
+.wg-slat {
+  background: linear-gradient(180deg, #111214, #0b0c0d);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  opacity: 0.5;
+  pointer-events: none;
+}
+.wg-card__halo {
+  position: absolute;
+  z-index: -1;
+  inset: -14% -10%;
+  border-radius: 22px;
+  background: var(--pick-bl, #23262b);
+  filter: blur(60px);
+  opacity: 0.35;
+}
+.wg-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+.wg-card__placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'MuseoModerno', sans-serif;
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: #4b5563;
+  background: #0d0e0f;
+}
+
+/* info to the right of the wheel — eyebrow, name, description, links */
+.wg-info {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 420px;
+  text-align: left;
+}
+/* site icon (favicon/tab icon) sitting above the eyebrow + title */
+.wg-info__icon {
+  display: block;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  object-fit: cover;
+  margin-bottom: 18px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+.wg-info__eyebrow {
+  margin-bottom: 14px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #8b929c;
+}
+.wg-info__name {
+  font-family: 'MuseoModerno', sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+  font-size: clamp(1.9rem, 3.6vw, 3.2rem);
+  text-align: left;
+  /* words wrap whole onto new lines; no mid-word breaks */
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+/* each word is an unbreakable inline-block, and clips its own char rise so the
+   reveal is masked per word without cutting into the line above/below */
+.wg-word {
+  display: inline-block;
+  overflow: hidden;
+  padding: 0.12em 0.02em; /* room for descenders / the rise, trimmed by margin */
+  margin: -0.12em -0.02em;
+  vertical-align: top;
+}
+.wg-ch {
+  display: inline-block;
+  will-change: transform, opacity;
+}
+.wg-info__desc {
+  margin-top: 18px;
+  max-width: 42ch;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #a8afba;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.wg-info__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}
+.wg-info__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  color: #f5f6f7;
+  text-decoration: none;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: border-color 0.4s, background 0.4s, color 0.4s;
+}
+.wg-info__btn:hover {
+  border-color: rgba(245, 246, 247, 0.5);
+  background: rgba(245, 246, 247, 0.06);
+}
+.wg-info__btn--primary {
+  background: #f5f6f7;
+  border-color: #f5f6f7;
+  color: #08090a;
+}
+.wg-info__btn--primary:hover {
+  background: #ffffff;
+  border-color: #ffffff;
+  color: #08090a;
+}
+.wg-arrow {
+  transition: transform 0.4s;
+}
+.wg-info__btn:hover .wg-arrow {
+  transform: translate(3px, -3px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wg-grain { animation: none; }
+}
+
+@media (max-width: 760px) {
+  .wg-focus { flex-direction: column; gap: 24px; }
+  .wg-wheel-scene { width: 86vw; height: 260px; }
+  .wg-info { max-width: 82vw; text-align: center; }
+  .wg-info__name { text-align: center; }
+}

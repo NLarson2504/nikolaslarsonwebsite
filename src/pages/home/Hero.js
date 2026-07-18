@@ -67,13 +67,21 @@ const Hero = () => {
   return (
       <section
           id="home"
-          className="hero min-h-screen pt-16 mx-10 flex items-center relative bg-dark-950 text-dark-50 border-t border-white/5 overflow-hidden"
+          className="hero min-h-screen pt-16 px-4 sm:px-6 md:px-10 flex items-center relative bg-dark-950 text-dark-50 border-t border-white/5 overflow-hidden"
       >
-        <div className={"text-white opacity-10 text-[20rem] font-heading font-bold leading-none"}>
-          <div ref={firstNameRef} className="leading-none">Nikolas</div>
-          <div ref={lastNameRef} className="leading-none -ml-40">Larson</div>
+        <div className="text-white opacity-10 font-heading font-bold leading-none">
+          {/* Mobile: N and L centered and larger */}
+          <div className="sm:hidden text-[20rem] absolute inset-0 flex flex-col items-center justify-center">
+            <div ref={firstNameRef} className="leading-none">N</div>
+            <div ref={lastNameRef} className="leading-none">L</div>
+          </div>
+          
+          {/* Desktop: Full names with original layout */}
+          <div className="hidden sm:block text-[10rem] md:text-[12rem] lg:text-[16rem] xl:text-[20rem]">
+            <div ref={firstNameRef} className="leading-none">Nikolas</div>
+            <div ref={lastNameRef} className="leading-none -ml-16 md:-ml-24 lg:-ml-32 xl:-ml-40">Larson</div>
+          </div>
         </div>
-
 
         {/* 3D Modules - Overlaying on the right side */}
         {/* <HeroModules/> */}

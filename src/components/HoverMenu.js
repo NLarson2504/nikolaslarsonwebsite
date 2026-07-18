@@ -1,10 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
-import liraLogo from '../assets/icons/liralogo.svg';
-import tallieLogo from '../assets/icons/tallielogo.svg';
-import tarragonLogo from '../assets/icons/tarragonlogo.jpg';
-import campusLMLogo from '../assets/icons/campuslmlogo.png';
-import mooslixLogo from '../assets/icons/mooslixlogo.svg';
+import useTopProjects from '../hooks/useTopProjects';
 
 const HoverMenu = ({ activeSection, navigateToPage, isVisible }) => {
   const [currentContent, setCurrentContent] = useState(null);
@@ -12,76 +8,63 @@ const HoverMenu = ({ activeSection, navigateToPage, isVisible }) => {
   const contentRef = useRef(null);
   const containerRef = useRef(null);
 
-  const navOrder = ['agents', 'mobile', 'design'];
-  
-  const menuContent = {
+  // Top-2 highest-priority projects per section, live from Firestore.
+  const { topBySection } = useTopProjects(2);
+
+  const navOrder = ['agents', 'apps', 'web'];
+
+  // Static labels + right-column links; the `examples` are injected live below.
+  const menuMeta = {
     agents: {
-      leftLabel: "Agents",
-      rightLabel: "Implementations",
-      examples: [
-        { 
-          title: "Lira", 
-          description: "AI Invoice Scanner",
-          logo: liraLogo,
-        },
-        { 
-          title: "Tallie", 
-          description: "Restaurant Analytics Agent",
-          logo: tallieLogo,
-        }
-      ],
+      leftLabel: 'Agents',
+      rightLabel: 'Implementations',
       items: [
-        { label: "Conversational AI", page: "agents", description: "Chat-based solutions" },
-        { label: "Task Automation", page: "automation", description: "AI workflows" },
-        { label: "Custom Models", page: "models", description: "Tailored AI" },
-        { label: "Integration", page: "integration", description: "Connect systems" }
-      ]
+        { label: 'Conversational AI', page: 'agents#chatai', description: 'Chat-based solutions' },
+        { label: 'Task Automation', page: 'agents#actionai', description: 'AI workflows' },
+        { label: 'Custom Models', page: 'agents#assistants', description: 'Tailored AI' },
+        { label: 'Integration', page: 'agents#integration', description: 'Connect systems' },
+      ],
     },
-    mobile: {
-      leftLabel: "Apps",
-      rightLabel: "More",
-      examples: [
-        {
-          title: "Tarragon",
-          description: "Product Ecosystem in Your Pocket",
-          logo: tarragonLogo,
-        },
-        {
-          title: "CampusLM",
-          description: "AI Tools for College Students",
-          logo: campusLMLogo,
-        }
-      ],
+    apps: {
+      leftLabel: 'Apps',
+      rightLabel: 'More',
       items: [
-        { label: "iOS Apps", page: "ios", description: "Native Swift" },
-        { label: "Android Apps", page: "android", description: "Kotlin & Java" },
-        { label: "React Native", page: "react-native", description: "Cross-platform" },
-        { label: "App Store", page: "aso", description: "Optimization" }
-      ]
+        { label: 'iOS Apps', page: 'apps#ios', description: 'Native Swift' },
+        { label: 'Android Apps', page: 'apps#android', description: 'Kotlin & Java' },
+        { label: 'React Native', page: 'apps#reactnative', description: 'Cross-platform' },
+        { label: 'App Store', page: 'apps#appstore', description: 'Optimization' },
+      ],
     },
-    design: {
-      leftLabel: "Sites",
-      rightLabel: "More",
-      examples: [
-        {
-          title: "Mooslix",
-          description: "Biometric Authentication",
-          logo: mooslixLogo,
-        },
-        {
-          title: "Tarragon",
-          description: "Product Ecosystem in Your Pocket",
-          logo: tarragonLogo,
-        },
-      ],
+    web: {
+      leftLabel: 'Web',
+      rightLabel: 'More',
       items: [
-        { label: "UI/UX Design", page: "ux-design", description: "User interfaces" },
-        { label: "Prototyping", page: "prototyping", description: "Interactive mockups" },
-        { label: "Design Systems", page: "design-systems", description: "Frameworks" },
-        { label: "Brand Identity", page: "branding", description: "Visual development" }
-      ]
-    }
+        { label: 'UI/UX Design', page: 'web#design', description: 'User interfaces' },
+        { label: 'Prototyping', page: 'web#prototyping', description: 'Interactive mockups' },
+        { label: 'Design Systems', page: 'web#system', description: 'Frameworks' },
+        { label: 'Brand Identity', page: 'web#branding', description: 'Visual development' },
+      ],
+    },
   };
+
+  // Build the live `examples` (top-2 ranked projects) for each section.
+  const menuContent = Object.fromEntries(
+    navOrder.map((section) => [
+      section,
+      {
+        ...menuMeta[section],
+        examples: (topBySection[section] || []).map((p) => ({
+          title: p.title,
+          description: p.brand?.name || p.category || p.platform || '',
+          logo: p.icon || p.brand?.logo || '',
+          // Link to the case study when there is one; otherwise to the section
+          // list so we never land on a "no case study" page. navigateToPage
+          // prepends "/", so strip the leading slash from the path.
+          page: (p.caseStudy ? p.href : `/${section}`).replace(/^\//, ''),
+        })),
+      },
+    ])
+  );
 
   const getSlideDirection = (from, to) => {
     if (!from || !to) return 0;
@@ -206,7 +189,11 @@ const HoverMenu = ({ activeSection, navigateToPage, isVisible }) => {
             
             <div className="space-y-3">
               {content.examples.map((example, index) => (
-                <div key={index} className="flex p-2 space-x-2 items-center rounded-lg hover:bg-white/10 transition-all duration-200">
+                <button
+                  key={index} 
+                  onClick={() => navigateToPage(example.page)}
+                  className="flex p-2 space-x-2 items-center rounded-lg hover:bg-white/10 transition-all duration-200 w-full text-left focus:outline-none group"
+                >
                   <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0`}>
                     {example.logo ? (
                       <img src={example.logo} alt={example.title} className="w-9 h-9 rounded" />
@@ -217,14 +204,14 @@ const HoverMenu = ({ activeSection, navigateToPage, isVisible }) => {
                     )}
                   </div>
                   <div className="flex flex-col items-start justify-center text-start -space-y-0.5">
-                    <div className="text-sm font-medium text-white/90">
+                    <div className="text-sm font-medium text-white/90 group-hover:text-white transition-colors">
                       {example.title}
                     </div>
-                    <div className="text-sm font-medium text-white/60 leading-relaxed line-clamp-1">
+                    <div className="text-sm font-medium text-white/60 leading-relaxed line-clamp-1 group-hover:text-white/80 transition-colors">
                       {example.description}
                     </div>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           </div>

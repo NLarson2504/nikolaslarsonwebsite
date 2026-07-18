@@ -1,0 +1,311 @@
+/* Horizontal Apps wheel — scoped styles (all aw-*).
+   A vertical-axis cylinder of portrait phone mockups; grayscale-first, a grainy
+   multi-corner footlight tinted per-region from the focused screenshot, film
+   grain, and a lagging cursor dot behind the real cursor. */
+
+.aw-root {
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg, #08090a);
+  color: #f5f6f7;
+  --pick-tl: #23262b;
+  --pick-tr: #23262b;
+  --pick-bl: #23262b;
+  --pick-br: #23262b;
+  /* dragging the wheel should never blue-highlight the screenshots or labels */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+.aw-root img {
+  -webkit-user-drag: none;
+  user-drag: none;
+  -webkit-touch-callout: none;
+}
+
+/* Footlights rising from the bottom, fading out before the navbar. */
+.aw-ambient {
+  position: absolute;
+  inset: -10% -10% 0 -10%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.75;
+  filter: blur(72px) saturate(1.55);
+  will-change: opacity, transform;
+  -webkit-mask-image: linear-gradient(to top, #000 0%, #000 18%, transparent 58%);
+  mask-image: linear-gradient(to top, #000 0%, #000 18%, transparent 58%);
+}
+.aw-ambient__c {
+  position: absolute;
+  inset: 0;
+  mix-blend-mode: screen;
+}
+.aw-ambient__bl {
+  background: radial-gradient(90vmax 80vmax at 10% 104%, var(--pick-bl) 0%, transparent 66%);
+}
+.aw-ambient__br {
+  background: radial-gradient(90vmax 80vmax at 90% 104%, var(--pick-br) 0%, transparent 66%);
+}
+.aw-ambient__tl {
+  background: radial-gradient(80vmax 70vmax at 32% 108%, var(--pick-tl) 0%, transparent 62%);
+}
+.aw-ambient__tr {
+  background: radial-gradient(80vmax 70vmax at 68% 108%, var(--pick-tr) 0%, transparent 62%);
+}
+
+.aw-grain {
+  position: absolute;
+  inset: -50%;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.06;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: aw-grain 9s steps(5) infinite;
+}
+@keyframes aw-grain {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-3%, 2%); }
+  50% { transform: translate(2%, -2%); }
+  75% { transform: translate(-2%, 3%); }
+  100% { transform: translate(0, 0); }
+}
+
+.aw-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 8;
+  pointer-events: none;
+  width: 26px;
+  height: 26px;
+  border: 1px solid rgba(245, 246, 247, 0.5);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  mix-blend-mode: difference;
+  transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    height 0.5s cubic-bezier(0.16, 1, 0.3, 1), background 0.5s;
+}
+.aw-cursor.hot {
+  width: 78px;
+  height: 78px;
+  background: rgba(245, 246, 247, 0.12);
+  border-color: transparent;
+}
+@media (pointer: coarse) {
+  .aw-cursor { display: none; }
+}
+
+/* stage */
+.aw-stage {
+  position: relative;
+  z-index: 2;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 clamp(24px, 6vw, 90px);
+}
+/* Right-edge scrim: fades the wheel out toward the right so the (left-aligned)
+   text has open space to breathe. Sits above the wheel but is non-interactive,
+   and stops well short of centre so the focused phone stays solid. */
+.aw-stage::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 24%;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(to right, transparent 0%, transparent 45%, #08090a 100%);
+}
+.aw-focus {
+  display: flex;
+  align-items: center;
+  gap: clamp(40px, 6vw, 110px);
+  width: 100%;
+  max-width: 1320px;
+  justify-content: center;
+}
+
+/* info to the LEFT of the wheel — name + platform + store button */
+.aw-info {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 400px;
+  text-align: left;
+  /* pull the text block hard to the left, toward the viewport edge */
+  transform: translateX(-180px);
+}
+.aw-info__name {
+  font-family: 'MuseoModerno', sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+  font-size: clamp(1.9rem, 3.6vw, 3.2rem);
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+.aw-word {
+  display: inline-block;
+  overflow: hidden;
+  padding: 0.12em 0.02em;
+  margin: -0.12em -0.02em;
+  vertical-align: top;
+}
+.aw-ch {
+  display: inline-block;
+  will-change: transform, opacity;
+}
+/* app icon sitting ABOVE the title (replaces the platform label) */
+.aw-info__icon {
+  display: block;
+  width: 60px;
+  height: 60px;
+  border-radius: 15px;
+  object-fit: cover;
+  margin-bottom: 18px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+.aw-info__desc {
+  margin-top: 18px;
+  max-width: 38ch;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #a8afba;
+  /* keep it tidy — clamp long descriptions */
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.aw-info__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 26px;
+}
+.aw-info__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  color: #f5f6f7;
+  text-decoration: none;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: border-color 0.4s, background 0.4s, color 0.4s;
+}
+.aw-info__btn:hover {
+  border-color: rgba(245, 246, 247, 0.5);
+  background: rgba(245, 246, 247, 0.06);
+}
+/* primary = the case-study link; filled so it reads as the main action */
+.aw-info__btn--primary {
+  background: #f5f6f7;
+  border-color: #f5f6f7;
+  color: #08090a;
+}
+.aw-info__btn--primary:hover {
+  background: #ffffff;
+  border-color: #ffffff;
+  color: #08090a;
+}
+.aw-arrow { transition: transform 0.4s; }
+.aw-info__btn:hover .aw-arrow { transform: translate(3px, -3px); }
+
+/* 3D wheel scene — vertical axis (rotateY) */
+.aw-wheel-scene {
+  position: relative;
+  flex: 0 0 auto;
+  /* match the home-page phone-preview proportions (12rem : 25rem ≈ 1 : 2.083),
+     a touch taller than before */
+  width: 290px;
+  height: 620px;
+  perspective: 1700px;
+  perspective-origin: 50% 50%;
+  cursor: grab;
+  /* sit the wheel a little lower and a touch to the right */
+  margin-top: 80px;
+  transform: translateX(60px);
+}
+.aw-wheel-scene:active { cursor: grabbing; }
+.aw-wheel {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+/* phone mockup card */
+.aw-phone,
+.aw-slat {
+  position: absolute;
+  inset: 0;
+  will-change: opacity, filter;
+  backface-visibility: hidden;
+}
+.aw-phone__frame {
+  position: absolute;
+  inset: 0;
+  border-radius: 34px;
+  overflow: hidden;
+  background: #0d0e0f;
+  border: 6px solid #17181a;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+.aw-phone.is-front .aw-phone__frame {
+  box-shadow: 0 45px 130px rgba(0, 0, 0, 0.65), inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+.aw-phone__frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+.aw-phone__fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #131416, #0b0c0d);
+  color: #4b5563;
+  font-family: 'MuseoModerno', sans-serif;
+  font-weight: 700;
+  padding: 24px;
+  text-align: center;
+}
+.aw-phone__icon {
+  width: 96px;
+  height: 96px;
+  border-radius: 22px;
+  object-fit: cover;
+}
+/* ghost slats bridging the arc between phones so the ring reads round */
+.aw-slat {
+  border-radius: 34px;
+  background: linear-gradient(180deg, #111214, #0b0c0d);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aw-grain { animation: none; }
+}
+
+@media (max-width: 760px) {
+  .aw-focus { flex-direction: column; gap: 28px; }
+  .aw-info { max-width: 82vw; text-align: center; }
+  .aw-info__name { text-align: center; }
+  .aw-info { transform: none; }
+  .aw-wheel-scene { width: 230px; height: 480px; }
+}

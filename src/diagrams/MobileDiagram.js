@@ -77,14 +77,15 @@ const MobileDiagram = ({ className = "" }) => {
     phonesRef.current = []; // Reset refs
     
     // Fixed number of phones for better performance
-    const cols = 2;
-    const totalPhones = 6; // Only 6 phones total
+    const cols = 3;
+    const totalPhones = 9; // 3 columns x 3 rows
     
     // Phone dimensions
     const phoneWidth = 192;
     const phoneHeight = 400;
-    const phoneScale = 1.0;
+    const phoneScale = 1.2;
     const spacing = 120;
+    const verticalSpacing = 60; // Much closer vertical spacing
     
     // Center the grid
     const startX = (dimensions.width - (cols - 1) * (phoneWidth + spacing)) / 2;
@@ -95,7 +96,8 @@ const MobileDiagram = ({ className = "" }) => {
       const row = Math.floor(i / cols);
       
       const x = startX + col * (phoneWidth + spacing);
-      const y = startY + row * (phoneHeight + spacing) - (row * 200); // Increased vertical stagger
+      const columnOffset = col === 0 ? -450 : col === 1 ? -225 : -450; // Staggered heights: left highest, middle medium, right lowest
+      const y = startY + row * (phoneHeight + verticalSpacing) - (row * 100) + columnOffset;
       
       phones.push(
         <div 

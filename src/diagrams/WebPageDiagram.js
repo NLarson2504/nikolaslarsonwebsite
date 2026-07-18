@@ -34,7 +34,7 @@ const WebPageDiagram = ({ className = "" }) => {
       const isEvenColumn = col % 2 === 0;
       
       // Calculate staggered start position to maintain spacing illusion
-      const baseStagger = (row * 250) + (col * 125); // Increased offsets for better spacing
+      const baseStagger = (row * 25) + (col * 20); // Much tighter offsets to match layout spacing
       const direction = isEvenColumn ? 1 : -1; // Fixed: opposite directions for columns
       // Use same base stagger for both sides, only direction affects movement
       const staggerOffset = baseStagger;
@@ -80,13 +80,13 @@ const WebPageDiagram = ({ className = "" }) => {
     
     // Fixed number of webpages for better performance
     const cols = 2;
-    const totalWebpages = 4; // Only 4 webpages total
+    const totalWebpages = 7; // Only 4 webpages total
     
     // Webpage dimensions
     const webpageWidth = 500;
     const webpageHeight = 300;
-    const webpageScale = 0.8;
-    const spacing = 150;
+    const webpageScale = 1.0;
+    const spacing = 50; // Moderate horizontal spacing
     
     // Center the grid
     const startX = (dimensions.width - (cols - 1) * (webpageWidth + spacing)) / 2 - 100;
@@ -97,7 +97,8 @@ const WebPageDiagram = ({ className = "" }) => {
       const row = Math.floor(i / cols);
       
       const x = startX + col * (webpageWidth + spacing);
-      const y = startY + row * (webpageHeight + spacing) - (row * 150); // Increased vertical stagger
+      const columnOffset = col === 0 ? -75 : col === 1 ? -450 : 0; // Left column starts higher
+      const y = startY + row * (webpageHeight + 40) - (row * 30) + columnOffset; // Moderate vertical spacing
       
       webpages.push(
         <div 

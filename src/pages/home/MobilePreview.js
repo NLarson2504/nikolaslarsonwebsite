@@ -24,9 +24,9 @@ const MobilePreview = () => {
             <FeatureContainer
               categoryIcon={Smartphone}
               category="Mobile Development"
-              title="Cross-Platform Mobile Apps"
-              description="Developing native and cross-platform mobile applications with React Native and Flutter. Focus on performance, user experience, and seamless integration across iOS and Android platforms."
-              link="/mobile"
+              title="Cross-Platform Mobile Development"
+              description="Building native and cross-platform mobile applications that solve real business problems. From inventory management systems to enterprise security solutions, creating intuitive apps that users love."
+              link="/apps"
               linkTitle="View Mobile Projects"
             />
           </div>

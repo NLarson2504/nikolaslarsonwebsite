@@ -1,0 +1,327 @@
+/* Agents page — mirrors the Web/Apps landing layout: a text info panel on the
+   left and the "hero" on the right. Here the hero is the agent's frameless
+   terminal render (an ASCII portrait for the profile agent, streaming logs for
+   the real ones). Scoped to .ag-* / .agt-*. */
+
+/* register --ag-glow so GSAP can smoothly tween the footlight intensity during
+   the stage-light crossfade between agents */
+@property --ag-glow {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 1;
+}
+
+.ag-root {
+  position: relative;
+  min-height: 100vh;
+  background: var(--bg, #08090a);
+  color: #f5f6f7;
+  overflow: hidden;
+  /* footlight tint — sampled from the active icon at runtime (neutral default) */
+  --pick-bl: #1f2b45;
+  --pick-br: #1f2b45;
+  --ag-glow: 1;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+/* Footlight glow rising from the bottom, fading out before the navbar — same
+   treatment as the Web/Apps wheels; tinted from the current agent's icon. */
+.ag-ambient {
+  position: absolute;
+  inset: -10% -10% 0 -10%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: calc(0.72 * var(--ag-glow));
+  filter: blur(72px) saturate(1.5);
+  -webkit-mask-image: linear-gradient(to top, #000 0%, #000 18%, transparent 58%);
+  mask-image: linear-gradient(to top, #000 0%, #000 18%, transparent 58%);
+}
+.ag-ambient__c {
+  position: absolute;
+  inset: 0;
+  mix-blend-mode: screen;
+}
+.ag-ambient__bl {
+  background: radial-gradient(90vmax 80vmax at 22% 106%, var(--pick-bl) 0%, transparent 66%);
+}
+.ag-ambient__br {
+  background: radial-gradient(90vmax 80vmax at 82% 106%, var(--pick-br) 0%, transparent 66%);
+}
+
+/* film grain — identical to the wheels */
+.ag-grain {
+  position: absolute;
+  inset: -50%;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.06;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: ag-grain 9s steps(5) infinite;
+}
+@keyframes ag-grain {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-3%, 2%); }
+  50% { transform: translate(2%, -2%); }
+  75% { transform: translate(-2%, 3%); }
+  100% { transform: translate(0, 0); }
+}
+
+.ag-stage {
+  position: relative;
+  z-index: 2;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(80px, 12vh, 130px) clamp(24px, 6vw, 90px) clamp(48px, 8vh, 96px);
+}
+
+/* same flex row + max-width as .aw-focus / .wg-focus */
+.ag-focus {
+  display: flex;
+  align-items: center;
+  gap: clamp(40px, 6vw, 110px);
+  width: 100%;
+  max-width: 1360px;
+  justify-content: center;
+}
+
+/* ---- left info panel — same vocabulary as .aw-info / .wg-info ------------- */
+.ag-info {
+  flex: 0 0 auto;
+  min-width: 0;
+  width: 400px;
+  max-width: 400px;
+  text-align: left;
+}
+.ag-info__icon {
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 15px;
+  object-fit: cover;
+  margin-bottom: 18px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+.ag-info__icon--glyph {
+  background: linear-gradient(145deg, #1b1e24, #101216);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 26px;
+  color: #9fb4d8;
+}
+.ag-info__eyebrow {
+  margin-bottom: 14px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #8b929c;
+}
+.ag-info__name {
+  font-family: 'MuseoModerno', sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+  font-size: clamp(1.9rem, 3.6vw, 3.2rem);
+  color: #f6f8fa;
+  text-align: left;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  min-height: 1.08em; /* reserve line so the reveal doesn't shift layout */
+}
+/* profile/default view: this is the page header, so it's larger */
+.ag-info__name--header {
+  font-size: clamp(2.6rem, 5vw, 4.2rem);
+  margin-bottom: 6px;
+}
+/* split-word reveal scaffolding — mirrors .aw-word / .aw-ch */
+.ag-word {
+  display: inline-block;
+  overflow: hidden;
+  padding: 0.12em 0.02em;
+  margin: -0.12em -0.02em;
+  vertical-align: top;
+}
+.ag-ch {
+  display: inline-block;
+  will-change: transform, opacity;
+}
+.ag-info__desc {
+  margin-top: 18px;
+  max-width: 40ch;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #a8afba;
+}
+.ag-info__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 26px;
+}
+.ag-info__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  color: #f5f6f7;
+  text-decoration: none;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: border-color 0.4s, background 0.4s, color 0.4s;
+}
+.ag-info__btn:hover {
+  border-color: rgba(245, 246, 247, 0.5);
+  background: rgba(245, 246, 247, 0.06);
+}
+.ag-info__btn--primary {
+  background: #f5f6f7;
+  border-color: #f5f6f7;
+  color: #08090a;
+}
+.ag-info__btn--primary:hover {
+  background: #fff;
+  border-color: #fff;
+  color: #08090a;
+}
+.ag-arrow { transition: transform 0.4s; }
+.ag-info__btn:hover .ag-arrow { transform: translate(3px, -3px); }
+
+/* ---- right: the large frameless render (the hero) ------------------------ */
+.ag-render-col {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* the deck — a fixed-height stage the panels slide within, so cycling agents
+   never shifts the surrounding layout */
+.agt-deck {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  height: clamp(380px, 56vh, 520px);
+  perspective: 1400px;
+  transform-style: preserve-3d;
+}
+
+/* one agent's slide — absolutely centered, then offset up/down by --off. The
+   focused slide (off 0) is sharp/forward; neighbours slide away, shrink, gray
+   out, and drop back. --off is signed (direction); --scale/--gray/--depth are
+   precomputed in JS from |off| so the CSS stays free of conditionals. */
+.agt-slide {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform-origin: center center;
+  transform: translateY(calc(-50% + var(--off) * 118%))
+    translateZ(var(--depth, 0px)) scale(var(--scale, 1));
+  filter: grayscale(var(--gray, 0));
+  transition: transform 0.62s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.62s ease, opacity 0.5s ease;
+  will-change: transform, filter, opacity;
+}
+.agt-slide.is-active {
+  filter: none;
+}
+
+/* the log panel — a rounded card with a subtle glassy fill + hairline border */
+.agt-panel {
+  position: relative;
+  width: 100%;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(
+    180deg,
+    rgba(22, 24, 28, 0.66),
+    rgba(12, 13, 16, 0.72)
+  );
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  box-shadow: 0 34px 90px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* title bar with the agent slug */
+.agt-panel__bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* left padding matches the log body so the name lines up with the log text.
+     The pal perches ABOVE the panel edge, so it doesn't crowd this row. */
+  padding: 11px 16px 10px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+.agt-panel__name {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: #8a929d;
+}
+
+/* the pixel pal, perched standing on the panel's top-left edge */
+.agt-pal {
+  position: absolute;
+  left: 18px;
+  bottom: 100%;
+  /* overlap the border by a few px so it "stands on" the edge */
+  margin-bottom: -6px;
+  width: 80px;
+  height: 80px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.45));
+  transition: filter 0.3s;
+}
+.agt-pal.is-working {
+  filter: drop-shadow(0 0 10px rgba(242, 193, 78, 0.35))
+    drop-shadow(0 4px 6px rgba(0, 0, 0, 0.45));
+}
+
+/* streaming logs — left-aligned inside the panel */
+.agt-log {
+  padding: 16px 18px 18px;
+  height: clamp(300px, 46vh, 420px);
+  overflow: auto;
+  text-align: left;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: #c6ccd4;
+}
+.agt-line { white-space: pre-wrap; word-break: break-word; }
+.agt-dim { color: #6b7280; }
+.agt-cmd { color: #dfe4ea; }
+.agt-txt { color: #cbd2db; }
+.agt-ok { color: #6ee7a8; }
+.agt-cursor { color: #60a5fa; animation: agt-blink 1s steps(1) infinite; }
+@keyframes agt-blink { 50% { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .agt-cursor { animation: none; }
+}
+
+/* stack on narrow screens: render on top, info below */
+@media (max-width: 900px) {
+  .ag-focus {
+    flex-direction: column-reverse;
+    gap: 40px;
+  }
+  .ag-info {
+    width: 100%;
+    max-width: 88vw;
+  }
+  .agt-log { height: clamp(240px, 40vh, 360px); }
+}

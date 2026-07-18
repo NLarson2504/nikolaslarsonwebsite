@@ -17,6 +17,73 @@
   will-change: transform;
 }
 
+/* Experience marquee — cells flip like a 3D prism on hover (rotateX).
+   The prism is a proper box: both faces are exactly the cell height, and the
+   translateZ depth is half the cell height, so the arriving face lands at the
+   same height as the cell (no leak past the bottom). The cell clips overflow
+   so nothing pokes out during the turn. --cell-h keeps depth in sync with the
+   responsive height. */
+.marquee-cell {
+  --cell-h: 10rem;
+  height: var(--cell-h);
+  overflow: hidden;
+  perspective: 900px;
+}
+@media (min-width: 768px) {
+  .marquee-cell {
+    --cell-h: 11rem;
+  }
+}
+
+.marquee-prism {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.marquee-cell:hover .marquee-prism,
+.marquee-cell:focus-within .marquee-prism {
+  /* Rotate about the prism's mid-depth so the bottom face swings up to front. */
+  transform: rotateX(-90deg);
+}
+
+.marquee-face {
+  position: absolute;
+  inset: 0;
+  height: var(--cell-h);
+  backface-visibility: hidden;
+  overflow: hidden;
+}
+
+/* Tint logos to a uniform, muted theme gray so the row reads as one system,
+   whatever each brand's real colors are. Flatten to a silhouette, then invert
+   to a dim gray in the family of the hero name text (white @ ~10%), but a touch
+   brighter so the logos stay legible at rest. Brighten on hover. */
+.marquee-logo {
+  filter: grayscale(1) brightness(0) invert(0.42);
+  transition: filter 0.3s ease;
+}
+.marquee-cell:hover .marquee-logo,
+.marquee-cell:focus-within .marquee-logo {
+  filter: grayscale(1) brightness(0) invert(0.82);
+}
+/* Front face: pushed toward the viewer by half the depth. */
+.marquee-face--front {
+  transform: translateZ(calc(var(--cell-h) / 2));
+}
+/* Bottom face: laid on the prism's bottom, pre-rotated so it reads upright
+   once the prism turns -90deg. */
+.marquee-face--bottom {
+  transform: rotateX(90deg) translateZ(calc(var(--cell-h) / 2));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-prism {
+    transition: none;
+  }
+}
+
 /* Performance optimizations for diagrams */
 .mobile-diagram,
 .webpage-diagram {
