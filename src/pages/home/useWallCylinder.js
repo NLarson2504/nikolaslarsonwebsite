@@ -82,7 +82,13 @@ const MAX_YAW = 0.06;       // radians (~3.5deg) at the far left or right
 const TILT_EASE = 0.06;     // slower than the spin, so it drifts rather than tracks
 
 const SPIN_PER_PX = 0.0016;
-const EASE = 0.09;
+/*
+ * How quickly the drum settles toward its target angle. This governs both the
+ * wheel's inertia and a drag's release fling, so the two decelerate alike.
+ * At 0.09 a throw took over a second to come to rest and felt floaty; 0.14
+ * keeps the same glide distance but settles in ~0.8s.
+ */
+const EASE = 0.14;
 const TAU = Math.PI * 2;
 
 export default function useWallCylinder({ entries, enabled = true, onPick, filter = 'all', compact = false }) {
@@ -384,6 +390,22 @@ export default function useWallCylinder({ entries, enabled = true, onPick, filte
 
     /* ------------------------------------------------------- interaction */
 
+    /*
+     * Screen pixels per world unit at the cylinder's surface. Used to make a
+     * mouse drag move the wall exactly as far as the cursor travels. Recomputed
+     * on resize, since it depends on the viewport height.
+     */
+    let pxPerWorld = 1;
+    const measureScale = () => {
+      const halfWorld = Math.tan((camera.fov * Math.PI) / 360) * radius;
+      pxPerWorld = (mount.clientHeight / 2) / halfWorld;
+    };
+    measureScale();
+
+    // Declared before the pointer handlers, which reference it — a `const`
+    // further down would sit in the temporal dead zone and throw on first drag.
+    const el = renderer.domElement;
+
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
 
@@ -483,6 +505,45 @@ export default function useWallCylinder({ entries, enabled = true, onPick, filte
       lastPointer.y = e.clientY;
       lastPointer.inside = true;
 
+      /*
+       * While dragging, horizontal movement turns the drum. Divided by the
+       * radius so the surface tracks the cursor — a pixel of pointer travel
+       * moves the wall by a pixel at the front of the cylinder, which is what
+       * makes it feel like you're pushing the thing itself.
+       */
+      if (drag.active) {
+        const dx = e.clientX - drag.lastX;
+        const t = performance.now();
+        const dtMs = Math.max(1, t - drag.lastT);
+        drag.lastX = e.clientX;
+        drag.lastT = t;
+        drag.moved += Math.abs(dx);
+        /*
+         * Convert pixels to radians through the actual camera geometry, so the
+         * surface tracks the cursor 1:1 — grab a tile and it stays under your
+         * pointer.
+         *
+         * The camera sits on the cylinder's axis, so the wall is `radius` away.
+         * Half the viewport height spans tan(fov/2) * radius world units, which
+         * gives pixels-per-world-unit; dividing that into the drag and then by
+         * the radius yields the arc swept. (A guessed constant here was 7.5x
+         * too fast and the wall shot away from the cursor.)
+         */
+        const dTheta = dx / pxPerWorld / radius;
+        spin.target -= dTheta;
+        // Dragging is a direct manipulation: skip the easing so the wall stays
+        // under the cursor instead of lagging behind it.
+        spin.current = spin.target;
+
+        /*
+         * Track velocity so the release can carry momentum. Smoothed across
+         * samples, because raw per-event deltas are noisy and a single stray
+         * frame at the end of a gesture would otherwise decide the whole fling.
+         */
+        const v = -dTheta / dtMs;
+        drag.vel = drag.vel * 0.7 + v * 0.3;
+      }
+
       // -1..+1 across the viewport on each axis.
       const rect = renderer.domElement.getBoundingClientRect();
       const nx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
@@ -503,27 +564,100 @@ export default function useWallCylinder({ entries, enabled = true, onPick, filte
       tilt.yawTarget = 0;
     };
 
-    // Distinguish a click from a drag, so spinning the wall doesn't open a
-    // project every time the pointer comes to rest.
-    let downX = 0;
-    let downY = 0;
-    const onPointerDown = (e) => {
-      downX = e.clientX;
-      downY = e.clientY;
+    const spin = spinRef.current;
+
+    /*
+     * Mouse drag spins the drum, the same way touch does.
+     *
+     * `drag` tracks the gesture; `moved` is the total distance travelled, which
+     * doubles as the click-vs-drag test — releasing after more than a few pixels
+     * is a spin, not a tap on a tile, so it must not open a project.
+     *
+     * Pointer capture means the drag keeps working when the cursor leaves the
+     * canvas (over the slider, or off the window edge) and that we still get the
+     * pointerup that ends it.
+     */
+    const drag = {
+      active: false,
+      lastX: 0,
+      moved: 0,
+      id: null,
+      // Rolling velocity in radians per ms, so releasing can fling the drum.
+      vel: 0,
+      lastT: 0,
     };
+
+    const onPointerDown = (e) => {
+      // Primary button only; let right/middle clicks through.
+      if (e.button !== 0) return;
+      drag.active = true;
+      drag.lastX = e.clientX;
+      drag.lastT = performance.now();
+      drag.moved = 0;
+      drag.vel = 0;
+      drag.id = e.pointerId;
+      el.setPointerCapture?.(e.pointerId);
+      // Pointer capture suppresses :active, so the grabbing cursor is applied
+      // explicitly here and removed on release.
+      el.classList.add('is-dragging');
+      // Stop the browser starting a text/image selection mid-drag.
+      e.preventDefault();
+    };
+
     const onPointerUp = (e) => {
-      if (Math.hypot(e.clientX - downX, e.clientY - downY) > 6) return;
+      if (drag.id !== null) el.releasePointerCapture?.(drag.id);
+      el.classList.remove('is-dragging');
+      const wasDragging = drag.active;
+      drag.active = false;
+      drag.id = null;
+
+      /*
+       * Fling on release, so the drum carries the gesture's momentum instead of
+       * stopping dead under your finger.
+       *
+       * Setting spin.target ahead of spin.current hands the throw to the same
+       * easing the wheel already uses, so both gestures decelerate identically.
+       * FLING_MS is how long the current velocity would keep running; the ease
+       * then bleeds it off.
+       *
+       * A stale velocity is ignored: if the pointer paused before releasing,
+       * the wall was already at rest and should stay there.
+       */
+      if (wasDragging) {
+        const idleMs = performance.now() - drag.lastT;
+        if (idleMs < 90 && Math.abs(drag.vel) > 0.00002) {
+          const FLING_MS = 260;
+          spin.target = spin.current + drag.vel * FLING_MS;
+        }
+        drag.vel = 0;
+      }
+
+      // A gesture that travelled is a spin; only a near-stationary release
+      // counts as a click on a tile.
+      if (wasDragging && drag.moved > 6) return;
+
       const idx = hitSlot(e.clientX, e.clientY);
       if (idx >= 0 && pickRef.current) pickRef.current(idx);
     };
 
-    const spin = spinRef.current;
+    const onPointerCancel = () => {
+      if (drag.id !== null) el.releasePointerCapture?.(drag.id);
+      el.classList.remove('is-dragging');
+      drag.active = false;
+      drag.id = null;
+    };
+
     const onWheel = (e) => {
       e.preventDefault();
       const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
       spin.target += d * SPIN_PER_PX;
     };
 
+    /*
+     * Touch keeps its own handlers rather than sharing the pointer path: the
+     * canvas sets touch-action: none, so touch events arrive reliably, and this
+     * avoids double-counting on browsers that emit both.
+     */
     let touchX = null;
     const onTouchStart = (e) => { touchX = e.touches[0].clientX; };
     const onTouchMove = (e) => {
@@ -541,11 +675,11 @@ export default function useWallCylinder({ entries, enabled = true, onPick, filte
       e.preventDefault();
     };
 
-    const el = renderer.domElement;
     el.addEventListener('pointermove', onPointerMove);
     el.addEventListener('pointerleave', onPointerLeave);
     el.addEventListener('pointerdown', onPointerDown);
     el.addEventListener('pointerup', onPointerUp);
+    el.addEventListener('pointercancel', onPointerCancel);
     el.addEventListener('wheel', onWheel, { passive: false });
     el.addEventListener('touchstart', onTouchStart, { passive: true });
     el.addEventListener('touchmove', onTouchMove, { passive: true });
@@ -601,6 +735,14 @@ export default function useWallCylinder({ entries, enabled = true, onPick, filte
       if (!running) return;
 
       let dirty = false;
+
+      // A drag moves spin.current directly, so the wall has to redraw even
+      // though there is no easing gap left to close.
+      if (drag.active) {
+        mesh.rotation.y = spin.current;
+        syncHover();
+        dirty = true;
+      }
 
       const diff = spin.target - spin.current;
       if (Math.abs(diff) > 0.00002) {
@@ -756,6 +898,7 @@ export default function useWallCylinder({ entries, enabled = true, onPick, filte
       renderer.setSize(w, h);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
+      measureScale();
       renderer.render(scene, camera);
     };
     window.addEventListener('resize', onResize, { passive: true });
@@ -771,6 +914,7 @@ export default function useWallCylinder({ entries, enabled = true, onPick, filte
       el.removeEventListener('pointerleave', onPointerLeave);
       el.removeEventListener('pointerdown', onPointerDown);
       el.removeEventListener('pointerup', onPointerUp);
+      el.removeEventListener('pointercancel', onPointerCancel);
       el.removeEventListener('wheel', onWheel);
       el.removeEventListener('touchstart', onTouchStart);
       el.removeEventListener('touchmove', onTouchMove);

@@ -425,6 +425,7 @@ export const paintPack = (
      * that the tile becomes mostly empty ground.
      */
     let hInset = inset;
+    let vInset = inset;
     if (image && image.width && image.height) {
       const boxH = h - inset * 2;
       const wantW = boxH * (image.width / image.height);
@@ -439,12 +440,30 @@ export const paintPack = (
        */
       const ceiling = slot.w > slot.h ? inset * 1.9 : inset * 1.5;
       hInset = Math.max(inset * 0.34, Math.min(ceiling, wantInset));
+
+      /*
+       * A landscape tile that had to narrow also gets a touch TALLER.
+       *
+       * Compressing the width to save the image's height shrinks the whole box,
+       * so the artwork ends up smaller overall. Giving back a little vertical
+       * inset in proportion to how much width was taken keeps the work at a
+       * comfortable size instead of receding into its own margin.
+       *
+       * Deliberately a small give: the top and bottom margins carry the tile's
+       * metadata, and only the slack beyond what that type needs is available.
+       * At the base inset there is ~45px spare per side, so easing down to 0.78
+       * stays clear of the labels while adding a visible amount of height.
+       */
+      if (slot.w > slot.h && hInset > inset) {
+        const squeeze = (hInset - inset) / (ceiling - inset); // 0..1
+        vInset = inset * (1 - 0.22 * squeeze);
+      }
     }
 
     const ax = x + hInset;
-    const ay = y + inset;
+    const ay = y + vInset;
     const aw = w - hInset * 2;
-    const ah = h - inset * 2;
+    const ah = h - vInset * 2;
 
     /*
      * Hover bloom: flood this tile's whole cell with the image's colours.

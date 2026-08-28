@@ -45,13 +45,33 @@
   z-index: 1;
 }
 
+/*
+ * The dragging cursor is set from JS (see useWallCylinder), not with :active.
+ * The drag calls setPointerCapture, which redirects events away from the
+ * element and makes the browser drop :active — so the closed hand never
+ * appeared. A class toggled on pointerdown/up is reliable.
+ */
+.wl-canvas-mount canvas.is-dragging {
+  cursor: grabbing;
+}
+
 .wl-canvas-mount canvas {
   display: block;
   width: 100%;
   height: 100%;
-  /* Default arrow across the whole wall — never a pointing finger, which would
-     make the surface read as a wall of buttons. */
+  /*
+   * Default arrow at rest, closed hand only while actually dragging (see
+   * :active below).
+   *
+   * Never the open `grab` hand: it advertises a drag before one is happening
+   * and makes the whole wall read as a control surface. Never a pointing finger
+   * either, which would make it read as a wall of buttons rather than one
+   * continuous thing you can push.
+   */
   cursor: default;
+  /* No text/image selection while dragging across the canvas. */
+  user-select: none;
+  -webkit-user-select: none;
   /* The drum spins on wheel/touch, so the browser must not also scroll or
      rubber-band the page underneath it. */
   touch-action: none;
@@ -124,12 +144,23 @@
  * glass; a thumb slides between the options rather than each option restyling
  * itself, so switching sections is one transform.
  */
+/*
+ * Desktop: centred INSIDE the site nav.
+ *
+ * The nav is h-16 (4rem) and on the home route its Agents/Apps/Web tabs are
+ * hidden — the slider covers those same three sections, so it takes their place
+ * rather than sitting as a second row beneath them. Fixed, not absolute, so it
+ * aligns to the viewport-fixed nav rather than to this page's stage.
+ *
+ * z-index clears the nav's own 9999. On narrow viewports it drops to the bottom
+ * instead (see the media query), in easy thumb reach.
+ */
 .wl-slider {
-  position: absolute;
+  position: fixed;
   left: 50%;
-  bottom: 2rem;
-  transform: translateX(-50%);
-  z-index: 4;
+  top: 2rem; /* centre of the 4rem nav */
+  transform: translate(-50%, -50%);
+  z-index: 10000;
 }
 
 .wl-slider-track {
@@ -174,21 +205,36 @@
 .wl-slider-option {
   position: relative;
   z-index: 1;
+  /*
+   * Equal widths come from `flex: 1` plus a flex-basis, NOT a fixed min-width.
+   * The thumb is sized as a fraction of the track, so the options have to be
+   * identical widths or it drifts out of alignment — but a hard 5.5rem minimum
+   * pushed the control to 352px, wider than a 320px phone. Basing them on the
+   * longest label instead keeps them equal and fits the narrowest screens.
+   */
+  flex: 1 1 0;
   /* No default focus ring — a blue browser outline breaks the glass. Keyboard
      focus is shown by the thumb instead (see :focus-visible below). */
   outline: none;
   -webkit-tap-highlight-color: transparent;
-  flex: 1 0 auto;
-  min-width: 5.5rem;
   padding: 0.6rem 1.1rem;
   border: 0;
   background: none;
   cursor: pointer;
-  font-family: 'JetBrains Mono', Consolas, monospace;
-  font-size: 0.68rem;
-  /* Natural casing, not uppercase — the labels read as words rather than as
-     shouted chrome. Tracking is eased back since lowercase needs less. */
-  letter-spacing: 0.06em;
+  text-align: center;
+  /*
+   * The site's sans face at medium weight — these are labels to read, not
+   * technical chrome, so the mono treatment the rest of the metadata uses would
+   * be the wrong register here.
+   *
+   * Dropping the letter-spacing also fixes the centring: tracking adds its gap
+   * after the FINAL character too, which pushed the text left of centre inside
+   * an equal-width option.
+   */
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0;
   color: rgba(244, 242, 238, 0.55);
   transition: color 260ms ease;
 }
@@ -465,16 +511,19 @@
    * same vertical drag.
    */
 
-      /* Tighter, and lifted clear of a phone's home indicator. */
+      /*
+   * Mobile: bottom-anchored for thumb reach and lifted clear of a phone's home
+   * indicator. `top: auto` is required to release the desktop placement above.
+   *
+   * The control keeps its full desktop size here — shrinking the type made it
+   * hard to read and the targets awkward to hit, which is the wrong trade on
+   * the device where it's tapped rather than clicked.
+   */
   .wl-slider {
+    position: absolute;
+    top: auto;
     bottom: max(1rem, env(safe-area-inset-bottom));
-  }
-
-  .wl-slider-option {
-    min-width: 0;
-    padding: 0.55rem 0.7rem;
-    font-size: 0.55rem;
-    letter-spacing: 0.12em;
+    transform: translateX(-50%);
   }
 
   .wl-panel {
