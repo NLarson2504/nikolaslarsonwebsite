@@ -8,24 +8,6 @@
 */
 
 /*!
- * Observer 3.15.0
- * https://gsap.com
- *
- * @license Copyright 2008-2026, GreenSock. All rights reserved.
- * Subject to the terms at https://gsap.com/standard-license
- * @author: Jack Doyle, jack@greensock.com
-*/
-
-/*!
- * ScrollTrigger 3.15.0
- * https://gsap.com
- *
- * @license Copyright 2008-2026, GreenSock. All rights reserved.
- * Subject to the terms at https://gsap.com/standard-license
- * @author: Jack Doyle, jack@greensock.com
-*/
-
-/*!
  * SplitText 3.15.0
  * https://gsap.com
  *
@@ -128,6 +110,12 @@
   * See the License for the specific language governing permissions and
   * limitations under the License.
   */
+
+/**
+ * @license
+ * Copyright 2010-2026 Three.js Authors
+ * SPDX-License-Identifier: MIT
+ */
 
 /**
  * @license
@@ -347,13 +335,6 @@
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
- */
-
-/**
- * @license lucide-react v0.539.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
  */
 
 /**
