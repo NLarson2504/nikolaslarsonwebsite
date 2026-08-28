@@ -400,11 +400,39 @@ export const paintPack = (
     const w = slot.w * U;
     const h = slot.h * U;
 
-    // The artwork sits inset from the tile edge, leaving the ground visible as
-    // the gap between neighbours — the "padding, no gutter" model.
-    const ax = x + inset;
+    /*
+     * The artwork sits inset from the tile edge, leaving the ground visible as
+     * the gap between neighbours — the "padding, no gutter" model.
+     *
+     * PORTRAIT tiles flex their HORIZONTAL inset to fit the image's true
+     * aspect ratio. Nothing runs along a tile's left or right margin (the
+     * metadata sits along the top and bottom), so that padding is free to give
+     * or take a little — and a fixed inset was cropping the sides off phone
+     * screenshots, which are ~9:19.5 in a 1:2 frame.
+     *
+     * Deliberately limited to portrait tiles. Landscape (2x1) tiles keep a
+     * fixed inset: their width is shared with the tile beside them and the
+     * metadata runs the full width, so flexing it there would misalign the wall
+     * and crowd the labels.
+     *
+     * The result is clamped so the artwork can never touch the divider lines
+     * (a floor on the inset) or shrink oddly narrow (a ceiling).
+     */
+    const isPortrait = slot.h > slot.w;
+
+    let hInset = inset;
+    if (isPortrait && image && image.width && image.height) {
+      const boxH = h - inset * 2;
+      const wantW = boxH * (image.width / image.height);
+      const wantInset = (w - wantW) / 2;
+      // Never closer to the edge than a third of the base inset, never more
+      // than half again as far.
+      hInset = Math.max(inset * 0.34, Math.min(inset * 1.5, wantInset));
+    }
+
+    const ax = x + hInset;
     const ay = y + inset;
-    const aw = w - inset * 2;
+    const aw = w - hInset * 2;
     const ah = h - inset * 2;
 
     /*
