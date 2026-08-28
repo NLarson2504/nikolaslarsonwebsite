@@ -513,21 +513,33 @@ export const createSlotMapCanvas = () => {
  * shader samples by slot index. It's SLOTS.length x 1 px — a few hundred bytes,
  * uploaded once alongside the wall texture.
  */
+export const PALETTE_STOPS = 3;
+
 export const createPaletteCanvas = (entries) => {
+  /*
+   * SLOTS.length x PALETTE_STOPS — one ROW per gradient stop, so each slot
+   * carries its three dominant colours rather than just its single most common
+   * one. The shader ramps between them across the cell, which gives the wash
+   * some depth instead of a flat single-hue fill.
+   */
   const c = document.createElement('canvas');
   c.width = SLOTS.length;
-  c.height = 1;
+  c.height = PALETTE_STOPS;
   const cx = c.getContext('2d');
 
   // Neutral fallback, so a slot with no usable palette still lifts on hover.
   cx.fillStyle = PALETTE.agentBloom;
-  cx.fillRect(0, 0, c.width, 1);
+  cx.fillRect(0, 0, c.width, c.height);
 
   for (const { index, image } of entries) {
     const colours = paletteFor(image);
     if (!colours) continue;
-    cx.fillStyle = colours[0];
-    cx.fillRect(index, 0, 1, 1);
+    for (let row = 0; row < PALETTE_STOPS; row += 1) {
+      // Images yielding fewer than three usable colours repeat their last one,
+      // so the gradient degrades to a flatter wash rather than a hard edge.
+      cx.fillStyle = colours[Math.min(row, colours.length - 1)];
+      cx.fillRect(index, row, 1, 1);
+    }
   }
 
   return c;

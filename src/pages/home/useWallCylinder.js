@@ -48,14 +48,21 @@ const SEGMENTS = 128;     // radial segments — plenty for a seamless silhouett
 /*
  * The wash's FULL strength, once the ramp has settled.
  *
- * This is the ceiling, not the onset — see HOVER_FLOOR.
+ * This is the wash at full strength, reached at the end of the hover ramp.
  *
- * Kept low on purpose. This is a background effect: the ground around a tile
- * should pick up a hint of the work's colour, not turn into a coloured panel.
- * At 0.55 it read as a spotlight; 0.16 tops out around a sixth of the way to
- * the colour, which is a tint you notice without it taking over the wall.
+ * The hard ceiling on the wash: the hovered cell's ground travels at most this
+ * far from its own colour toward the artwork's. 0.035 = a 3.5% tint.
+ *
+ * This is deliberately minute. The wash sits on a near-black ground in a dark
+ * room, and anything that reads as a distinct colour there is already competing
+ * with the artwork. At this level it registers as the cell warming very
+ * slightly rather than as a coloured panel.
+ *
+ * This is now the ONLY brightness control — see the shader, where it is applied
+ * once. It reads as a quiet tint rather than a glow, which is the intent: the
+ * ground picks up a hint of the work's colour and nothing more.
  */
-const WASH_STRENGTH = 0.16;
+const WASH_STRENGTH = 0.035;
 
 /*
  * Mouse position steers the camera, so moving around feels like looking about
@@ -202,6 +209,8 @@ export default function useWallCylinder({ entries, enabled = true, onPick }) {
         uSlotCount: { value: SLOTS.length },
         uHoverSlot: { value: -1 },
         uHoverAmount: { value: 0 },
+        uPrevSlot: { value: -1 },
+        uPrevAmount: { value: 0 },
         uWashStrength: { value: WASH_STRENGTH },
       },
       vertexShader: `
@@ -218,8 +227,19 @@ export default function useWallCylinder({ entries, enabled = true, onPick }) {
         uniform vec2  uRepeat;
         uniform vec2  uOffset;
         uniform float uSlotCount;
+        /*
+         * TWO washes, not one.
+         *
+         * Moving between tiles has to fade the old cell down while the new one
+         * comes up — with a single (slot, amount) pair the slot swaps instantly
+         * and the incoming tile simply inherits the outgoing brightness, so
+         * nothing appears to animate after the first hover. A second slot lets
+         * both run at once.
+         */
         uniform float uHoverSlot;
         uniform float uHoverAmount;
+        uniform float uPrevSlot;
+        uniform float uPrevAmount;
         uniform float uWashStrength;
         varying vec2 vUv;
 
@@ -233,10 +253,41 @@ export default function useWallCylinder({ entries, enabled = true, onPick }) {
           vec2 cellUv = fract(uv);
           float slot = floor(texture2D(uSlotMap, cellUv).r * 255.0 + 0.5);
 
-          if (uHoverAmount > 0.001 && abs(slot - uHoverSlot) < 0.5) {
-            // Sample this slot's colour from the middle of its palette texel.
-            vec2 pUv = vec2((slot + 0.5) / uSlotCount, 0.5);
-            vec3 wash = texture2D(uPalette, pUv).rgb;
+          // How lit is THIS cell? It may be the incoming tile, the outgoing
+          // one, or neither.
+          float amount = 0.0;
+          if (abs(slot - uHoverSlot) < 0.5) amount = uHoverAmount;
+          else if (abs(slot - uPrevSlot) < 0.5) amount = uPrevAmount;
+
+          if (amount > 0.001) {
+            /*
+             * Blend this slot's THREE dominant colours across the cell.
+             *
+             * The palette texture carries one row per stop, so a diagonal
+             * position within the cell picks how far through the ramp we are.
+             * A single flat colour read as a solid tint; ramping between the
+             * top three gives the wash some internal variation, closer to light
+             * bouncing off the work than a colour fill.
+             */
+            float u0 = (slot + 0.5) / uSlotCount;
+            vec3 cA = texture2D(uPalette, vec2(u0, 0.5 / 3.0)).rgb;
+            vec3 cB = texture2D(uPalette, vec2(u0, 1.5 / 3.0)).rgb;
+            vec3 cC = texture2D(uPalette, vec2(u0, 2.5 / 3.0)).rgb;
+
+            /*
+             * Diagonal ramp across the PACK, not within each cell.
+             *
+             * fract(cellUv * grid) would repeat per BASE UNIT, so a 2x1 tile
+             * would show the gradient twice with a hard reset at its midpoint —
+             * a visible seam through every landscape and portrait tile. Ramping
+             * across the pack keeps each tile's wash continuous and lets
+             * neighbours differ slightly, which is the variation we wanted.
+             */
+            float g = clamp((cellUv.x + (1.0 - cellUv.y)) * 0.5, 0.0, 1.0);
+
+            vec3 wash = g < 0.5
+              ? mix(cA, cB, g * 2.0)
+              : mix(cB, cC, (g - 0.5) * 2.0);
 
             /*
              * The wash belongs BEHIND the artwork, so it may only touch the
@@ -254,7 +305,32 @@ export default function useWallCylinder({ entries, enabled = true, onPick }) {
             // way and no wash creeps onto the work's rim.
             float ground = 1.0 - smoothstep(0.86, 0.94, wall.a);
 
-            wall.rgb = mix(wall.rgb, wash, ground * uHoverAmount * uWashStrength);
+            /*
+             * Two terms, because a mix alone cannot lift this ground.
+             *
+             * The ground is near-black (#101113), so mixing it 16% toward the
+             * image colour moved it by only ~26/255 — running the animation
+             * correctly but with almost nothing visible, which is why the
+             * effect kept reading as "not animated". The additive term is what
+             * makes it actually glow: the cell lights UP toward the colour
+             * rather than merely leaning toward it.
+             */
+            /*
+             * ONE blend, one number.
+             *
+             * This used to be a mix plus a separate additive lift, with
+             * uWashStrength applied to BOTH — so the strength was effectively
+             * squared into the result and the additive term (which just piles
+             * light on regardless of how dark the ground is) contributed most
+             * of the brightness. Lowering the strength barely dimmed anything
+             * because the two terms fought each other.
+             *
+             * Now uWashStrength is the literal ceiling: at 0.16 the ground ends
+             * up exactly 16% of the way from its own colour to the artwork's,
+             * and nothing else brightens it.
+             */
+            float k = ground * amount * uWashStrength;
+            wall.rgb = mix(wall.rgb, wash, k);
             wall.a = 1.0;
           }
 
@@ -327,7 +403,7 @@ export default function useWallCylinder({ entries, enabled = true, onPick }) {
      * it isn't; `hover.slot` only changes once the outgoing wash has faded, so
      * moving between tiles crossfades rather than jumping.
      */
-    const hover = { slot: -1, amount: 0 };
+    const hover = { slot: -1, amount: 0, prevSlot: -1, prevAmount: 0 };
 
     /*
      * Hover now costs two uniform writes — no texture repaint, no upload. This
@@ -335,14 +411,22 @@ export default function useWallCylinder({ entries, enabled = true, onPick }) {
      */
     const applyHover = () => {
       /*
-       * The eased value is used as-is. An earlier version ran it through a
-       * smoothstep, which flattens the beginning of the curve — the opposite of
-       * what's wanted here. Combined with a slow ease it meant only ~1% of the
-       * wash was visible after the first frame and ~130ms to reach a quarter,
-       * which is what read as lag. The onset is handled by HOVER_FLOOR below.
+       * hover.amount advances LINEARLY along a fixed duration; the smoothstep
+       * here gives it its shape — easing in and out so the wash starts and
+       * settles gently rather than beginning at full rate.
+       *
+       * (Shaping a linear timeline is not the same as the earlier mistake of
+       * smoothstepping an exponential ease, which flattened an already
+       * front-loaded curve into something that looked like nothing happened.)
        */
+      const shape = (v) => {
+        const t = Math.min(1, Math.max(0, v));
+        return t * t * (3 - 2 * t);
+      };
       material.uniforms.uHoverSlot.value = hover.slot;
-      material.uniforms.uHoverAmount.value = Math.min(1, Math.max(0, hover.amount));
+      material.uniforms.uHoverAmount.value = shape(hover.amount);
+      material.uniforms.uPrevSlot.value = hover.prevSlot;
+      material.uniforms.uPrevAmount.value = shape(hover.prevAmount);
     };
 
     // Last known pointer position, so the hovered slot can be re-resolved as the
@@ -436,25 +520,45 @@ export default function useWallCylinder({ entries, enabled = true, onPick }) {
     let running = true;
 
     /*
-     * Hover behaves like a dimmer switch: the light comes on the instant you
-     * touch it, then rides up smoothly to full.
+     * Hover ramps the cell's ground from the wall's own background up to full
+     * wash strength — a dimmer coming up, with nothing skipped at the start.
      *
-     * HOVER_FLOOR is the onset — the wash jumps straight to this on first
-     * contact, so the reaction registers immediately. It is deliberately LOW
-     * (a ~6% tint): enough to acknowledge the pointer, faint enough that the
-     * ramp afterwards is the part you actually notice. HOVER_EASE then carries
-     * it up to full over ~400ms.
-     *
-     * Exponential easing alone can't do this: it is slowest exactly where the
-     * response needs to be fastest.
+     * There is deliberately NO onset floor. An earlier version snapped the
+     * value to a floor on first contact to kill a perceived lag, but that made
+     * the wash TELEPORT to ~1.6% and then animate only the remaining sliver.
+     * That snap was simultaneously the "too bright on first hover" and the
+     * "I don't notice any brightening" — the tile lit instantly and then barely
+     * moved. Starting from a true 0 and easing faster gives an onset that is
+     * both immediate and actually visible as a ramp.
      */
-    const HOVER_FLOOR = 0.1;
-    const HOVER_EASE = 0.16;
-    // Fading out is slower than fading in — a light dimming down, not snapping
-    // off, and it keeps a fast sweep across tiles from flickering.
-    const HOVER_EASE_OUT = 0.1;
+    /*
+     * Fixed DURATIONS, not an exponential ease.
+     *
+     * Exponential easing (amount += (target - amount) * k) is fastest at the
+     * start: at k = 0.28 the first frame covered 28% of the range in 17ms, so
+     * the eye read an instant ON followed by a slow crawl — a snap wearing an
+     * animation's clothing. Lowering k just moved the problem, because the
+     * shape is wrong, not the speed.
+     *
+     * Driving progress from elapsed TIME and shaping it with a smoothstep gives
+     * even, watchable motion: the first frame moves ~1/255, the peak rate is in
+     * the middle, and it settles gently at the end.
+     */
+    const HOVER_IN_MS = 240;
+    // Fading out is the FASTER of the two: a cell you've left should get out of
+    // the way quickly, and a slow fade makes a sweep across the wall look like
+    // it's smearing light behind the pointer.
+    const HOVER_OUT_MS = 170;
 
-    const tick = () => {
+    /*
+     * Timestamped so the hover ramp advances by real elapsed time rather than
+     * per frame. A frame-counted ramp runs at whatever rate the display happens
+     * to refresh at — twice as fast on a 120Hz screen, and it stutters whenever
+     * a frame is dropped.
+     */
+    let lastTick = performance.now();
+
+    const tick = (now = performance.now()) => {
       if (!running) return;
 
       let dirty = false;
@@ -507,30 +611,74 @@ export default function useWallCylinder({ entries, enabled = true, onPick }) {
        * of the old one's fade-out, which is most of what felt laggy when moving
        * between tiles.
        */
-      if (hover.slot !== want) {
+      /*
+       * On a slot change, HAND THE OUTGOING CELL OFF to the `prev` channel and
+       * start the incoming one from zero.
+       *
+       * Previously the slot swapped while `amount` carried over, so every tile
+       * after the first inherited full brightness and had nothing left to
+       * animate — the wash appeared to teleport from tile to tile. Two channels
+       * let the old cell fade out on its own timeline while the new one ramps
+       * up, so every tile animates in and every tile animates out.
+       */
+      /*
+       * Only hand off when moving to ANOTHER tile.
+       *
+       * Leaving the wall (want === -1) must let the current cell ramp down in
+       * place — treating that as a slot change zeroed `amount` instantly and
+       * the fade-out never played at all.
+       */
+      if (want !== -1 && hover.slot !== want) {
+        /*
+         * Only claim the fade-out channel if this cell is brighter than
+         * whatever is already fading. Sweeping quickly across the wall would
+         * otherwise let a tile that was lit for a single frame evict a fully
+         * bright one mid-fade, cutting the visible fade-out short.
+         */
+        if (hover.slot !== -1 && hover.amount > hover.prevAmount) {
+          hover.prevSlot = hover.slot;
+          hover.prevAmount = hover.amount;
+        }
         hover.slot = want;
-        // Land at the floor rather than 0, so the new cell is already visibly
-        // lit on the very first frame it's hovered.
-        if (want !== -1) hover.amount = Math.max(hover.amount, HOVER_FLOOR);
+        hover.amount = 0;
         dirty = true;
       }
 
-      const target = want !== -1 ? 1 : 0;
+      // Clamp the frame gap: after a backgrounded tab or a long stall,
+      // now - lastTick can be hundreds of ms and would jump an entire ramp in a
+      // single frame — the exact snap this is all meant to avoid.
+      const dt = Math.min(50, now - lastTick);
 
-      if (Math.abs(hover.amount - target) > 0.002) {
+      // The hovered cell ramps up; once the pointer leaves, the same cell
+      // ramps back down in place (its slot is retained so it stays visible
+      // while it fades).
+      const target = want !== -1 ? 1 : 0;
+      if (hover.amount !== target) {
         if (reduceMotion) {
           hover.amount = target;
         } else {
-          // Rising uses the floor for instant onset; falling is gentler.
-          if (target > hover.amount && hover.amount < HOVER_FLOOR) {
-            hover.amount = HOVER_FLOOR;
-          }
-          const step = target > hover.amount ? HOVER_EASE : HOVER_EASE_OUT;
-          hover.amount += (target - hover.amount) * step;
+          const dur = target > hover.amount ? HOVER_IN_MS : HOVER_OUT_MS;
+          const delta = dt / dur;
+          hover.amount += target > hover.amount ? delta : -delta;
+          hover.amount = Math.min(1, Math.max(0, hover.amount));
         }
         dirty = true;
-      } else if (hover.amount !== target) {
-        hover.amount = target;
+      }
+
+      // Release the slot once it has fully dimmed, so it stops being drawn.
+      if (want === -1 && hover.amount === 0 && hover.slot !== -1) {
+        hover.slot = -1;
+        dirty = true;
+      }
+
+      // The cell just left always fades to nothing.
+      if (hover.prevAmount > 0) {
+        if (reduceMotion) {
+          hover.prevAmount = 0;
+        } else {
+          hover.prevAmount = Math.max(0, hover.prevAmount - dt / HOVER_OUT_MS);
+        }
+        if (hover.prevAmount === 0) hover.prevSlot = -1;
         dirty = true;
       }
 
@@ -539,6 +687,7 @@ export default function useWallCylinder({ entries, enabled = true, onPick }) {
         renderer.render(scene, camera);
       }
 
+      lastTick = now;
       raf = requestAnimationFrame(tick);
     };
 
