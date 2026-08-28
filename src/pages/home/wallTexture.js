@@ -212,6 +212,132 @@ const drawPal = (ctx, slug, ax, ay, aw, ah) => {
   return true;
 };
 
+/*
+ * Draws a project's details into the GROUND around its artwork.
+ *
+ * Three zones, all inside the cell's inset margin rather than over the work:
+ *
+ *   top-left     the brand the project belongs to
+ *   top-right    its status, platform or category — whichever it has
+ *   bottom       its technologies, as a subtle single row
+ *
+ * Everything is hard-clipped to one line. The margin is a fixed width and the
+ * text has nowhere to wrap to, so anything longer is truncated with an ellipsis
+ * rather than allowed to run into the artwork or collide with the opposite
+ * corner. The two top labels split the width between them so they can never
+ * overlap.
+ */
+const META_ALPHA = 0.42;
+
+/*
+ * The year a project was worked on, for the bottom row.
+ *
+ * Only `startDate` / `endDate` / `date` count as real: `updatedAt` is when the
+ * Firestore record was last edited, not when the work happened, so using it
+ * would print a confidently wrong year on almost every tile.
+ *
+ * A project with a start and a different end reads as a range ("2025—2026");
+ * one with a single date reads as that year. Projects carrying no date at all
+ * return null and the row stays empty rather than inventing something.
+ */
+const projectYear = (project) => {
+  const yearOf = (v) => {
+    if (!v) return null;
+    const t = new Date(v).getFullYear();
+    return Number.isNaN(t) ? null : t;
+  };
+
+  const start = yearOf(project.startDate) ?? yearOf(project.date);
+  const end = yearOf(project.endDate);
+
+  if (start && end && end !== start) return `${start}—${end}`;
+  const single = start ?? end;
+  return single ? String(single) : null;
+};
+
+const fitText = (ctx, text, maxWidth) => {
+  if (!text) return '';
+  if (ctx.measureText(text).width <= maxWidth) return text;
+  let out = text;
+  while (out.length > 1 && ctx.measureText(`${out}…`).width > maxWidth) {
+    out = out.slice(0, -1);
+  }
+  return `${out}…`;
+};
+
+const drawTileMeta = (ctx, { project, x, y, w, h, inset, brandLogos }) => {
+  if (!project) return;
+
+  const U = TEXEL_U;
+  const pad = inset * 0.34;          // breathing room from the cell's edge
+  const size = Math.round(U * 0.032); // one type size for every label
+  const half = (w - pad * 2) / 2 - pad;
+
+  /*
+   * The metadata is drawn INTO the ground, which is precisely what the hover
+   * wash targets — so without this it gets tinted along with the ground behind
+   * it and the labels appear to be coloured over.
+   *
+   * Marking these pixels at full alpha puts them on the artwork side of the
+   * shader's mask (see GROUND_ALPHA), so the wash flows around the text and
+   * logos instead of through them.
+   *
+   * globalAlpha can't be used to fade the type any more for the same reason —
+   * it would drag the alpha flag back down into the "ground" range. The colour
+   * itself carries the opacity instead.
+   */
+  ctx.save();
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = `rgba(244, 242, 238, ${META_ALPHA})`;
+  ctx.font = `500 ${size}px 'JetBrains Mono', Consolas, monospace`;
+  ctx.textBaseline = 'middle';
+
+  const topY = y + pad + size * 0.5;
+  const bottomY = y + h - pad - size * 0.5;
+
+  /*
+   * Top-left: the brand's LOGO where it has one, its name where it doesn't.
+   *
+   * Only some brands carry a logo (Mooslix and Tarragon do; the personal and
+   * Nourished brands have an empty `logo`), so the text path stays as the
+   * fallback rather than leaving those tiles blank. The mark is tinted to the
+   * label colour so a full-colour JPG doesn't shout next to the muted type.
+   */
+  const brand = project.brand?.name || '';
+  const logo = brandLogos.get(project.brand?.id);
+
+  if (logo) {
+    const lh = size * 1.25;
+    const lw = (logo.width / logo.height) * lh;
+    ctx.save();
+    // Fully opaque: the mark is already greyscaled to sit with the metadata,
+    // so fading it as well would just make it muddy.
+    ctx.globalAlpha = 1;
+    ctx.drawImage(logo, x + pad, topY - lh / 2, Math.min(lw, half), lh);
+    ctx.restore();
+  } else if (brand) {
+    ctx.textAlign = 'left';
+    ctx.fillText(fitText(ctx, brand.toUpperCase(), half), x + pad, topY);
+  }
+
+  // Top-right: whichever secondary fact this project actually carries.
+  const detail = project.status || project.platform || project.category || '';
+  if (detail) {
+    ctx.textAlign = 'right';
+    ctx.fillText(fitText(ctx, detail.toUpperCase(), half), x + w - pad, topY);
+  }
+
+  // Bottom: when the work was done, quieter still.
+  const year = projectYear(project);
+  if (year) {
+    ctx.fillStyle = `rgba(244, 242, 238, ${META_ALPHA * 0.72})`;
+    ctx.textAlign = 'left';
+    ctx.fillText(fitText(ctx, year, w - pad * 2), x + pad, bottomY);
+  }
+
+  ctx.restore();
+};
+
 /**
  * Paints one pack into `canvas`.
  *
@@ -236,7 +362,7 @@ export const paintPack = (
   // TEXEL_U = 512 a radius of 10 is barely 2-3 screen pixels — just enough to
   // take the hard point off each corner without the tiles reading as rounded
   // cards. Both scale with TEXEL_U.
-  { inset = 92, radius = 10 } = {}
+  { inset = 92, radius = 10, brandLogos = new Map() } = {}
 ) => {
   const ctx = canvas.getContext('2d');
   const U = TEXEL_U;
@@ -307,6 +433,8 @@ export const paintPack = (
     }
 
     ctx.restore();
+
+    drawTileMeta(ctx, { project, x, y, w, h, inset, brandLogos });
   }
 
   /*
@@ -420,6 +548,66 @@ export const tileImage = (project) => {
   const first = shots[0];
   if (!first) return null;
   return typeof first === 'string' ? first : first.url || first.src || null;
+};
+
+/**
+ * Loads every brand logo referenced by the projects, keyed by brand id.
+ *
+ * Brands without a `logo` are simply absent from the map, and drawTileMeta
+ * falls back to the brand's name — the personal and Nourished brands have no
+ * mark, so the text path is a real case, not just defensive.
+ */
+export const loadBrandLogos = async (projects) => {
+  const wanted = new Map();
+  for (const p of projects) {
+    const brand = p?.brand;
+    if (brand?.id && brand.logo && !wanted.has(brand.id)) {
+      wanted.set(brand.id, brand.logo);
+    }
+  }
+
+  const out = new Map();
+  await Promise.all(
+    [...wanted.entries()].map(async ([id, src]) => {
+      const img = await loadImage(src);
+      if (img) out.set(id, greyscale(img));
+    })
+  );
+  return out;
+};
+
+/*
+ * Flattens a logo to greyscale, once, at load time.
+ *
+ * The brand marks are full colour (Tarragon's is a JPEG photo-style mark), and
+ * dropped straight into the wall they shout next to the muted metadata type.
+ * Desaturating makes them read as one system with the rest of the chrome.
+ *
+ * Done here rather than per-paint because it's a pixel operation: it runs once
+ * per brand instead of once per tile per repaint.
+ */
+const greyscale = (img) => {
+  const c = document.createElement('canvas');
+  c.width = img.width || img.naturalWidth;
+  c.height = img.height || img.naturalHeight;
+  const cx = c.getContext('2d', { willReadFrequently: true });
+  cx.drawImage(img, 0, 0, c.width, c.height);
+
+  try {
+    const d = cx.getImageData(0, 0, c.width, c.height);
+    const px = d.data;
+    for (let i = 0; i < px.length; i += 4) {
+      // Rec. 601 luma — matches how the eye weights the channels.
+      const v = px[i] * 0.299 + px[i + 1] * 0.587 + px[i + 2] * 0.114;
+      px[i] = px[i + 1] = px[i + 2] = v;
+    }
+    cx.putImageData(d, 0, 0);
+  } catch {
+    // A tainted canvas would throw; the colour original is still usable.
+    return img;
+  }
+
+  return c;
 };
 
 /**

@@ -46,10 +46,16 @@ const BANDS = 2;          // packs stacked vertically
 const RADIUS = 2.6;       // world units
 const SEGMENTS = 128;     // radial segments — plenty for a seamless silhouette
 /*
- * How strongly the hover wash tints a cell's ground. Deliberately restrained:
- * it should read as a translucent glow behind the work, not a coloured panel.
+ * The wash's FULL strength, once the ramp has settled.
+ *
+ * This is the ceiling, not the onset — see HOVER_FLOOR.
+ *
+ * Kept low on purpose. This is a background effect: the ground around a tile
+ * should pick up a hint of the work's colour, not turn into a coloured panel.
+ * At 0.55 it read as a spotlight; 0.16 tops out around a sixth of the way to
+ * the colour, which is a tint you notice without it taking over the wall.
  */
-const WASH_STRENGTH = 0.34;
+const WASH_STRENGTH = 0.16;
 
 const SPIN_PER_PX = 0.0016;
 const EASE = 0.09;
@@ -67,7 +73,9 @@ export default function useWallCylinder({ entries, enabled = true, onPick }) {
 
   useEffect(() => {
     const mount = mountRef.current;
-    if (!mount || !enabled || !entries || !entries.length) return undefined;
+    const items = entries?.items;
+    if (!mount || !enabled || !items || !items.length) return undefined;
+    const brandLogos = entries.brandLogos || new Map();
 
     /* ---------------------------------------------------------- renderer */
 
@@ -94,7 +102,7 @@ export default function useWallCylinder({ entries, enabled = true, onPick }) {
     /* ----------------------------------------------------------- texture */
 
     const canvas = createPackCanvas();
-    paintPack(canvas, entries);
+    paintPack(canvas, items, { brandLogos });
 
     const texture = new THREE.CanvasTexture(canvas);
     texture.wrapS = THREE.RepeatWrapping;
@@ -151,7 +159,7 @@ export default function useWallCylinder({ entries, enabled = true, onPick }) {
     };
 
     const slotMapTex = makeDataTexture(createSlotMapCanvas());
-    const paletteTex = makeDataTexture(createPaletteCanvas(entries));
+    const paletteTex = makeDataTexture(createPaletteCanvas(items));
 
     /*
      * The hover wash lives in the FRAGMENT SHADER, not in the wall texture.
@@ -399,14 +407,16 @@ export default function useWallCylinder({ entries, enabled = true, onPick }) {
      * touch it, then rides up smoothly to full.
      *
      * HOVER_FLOOR is the onset — the wash jumps straight to this on first
-     * contact, so the reaction is immediate rather than fading up from nothing.
-     * HOVER_EASE then carries it the rest of the way, reaching full in ~250ms.
+     * contact, so the reaction registers immediately. It is deliberately LOW
+     * (a ~6% tint): enough to acknowledge the pointer, faint enough that the
+     * ramp afterwards is the part you actually notice. HOVER_EASE then carries
+     * it up to full over ~400ms.
      *
      * Exponential easing alone can't do this: it is slowest exactly where the
      * response needs to be fastest.
      */
-    const HOVER_FLOOR = 0.34;
-    const HOVER_EASE = 0.19;
+    const HOVER_FLOOR = 0.1;
+    const HOVER_EASE = 0.16;
     // Fading out is slower than fading in — a light dimming down, not snapping
     // off, and it keeps a fast sweep across tiles from flickering.
     const HOVER_EASE_OUT = 0.1;

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import useProjects from '../../hooks/useProjects';
 import useWallCylinder from './useWallCylinder';
 import { KIND_META, SLOTS } from './wallLayout';
-import { loadImage, tileImage } from './wallTexture';
+import { loadBrandLogos, loadImage, tileImage } from './wallTexture';
 import WallPanel from './WallPanel';
 import './Wall.css';
 
@@ -87,13 +87,18 @@ const Wall = () => {
     if (!assigned.length) return undefined;
     let alive = true;
 
-    Promise.all(
-      assigned.map(async (entry) => ({
-        ...entry,
-        image: await loadImage(tileImage(entry.project)),
-      }))
-    ).then((withImages) => {
-      if (alive) setEntries(withImages);
+    // Brand marks are loaded alongside the screenshots, since both have to be
+    // in hand before the pack can be composited in one pass.
+    Promise.all([
+      Promise.all(
+        assigned.map(async (entry) => ({
+          ...entry,
+          image: await loadImage(tileImage(entry.project)),
+        }))
+      ),
+      loadBrandLogos(assigned.map((e) => e.project)),
+    ]).then(([withImages, logos]) => {
+      if (alive) setEntries({ items: withImages, brandLogos: logos });
     });
 
     return () => {
@@ -104,7 +109,7 @@ const Wall = () => {
   // Raycasting hands back a slot index; map it to the entry to open.
   const handlePick = useCallback(
     (slotIndex) => {
-      const entry = (entries || []).find((e) => e.index === slotIndex);
+      const entry = (entries?.items || []).find((e) => e.index === slotIndex);
       if (entry) setActive({ ...entry.slot, project: entry.project });
     },
     [entries]
