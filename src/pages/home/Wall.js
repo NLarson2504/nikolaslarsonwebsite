@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import useProjects from '../../hooks/useProjects';
 import useWallCylinder from './useWallCylinder';
@@ -169,7 +170,8 @@ const Wall = () => {
         * label the thumb sits under stays legible because the thumb is glass,
         * not a solid fill.
         */}
-      <nav className="wl-slider" aria-label="Filter work by section">
+      {createPortal(
+        <nav className="wl-slider" aria-label="Filter work by section">
         <div className="wl-slider-track" role="tablist">
           <span
             className="wl-slider-thumb"
@@ -191,8 +193,10 @@ const Wall = () => {
               {f.label}
             </button>
           ))}
-        </div>
-      </nav>
+          </div>
+        </nav>,
+        document.body
+      )}
 
       {loading ? (
         <p className="wl-state">Loading the wall…</p>
