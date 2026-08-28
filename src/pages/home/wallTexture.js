@@ -296,7 +296,8 @@ const drawTileMeta = (ctx, { project, x, y, w, h, inset, brandLogos }) => {
   const bottomY = y + h - pad - size * 0.5;
 
   /*
-   * Top-left: the brand's LOGO where it has one, its name where it doesn't.
+   * Top-left: the brand's LOGO where it has one, its name where it doesn't —
+   * in the brand's own casing, matching the rest of the tile metadata.
    *
    * Only some brands carry a logo (Mooslix and Tarragon do; the personal and
    * Nourished brands have an empty `logo`), so the text path stays as the
@@ -317,7 +318,7 @@ const drawTileMeta = (ctx, { project, x, y, w, h, inset, brandLogos }) => {
     ctx.restore();
   } else if (brand) {
     ctx.textAlign = 'left';
-    ctx.fillText(fitText(ctx, brand.toUpperCase(), half), x + pad, topY);
+    ctx.fillText(fitText(ctx, brand, half), x + pad, topY);
   }
 
   // Top-right: when the work was done.
@@ -328,7 +329,8 @@ const drawTileMeta = (ctx, { project, x, y, w, h, inset, brandLogos }) => {
   }
 
   /*
-   * Bottom: what the thing IS, quieter still.
+   * Bottom: what the thing IS, quieter still — and in its natural casing
+   * rather than caps, so it reads as a label rather than a heading.
    *
    * Composed rather than a single field, because no one field covers the whole
    * inventory: apps carry `platform` (6/14), sites carry `category` (5/14), and
@@ -340,7 +342,7 @@ const drawTileMeta = (ctx, { project, x, y, w, h, inset, brandLogos }) => {
   if (kind) {
     ctx.fillStyle = `rgba(244, 242, 238, ${META_ALPHA * 0.72})`;
     ctx.textAlign = 'left';
-    ctx.fillText(fitText(ctx, kind.toUpperCase(), w - pad * 2), x + pad, bottomY);
+    ctx.fillText(fitText(ctx, kind, w - pad * 2), x + pad, bottomY);
   }
 
   ctx.restore();
@@ -404,30 +406,39 @@ export const paintPack = (
      * The artwork sits inset from the tile edge, leaving the ground visible as
      * the gap between neighbours — the "padding, no gutter" model.
      *
-     * PORTRAIT tiles flex their HORIZONTAL inset to fit the image's true
-     * aspect ratio. Nothing runs along a tile's left or right margin (the
-     * metadata sits along the top and bottom), so that padding is free to give
-     * or take a little — and a fixed inset was cropping the sides off phone
-     * screenshots, which are ~9:19.5 in a 1:2 frame.
+     * The HORIZONTAL inset flexes to suit the image, in both directions:
      *
-     * Deliberately limited to portrait tiles. Landscape (2x1) tiles keep a
-     * fixed inset: their width is shared with the tile beside them and the
-     * metadata runs the full width, so flexing it there would misalign the wall
-     * and crowd the labels.
+     *   PORTRAIT (1x2, apps)  widens the box so a ~9:19.5 phone screenshot
+     *                         isn't shaved down the sides by a 1:2 frame.
+     *   LANDSCAPE (2x1, web)  narrows the box so more of a site capture's
+     *                         HEIGHT survives — these are ~1.5-1.8:1 in a
+     *                         2.56:1 frame and were losing 29-40% off the
+     *                         bottom.
      *
-     * The result is clamped so the artwork can never touch the divider lines
-     * (a floor on the inset) or shrink oddly narrow (a ceiling).
+     * Only the horizontal padding moves. Nothing runs along a tile's left or
+     * right margin — the metadata sits along the top and bottom — so that space
+     * is free to give and take. The vertical inset stays fixed, which keeps
+     * every tile's metadata on the same baseline across the wall.
+     *
+     * Both directions are clamped: never closer to the edge than a third of the
+     * base inset (so artwork can't crowd the divider lines), and never so far
+     * that the tile becomes mostly empty ground.
      */
-    const isPortrait = slot.h > slot.w;
-
     let hInset = inset;
-    if (isPortrait && image && image.width && image.height) {
+    if (image && image.width && image.height) {
       const boxH = h - inset * 2;
       const wantW = boxH * (image.width / image.height);
       const wantInset = (w - wantW) / 2;
-      // Never closer to the edge than a third of the base inset, never more
-      // than half again as far.
-      hInset = Math.max(inset * 0.34, Math.min(inset * 1.5, wantInset));
+
+      /*
+       * Landscape tiles get a wider ceiling than portrait ones. Fully fitting a
+       * 1.5:1 capture into a 2.56:1 frame would need ~2.8x the base inset,
+       * leaving the artwork at half the cell's width with a hollow margin
+       * around it. 1.9x recovers most of the height while the work still fills
+       * about two thirds of the tile — the better trade.
+       */
+      const ceiling = slot.w > slot.h ? inset * 1.9 : inset * 1.5;
+      hInset = Math.max(inset * 0.34, Math.min(ceiling, wantInset));
     }
 
     const ax = x + hInset;
@@ -524,8 +535,16 @@ export const createSlotMapCanvas = () => {
   cx.fillStyle = 'rgb(255,0,0)'; // 255 = "no slot"
   cx.fillRect(0, 0, COLS, PACK_ROWS);
 
+  /*
+   * Red = slot index, GREEN = kind (1 web, 2 app, 3 agent).
+   *
+   * The kind rides along in the same lookup so the filter can dim by section
+   * without a second texture or a per-slot uniform array.
+   */
+  const KIND_ID = { web: 1, app: 2, agent: 3 };
+
   SLOTS.forEach((slot, i) => {
-    cx.fillStyle = `rgb(${i},0,0)`;
+    cx.fillStyle = `rgb(${i},${KIND_ID[slot.kind] || 0},0)`;
     cx.fillRect(slot.col, slot.row, slot.w, slot.h);
   });
 

@@ -34,13 +34,30 @@ const MOBILE_QUERY = '(max-width: 900px)';
 // Firestore `type` -> the KIND_META key that describes it.
 const KIND_FOR_TYPE = { site: 'web', app: 'app', agent: 'agent' };
 
+// The slider's options, in order. `all` is first so it reads as the default
+// resting state at the far left.
+const FILTERS = [
+  { key: 'all', label: 'All' },
+  { key: 'web', label: 'Web' },
+  { key: 'app', label: 'Apps' },
+  { key: 'agent', label: 'Agents' },
+];
+
 const Wall = () => {
   const { data: sites, loading: lSites, error: eSites } = useProjects('site');
   const { data: apps, loading: lApps, error: eApps } = useProjects('app');
   const { data: agents, loading: lAgents, error: eAgents } = useProjects('agent');
 
   const [active, setActive] = useState(null);   // slot shown in the overlay
+  // Which section the wall is showing. 'all' is the default and sits leftmost.
+  const [filter, setFilter] = useState('all');
   const [entries, setEntries] = useState(null); // slots + loaded images
+  /*
+   * Narrow viewports get the SAME wall, not a different page. isMobile only
+   * tunes how the drum is framed (see useWallCylinder) — a phone screen is a
+   * narrow window onto a wide cylinder, so it needs a tighter field of view and
+   * a smaller radius to show a comparable slice.
+   */
   const [isMobile, setIsMobile] = useState(
     () => typeof window !== 'undefined' && window.matchMedia(MOBILE_QUERY).matches
   );
@@ -117,16 +134,14 @@ const Wall = () => {
 
   const { mountRef } = useWallCylinder({
     entries,
-    enabled: !isMobile && !!entries,
+    enabled: !!entries,
     onPick: handlePick,
+    filter,
+    compact: isMobile,
   });
 
   const handleClose = useCallback(() => setActive(null), []);
 
-  const counts = useMemo(
-    () => ({ web: sites.length, app: apps.length, agent: agents.length }),
-    [sites, apps, agents]
-  );
 
   // One entry per distinct project, for the accessible index and for mobile.
   const distinct = useMemo(() => {
@@ -142,17 +157,42 @@ const Wall = () => {
 
   return (
     <section className="wl-stage">
-      <header className="wl-chrome">
-        <nav className="wl-filters" aria-label="Sections">
-          {Object.entries(KIND_META).map(([kind, meta]) => (
-            <Link key={kind} className="wl-filter" to={meta.base}>
-              <span className={`wl-glyph wl-glyph--${kind}`} aria-hidden="true" />
-              {meta.label}
-              <span className="wl-count">{counts[kind]}</span>
-            </Link>
+      {/*
+        * The filter slider, along the bottom.
+        *
+        * A segmented control rather than links: switching sections dims the
+        * wall in place instead of navigating away, so the drum is never torn
+        * down and rebuilt. "All" sits first and is the default.
+        *
+        * The thumb is one element translated across the track, so the movement
+        * is a single transform rather than four elements restyling — and the
+        * label the thumb sits under stays legible because the thumb is glass,
+        * not a solid fill.
+        */}
+      <nav className="wl-slider" aria-label="Filter work by section">
+        <div className="wl-slider-track" role="tablist">
+          <span
+            className="wl-slider-thumb"
+            aria-hidden="true"
+            style={{
+              '--wl-thumb-index': FILTERS.findIndex((f) => f.key === filter),
+              '--wl-thumb-count': FILTERS.length,
+            }}
+          />
+          {FILTERS.map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              role="tab"
+              aria-selected={filter === f.key}
+              className={`wl-slider-option${filter === f.key ? ' is-active' : ''}`}
+              onClick={() => setFilter(f.key)}
+            >
+              {f.label}
+            </button>
           ))}
-        </nav>
-      </header>
+        </div>
+      </nav>
 
       {loading ? (
         <p className="wl-state">Loading the wall…</p>
@@ -160,30 +200,6 @@ const Wall = () => {
         <p className="wl-state">The wall could not be loaded.</p>
       ) : !distinct.length ? (
         <p className="wl-state">No work to show yet.</p>
-      ) : isMobile ? (
-        /*
-         * Mobile gets a plain scrolling list rather than the cylinder: the drum
-         * needs a wide viewport to read at all, and standing up a WebGL context
-         * is a poor trade against a phone's battery.
-         */
-        <ul className="wl-list">
-          {distinct.map((project) => {
-            const meta = metaFor(project);
-            const src = tileImage(project);
-            return (
-              <li key={project.slug} className={`wl-list-item wl-list-item--${meta.label.toLowerCase()}`}>
-                <Link to={`${meta.base}/${project.slug}`}>
-                  {src ? <img src={src} alt="" loading="lazy" /> : null}
-                  <span className="wl-list-title">{project.title}</span>
-                  <span className="wl-list-meta">
-                    {project.brand?.name ? `${project.brand.name} · ` : ''}
-                    {meta.label}
-                  </span>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
       ) : (
         <>
           {/* The cylinder. Purely visual — everything it shows is also present

@@ -85,7 +85,7 @@ const SPIN_PER_PX = 0.0016;
 const EASE = 0.09;
 const TAU = Math.PI * 2;
 
-export default function useWallCylinder({ entries, enabled = true, onPick }) {
+export default function useWallCylinder({ entries, enabled = true, onPick, filter = 'all', compact = false }) {
   const mountRef = useRef(null);
   const pickRef = useRef(onPick);
   pickRef.current = onPick;
@@ -109,8 +109,14 @@ export default function useWallCylinder({ entries, enabled = true, onPick }) {
     mount.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
+    /*
+     * A narrow viewport is a small window onto the same wide cylinder, so at the
+     * desktop field of view a phone would show only a sliver of one tile. A
+     * wider FOV pulls more of the drum into frame; the radius is trimmed to
+     * match so tiles stay a comfortable size rather than receding.
+     */
     const camera = new THREE.PerspectiveCamera(
-      42,
+      compact ? 62 : 42,
       mount.clientWidth / mount.clientHeight,
       0.1,
       100
@@ -158,13 +164,14 @@ export default function useWallCylinder({ entries, enabled = true, onPick }) {
     // Height chosen so the pack's aspect ratio survives being wrapped: the
     // circumference carries REPEATS packs, so one pack's arc length sets the
     // scale for its height.
-    const circumference = TAU * RADIUS;
+    const radius = compact ? RADIUS * 0.72 : RADIUS;
+    const circumference = TAU * radius;
     const packArc = circumference / REPEATS;
     const packAspect = (COLS * TEXEL_U) / (PACK_ROWS * TEXEL_U);
     const height = (packArc / packAspect) * BANDS;
 
     const geometry = new THREE.CylinderGeometry(
-      RADIUS, RADIUS, height, SEGMENTS, 1, true
+      radius, radius, height, SEGMENTS, 1, true
     );
     // Render the inside of the tube: we're standing in it, and by default only
     // the outward faces are drawn.
@@ -207,6 +214,8 @@ export default function useWallCylinder({ entries, enabled = true, onPick }) {
         uRepeat: { value: new THREE.Vector2(-REPEATS, BANDS) },
         uOffset: { value: new THREE.Vector2(1, 0) },
         uSlotCount: { value: SLOTS.length },
+        uFilter: { value: 0 },
+        uFilterFade: { value: 1 },
         uHoverSlot: { value: -1 },
         uHoverAmount: { value: 0 },
         uPrevSlot: { value: -1 },
@@ -241,6 +250,9 @@ export default function useWallCylinder({ entries, enabled = true, onPick }) {
         uniform float uPrevSlot;
         uniform float uPrevAmount;
         uniform float uWashStrength;
+        // 0 = show everything; otherwise the kind index to keep lit.
+        uniform float uFilter;
+        uniform float uFilterFade;
         varying vec2 vUv;
 
         void main() {
@@ -334,6 +346,24 @@ export default function useWallCylinder({ entries, enabled = true, onPick }) {
             wall.a = 1.0;
           }
 
+          /*
+           * Filtering DIMS, it never removes.
+           *
+           * The wall is one tessellated surface — pulling tiles out would tear
+           * a hole in it. Non-matching cells fade toward the room's own black
+           * instead, so the packing stays intact and the selected section is
+           * simply the only lit thing on the wall.
+           *
+           * The kind is stored in the slot map's GREEN channel (1 = web,
+           * 2 = app, 3 = agent), alongside the slot index in red.
+           */
+          if (uFilter > 0.5) {
+            float kind = floor(texture2D(uSlotMap, cellUv).g * 255.0 + 0.5);
+            float keep = abs(kind - uFilter) < 0.5 ? 1.0 : 0.0;
+            float dim = mix(1.0, keep, uFilterFade);
+            wall.rgb = mix(wall.rgb * 0.18, wall.rgb, dim);
+          }
+
           gl_FragColor = wall;
 
           /*
@@ -404,6 +434,15 @@ export default function useWallCylinder({ entries, enabled = true, onPick }) {
      * moving between tiles crossfades rather than jumping.
      */
     const hover = { slot: -1, amount: 0, prevSlot: -1, prevAmount: 0 };
+
+    /*
+     * Filter state, animated so switching sections eases rather than snaps.
+     * `fade` runs 0..1: 1 = the filter fully applied, 0 = everything lit.
+     */
+    const KIND_ID = { all: 0, web: 1, app: 2, agent: 3 };
+    const filterState = { id: KIND_ID[filter] ?? 0, fade: filter === 'all' ? 0 : 1 };
+    material.uniforms.uFilter.value = filterState.id;
+    material.uniforms.uFilterFade.value = filterState.fade;
 
     /*
      * Hover now costs two uniform writes — no texture repaint, no upload. This
@@ -671,6 +710,21 @@ export default function useWallCylinder({ entries, enabled = true, onPick }) {
         dirty = true;
       }
 
+      /*
+       * Ease the filter's dimming. The target id is set on mount and whenever
+       * `filter` changes (the effect re-runs), so this only animates the fade
+       * between "everything lit" and "one section lit".
+       */
+      const wantFade = filterState.id === 0 ? 0 : 1;
+      if (filterState.fade !== wantFade) {
+        const d = dt / 320;
+        filterState.fade = wantFade > filterState.fade
+          ? Math.min(1, filterState.fade + d)
+          : Math.max(0, filterState.fade - d);
+        material.uniforms.uFilterFade.value = filterState.fade;
+        dirty = true;
+      }
+
       // The cell just left always fades to nothing.
       if (hover.prevAmount > 0) {
         if (reduceMotion) {
@@ -731,7 +785,7 @@ export default function useWallCylinder({ entries, enabled = true, onPick }) {
       renderer.dispose();
       if (el.parentNode === mount) mount.removeChild(el);
     };
-  }, [entries, enabled]);
+  }, [entries, enabled, filter, compact]);
 
   return { mountRef };
 }

@@ -114,79 +114,108 @@
   mask-composite: add;
 }
 
-/* ------------------------------------------------------------------ chrome */
+/* ------------------------------------------------------------------ slider */
 
 /*
- * Chrome floats over the wall. No scrim: the wall is full-bleed and any band
- * here would cut across it, so the chips carry their own contrast instead.
+ * The section filter: a glassy segmented control, bottom-centred.
+ *
+ * It floats over the wall rather than sitting in a bar, so the drum runs
+ * full-bleed underneath it. The whole control is a single pill of frosted
+ * glass; a thumb slides between the options rather than each option restyling
+ * itself, so switching sections is one transform.
  */
-.wl-chrome {
+.wl-slider {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 3;
+  left: 50%;
+  bottom: 2rem;
+  transform: translateX(-50%);
+  z-index: 4;
+}
+
+.wl-slider-track {
+  position: relative;
   display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 1.5rem;
-  flex-wrap: wrap;
-  padding: 5rem 2rem 1rem;
+  align-items: stretch;
+  padding: 4px;
+  border-radius: 999px;
+  /* The glass: a translucent ground, a blurred backdrop, and a bright top edge
+     with a dark base so the pill reads as a lit physical surface. */
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.22),
+    inset 0 -1px 0 0 rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.09),
+    0 10px 30px -10px rgba(0, 0, 0, 0.8);
+}
+
+/*
+ * The sliding thumb. Positioned from --wl-thumb-index so only a transform
+ * changes when the selection moves — no layout, and the option labels
+ * underneath stay put.
+ */
+.wl-slider-thumb {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc((100% - 8px) / var(--wl-thumb-count));
+  transform: translateX(calc(100% * var(--wl-thumb-index)));
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
+    0 2px 8px -2px rgba(0, 0, 0, 0.6);
+  transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
   pointer-events: none;
 }
 
-.wl-chrome > * {
-  pointer-events: auto;
-}
-
-/* Navigation is three glyphs, each a scale model of the tile shape it stands
-   for — shape already carries the taxonomy, so the links need no other label. */
-.wl-filters {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.wl-filter {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.45rem 0.7rem;
-  border-radius: 999px;
-  border: 1px solid var(--wl-hairline);
-  background: rgba(8, 9, 10, 0.55);
-  backdrop-filter: blur(10px);
-  color: var(--wl-ink-soft);
-  font-family: 'JetBrains Mono', Consolas, monospace;
-  font-size: 0.6rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  text-decoration: none;
+.wl-slider-option {
+  position: relative;
+  z-index: 1;
+  /* No default focus ring — a blue browser outline breaks the glass. Keyboard
+     focus is shown by the thumb instead (see :focus-visible below). */
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  flex: 1 0 auto;
+  min-width: 5.5rem;
+  padding: 0.6rem 1.1rem;
+  border: 0;
+  background: none;
   cursor: pointer;
-  transition: color 200ms ease, border-color 200ms ease, background-color 200ms ease;
-}
-
-.wl-filter:hover,
-.wl-filter:focus-visible {
-  color: var(--wl-ink);
-  border-color: rgba(255, 255, 255, 0.38);
-}
-
-.wl-glyph {
-  display: block;
-  background: currentColor;
-  opacity: 0.9;
-}
-
-.wl-glyph--web { width: 14px; height: 7px; }
-.wl-glyph--agent { width: 9px; height: 9px; }
-.wl-glyph--app { width: 7px; height: 14px; }
-
-.wl-count {
   font-family: 'JetBrains Mono', Consolas, monospace;
-  font-size: 0.6rem;
-  letter-spacing: 0.14em;
-  color: var(--wl-ink-soft);
+  font-size: 0.68rem;
+  /* Natural casing, not uppercase — the labels read as words rather than as
+     shouted chrome. Tracking is eased back since lowercase needs less. */
+  letter-spacing: 0.06em;
+  color: rgba(244, 242, 238, 0.55);
+  transition: color 260ms ease;
+}
+
+.wl-slider-option:hover {
+  color: rgba(244, 242, 238, 0.85);
+}
+
+.wl-slider-option.is-active {
+  color: #f4f2ee;
+}
+
+/*
+ * Keyboard focus is drawn as a soft white ring INSIDE the pill rather than a
+ * browser outline around it, so it reads as part of the glass instead of a
+ * blue box sitting on top of it. Mouse clicks don't trigger :focus-visible, so
+ * this only appears for keyboard users.
+ */
+.wl-slider-option:focus-visible {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+  border-radius: 999px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wl-slider-thumb {
+    transition: none;
+  }
 }
 
 /* ------------------------------------------------------------------ states */
@@ -261,87 +290,6 @@
 }
 
 /* ------------------------------------------------------------ mobile list */
-
-/*
- * Mobile replaces the drum with a plain scrolling list: the cylinder needs a
- * wide viewport to read, and standing up a WebGL context is a poor trade
- * against a phone's battery. Tile shape still carries the taxonomy, via each
- * item's aspect ratio.
- */
-.wl-list {
-  position: relative;
-  z-index: 2;
-  margin: 0;
-  padding: 5rem 1rem 3rem;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-}
-
-.wl-list-item a {
-  position: relative;
-  display: block;
-  overflow: hidden;
-  border-radius: 10px;
-  border: 1px solid var(--wl-hairline);
-  background: #101113;
-  color: var(--wl-ink);
-  text-decoration: none;
-}
-
-.wl-list-item img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: top center;
-}
-
-/* Shape as taxonomy, preserved in the stacked layout. */
-.wl-list-item--web a { aspect-ratio: 2 / 1; }
-.wl-list-item--apps a { aspect-ratio: 3 / 4; }
-.wl-list-item--agents a { aspect-ratio: 1 / 1; }
-
-.wl-list-title,
-.wl-list-meta {
-  position: relative;
-  display: block;
-  padding: 0 0.8rem;
-}
-
-.wl-list-title {
-  padding-top: 0.7rem;
-  font-family: 'Nunito', Inter, system-ui, sans-serif;
-  font-weight: 700;
-  font-size: 0.95rem;
-}
-
-.wl-list-meta {
-  padding-bottom: 0.8rem;
-  font-family: 'JetBrains Mono', Consolas, monospace;
-  font-size: 0.58rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--wl-ink-soft);
-}
-
-/* Where there's artwork, the caption sits over it rather than under it. */
-.wl-list-item img + .wl-list-title {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 1.4rem;
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
-}
-
-.wl-list-item img ~ .wl-list-meta {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0.5rem;
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
-}
 
 /* ----------------------------------------------------------------- overlay */
 
@@ -510,21 +458,23 @@
 }
 
 @media (max-width: 900px) {
-  .wl-stage {
-    position: relative;
-    inset: auto;
-    height: auto;
-    min-height: 100dvh;
+  /*
+   * The stage stays FIXED on mobile. It used to be un-fixed here so a scrolling
+   * list could live inside it, but the wall is now the cylinder on every
+   * viewport — and a scrolling page would fight the drum, which turns on the
+   * same vertical drag.
+   */
+
+      /* Tighter, and lifted clear of a phone's home indicator. */
+  .wl-slider {
+    bottom: max(1rem, env(safe-area-inset-bottom));
   }
 
-  .wl-chrome {
-    position: relative;
-    padding: 4.5rem 1rem 0.5rem;
-    justify-content: flex-start;
-  }
-
-  .wl-list {
-    padding-top: 0.5rem;
+  .wl-slider-option {
+    min-width: 0;
+    padding: 0.55rem 0.7rem;
+    font-size: 0.55rem;
+    letter-spacing: 0.12em;
   }
 
   .wl-panel {
