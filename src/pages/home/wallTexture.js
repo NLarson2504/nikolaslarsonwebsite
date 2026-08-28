@@ -320,19 +320,27 @@ const drawTileMeta = (ctx, { project, x, y, w, h, inset, brandLogos }) => {
     ctx.fillText(fitText(ctx, brand.toUpperCase(), half), x + pad, topY);
   }
 
-  // Top-right: whichever secondary fact this project actually carries.
-  const detail = project.status || project.platform || project.category || '';
-  if (detail) {
-    ctx.textAlign = 'right';
-    ctx.fillText(fitText(ctx, detail.toUpperCase(), half), x + w - pad, topY);
-  }
-
-  // Bottom: when the work was done, quieter still.
+  // Top-right: when the work was done.
   const year = projectYear(project);
   if (year) {
+    ctx.textAlign = 'right';
+    ctx.fillText(fitText(ctx, year, half), x + w - pad, topY);
+  }
+
+  /*
+   * Bottom: what the thing IS, quieter still.
+   *
+   * Composed rather than a single field, because no one field covers the whole
+   * inventory: apps carry `platform` (6/14), sites carry `category` (5/14), and
+   * agents carry neither. Falling through to `status` — which every project has
+   * — means all 14 tiles get a line instead of two thirds of them showing a
+   * blank row.
+   */
+  const kind = project.platform || project.category || project.status || '';
+  if (kind) {
     ctx.fillStyle = `rgba(244, 242, 238, ${META_ALPHA * 0.72})`;
     ctx.textAlign = 'left';
-    ctx.fillText(fitText(ctx, year, w - pad * 2), x + pad, bottomY);
+    ctx.fillText(fitText(ctx, kind.toUpperCase(), w - pad * 2), x + pad, bottomY);
   }
 
   ctx.restore();

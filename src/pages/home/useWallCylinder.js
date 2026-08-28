@@ -57,6 +57,23 @@ const SEGMENTS = 128;     // radial segments — plenty for a seamless silhouett
  */
 const WASH_STRENGTH = 0.16;
 
+/*
+ * Mouse position steers the camera, so moving around feels like looking about
+ * inside the drum rather than at a fixed panorama.
+ *
+ * Both axes are kept small and are parallax cues, not camera controls:
+ *
+ *   PITCH (vertical)  the wall is only a couple of packs tall, so too much
+ *                     would swing past its top and bottom and show the open
+ *                     ends of the tube.
+ *   YAW (horizontal)  this is a nudge on top of the scroll-driven spin, not a
+ *                     second way to rotate — too much and the wall appears to
+ *                     drift whenever the pointer moves.
+ */
+const MAX_PITCH = 0.13;     // radians (~7.5deg) at the very top or bottom
+const MAX_YAW = 0.06;       // radians (~3.5deg) at the far left or right
+const TILT_EASE = 0.06;     // slower than the spin, so it drifts rather than tracks
+
 const SPIN_PER_PX = 0.0016;
 const EASE = 0.09;
 const TAU = Math.PI * 2;
@@ -98,6 +115,9 @@ export default function useWallCylinder({ entries, enabled = true, onPick }) {
      * standing in a room.
      */
     camera.position.set(0, 0, 0);
+    // YXZ: yaw is applied before pitch, so leaning the view never rolls the
+    // horizon. Set once here rather than per frame.
+    camera.rotation.order = 'YXZ';
 
     /* ----------------------------------------------------------- texture */
 
@@ -328,6 +348,7 @@ export default function useWallCylinder({ entries, enabled = true, onPick }) {
     // Last known pointer position, so the hovered slot can be re-resolved as the
     // drum spins underneath a stationary cursor.
     const lastPointer = { x: 0, y: 0, inside: false };
+    const tilt = { pitch: 0, pitchTarget: 0, yaw: 0, yawTarget: 0 };
 
     const syncHover = () => {
       if (!lastPointer.inside) return;
@@ -338,6 +359,15 @@ export default function useWallCylinder({ entries, enabled = true, onPick }) {
       lastPointer.x = e.clientX;
       lastPointer.y = e.clientY;
       lastPointer.inside = true;
+
+      // -1..+1 across the viewport on each axis.
+      const rect = renderer.domElement.getBoundingClientRect();
+      const nx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      const ny = ((e.clientY - rect.top) / rect.height) * 2 - 1;
+      // Both negated, so the view leans TOWARD the pointer.
+      tilt.pitchTarget = -Math.max(-1, Math.min(1, ny)) * MAX_PITCH;
+      tilt.yawTarget = -Math.max(-1, Math.min(1, nx)) * MAX_YAW;
+
       syncHover();
     };
 
@@ -345,6 +375,9 @@ export default function useWallCylinder({ entries, enabled = true, onPick }) {
     const onPointerLeave = () => {
       lastPointer.inside = false;
       hoverRef.current = -1;
+      // Settle back to level when the pointer leaves the wall.
+      tilt.pitchTarget = 0;
+      tilt.yawTarget = 0;
     };
 
     // Distinguish a click from a drag, so spinning the wall doesn't open a
@@ -439,6 +472,25 @@ export default function useWallCylinder({ entries, enabled = true, onPick }) {
           spin.current %= TAU;
           spin.target %= TAU;
         }
+        dirty = true;
+      }
+
+      /*
+       * Ease the camera's pitch and yaw.
+       *
+       * Applied to the CAMERA, not the mesh, so the wall itself stays put and
+       * only the point of view shifts. The yaw is added on top of the
+       * scroll-driven spin (which lives on mesh.rotation.y), so the two don't
+       * fight each other.
+       */
+      const pitchDiff = tilt.pitchTarget - tilt.pitch;
+      const yawDiff = tilt.yawTarget - tilt.yaw;
+
+      if (Math.abs(pitchDiff) > 0.00002 || Math.abs(yawDiff) > 0.00002) {
+        tilt.pitch += reduceMotion ? pitchDiff : pitchDiff * TILT_EASE;
+        tilt.yaw += reduceMotion ? yawDiff : yawDiff * TILT_EASE;
+        camera.rotation.y = tilt.yaw;
+        camera.rotation.x = tilt.pitch;
         dirty = true;
       }
 
