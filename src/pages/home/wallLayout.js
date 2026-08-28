@@ -64,7 +64,7 @@ export const PACK_ROWS = 6;
  * varies with the window. Ceil plus a spare band guarantees the wall always
  * bleeds past the top and bottom edges instead of leaving dead margin.
  */
-export const bandsForViewport = (height, u, gutter = 6) => {
+export const bandsForViewport = (height, u, gutter = 0) => {
   const bandHeight = PACK_ROWS * (u + gutter);
   if (!Number.isFinite(bandHeight) || bandHeight <= 0) return 2;
   return Math.max(2, Math.ceil(height / bandHeight) + 1);

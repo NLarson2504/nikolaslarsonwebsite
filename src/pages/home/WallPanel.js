@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { KIND_META } from './wallLayout';
-import { tileImage } from './WallTile';
+import { tileImage } from './wallTexture';
 
 /*
  * The detail overlay.

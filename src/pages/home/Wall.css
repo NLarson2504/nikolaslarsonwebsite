@@ -1,11 +1,12 @@
 /*
  * The gallery wall.
  *
- * Deliberately the inverse of the reference (and of the rest of this site): a
- * warm off-white room with the work as the only saturated colour, hairline
- * gutters instead of heavy borders, and mono reserved for tiny metadata so the
- * project names can carry some character. Colourful work reads louder against
- * light than against black.
+ * The wall itself is a WebGL cylinder (see useWallCylinder.js) — the tiles,
+ * their artwork and the dividers between them are all painted into one texture
+ * (wallTexture.js), not built from DOM elements. So this stylesheet is much
+ * smaller than it used to be: it covers the stage the canvas sits in, the
+ * chrome floating over it, the accessible index behind it, and the mobile
+ * fallback that replaces the drum entirely.
  *
  * Everything here is prefixed `wl-`.
  */
@@ -13,23 +14,18 @@
 .wl-stage {
   /* Dark room, matching the rest of the site (dark-950 #08090a). The work is
      the only lit thing on the wall; everything else recedes. */
-  --wl-paper: #08090a;      /* the room */
-  --wl-paper-deep: #101113; /* the tile ground, one step up from the room */
+  --wl-paper: #08090a;
   --wl-ink: #f4f2ee;
   --wl-ink-soft: #8b8781;
   --wl-hairline: rgba(255, 255, 255, 0.12);
-  --wl-gutter: 6px;         /* a touch wider, so rounded corners can breathe */
-  --wl-radius: 10px;        /* container corner */
-  --wl-radius-inner: 6px;   /* content corner, nested inside the mat */
 
   /* The wall owns the whole viewport: fixed, edge to edge, no page scroll.
-     The grid is sized to fill it exactly, so there is nothing to scroll to —
-     a scrollbar here would just be a way to lose part of the wall. */
+     Scrolling spins the drum instead. */
   position: fixed;
   inset: 0;
   width: 100%;
   height: 100vh;
-  height: 100dvh; /* dvh so mobile browser chrome doesn't crop the last row */
+  height: 100dvh;
   display: block;
   background:
     radial-gradient(120% 95% at 50% 45%, #131518 0%, #0b0c0e 52%, #060708 100%);
@@ -37,261 +33,93 @@
   overflow: hidden;
 }
 
-/* Paper tooth. Keeps a large flat light field from looking like dead #fff. */
-.wl-stage::after {
-  content: '';
+/* ------------------------------------------------------------------ canvas */
+
+/*
+ * Where the WebGL renderer mounts. It fills the stage; the cylinder's geometry
+ * and the camera inside it decide what is actually visible.
+ */
+.wl-canvas-mount {
   position: absolute;
   inset: 0;
-  pointer-events: none;
-  opacity: 0.16;
-  mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.42'/%3E%3C/svg%3E");
-}
-
-/* ---------------------------------------------------------------- viewport */
-
-.wl-viewport {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  perspective: 1600px;
-  perspective-origin: 50% 50%;
   z-index: 1;
 }
 
-.wl-canvas {
-  display: grid;
-  gap: var(--wl-gutter);
-  transform-style: preserve-3d;
-  /* U is set inline from JS: min(width/cols, height/rows), so cells stay
-     square. If the cells go non-square the aspect ratios drift and the shape
-     taxonomy stops reading — that is the one thing this layout cannot lose. */
-  grid-template-columns: repeat(var(--wl-cols), var(--wl-u));
-  grid-auto-rows: var(--wl-u);
-}
-
-/* ------------------------------------------------------------------- tiles */
-
-.wl-tile {
-  /* --wl-edge is written per frame by useCylindricalWall: 1 at the front of
-     the drum, 0 round the back. It fades tiles out before they wrap, which is
-     what keeps the endless loop's seam invisible. */
-  --wl-edge: 1;
-  opacity: var(--wl-edge);
-  position: relative;
+.wl-canvas-mount canvas {
   display: block;
-  padding: 0;
-  border: none;
-  overflow: hidden;
-  border-radius: var(--wl-radius);
-  background: var(--wl-paper-deep);
-  cursor: pointer;
-  text-align: left;
-  color: inherit;
-  font: inherit;
-  /*
-   * The bevel. A real bevel is a lit edge, not a border: the light sits above
-   * and slightly in front, so the top-left catches it and the bottom-right
-   * falls into shadow. Three layers do that, all of them paint-only so nothing
-   * here can trigger layout while the drum spins:
-   *
-   *   1. an outer hairline, so the tile still has a defined boundary
-   *   2. an inset highlight along the top edge (the catch)
-   *   3. an inset shadow along the bottom edge (the fall)
-   *
-   * Plus a soft drop shadow to lift the tile off the room's back wall.
-   */
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.07),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.16),
-    inset 0 -1px 0 0 rgba(0, 0, 0, 0.55),
-    0 2px 10px -4px rgba(0, 0, 0, 0.75);
-  /* Transforms are written by useCylindricalWall; only the cheap paint
-     properties are transitioned so hover never re-runs layout. */
-  transition: opacity 420ms cubic-bezier(0.22, 1, 0.36, 1),
-              filter 420ms cubic-bezier(0.22, 1, 0.36, 1),
-              box-shadow 420ms cubic-bezier(0.22, 1, 0.36, 1);
-  backface-visibility: hidden;
-}
-
-/* Hover deepens the bevel: the catch brightens and the tile lifts further off
-   the wall, so the lit tile also reads as the nearest one. */
-.wl-tile:hover,
-.wl-tile:focus-visible {
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.14),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
-    inset 0 -1px 0 0 rgba(0, 0, 0, 0.6),
-    0 10px 26px -8px rgba(0, 0, 0, 0.85);
-}
-
-.wl-tile:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.5);
-  outline-offset: 2px;
-}
-
-/* The mat: the ground the work is fitted onto. The CONTAINER stays exactly on
-   the taxonomy ratio, but the image inside is inset and fitted, so each piece
-   keeps its own proportions instead of being sliced to the frame. That margin
-   is what makes these read as framed work rather than cropped thumbnails. */
-.wl-mat {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: clamp(4px, 0.55vw, 12px);
-}
-
-.wl-media {
-  /* Content corners round too, one step tighter than the container's so the
-     two curves nest instead of fighting. */
-  border-radius: var(--wl-radius-inner);
-  max-width: 100%;
-  max-height: 100%;
-  width: auto;
-  height: auto;
-  object-fit: contain;
-  display: block;
-  transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1),
-              filter 500ms ease;
-  filter: saturate(0.82) contrast(0.97);
-}
-
-/* Landscape frames hold wide screenshots; letting them fill the width and clip
-   the tail reads better than a tall image floating in a wide mat. */
-.wl-tile--web .wl-mat { padding: clamp(3px, 0.4vw, 9px); }
-.wl-tile--web .wl-media {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: top center;
+  /* Default arrow across the whole wall — never a pointing finger, which would
+     make the surface read as a wall of buttons. */
+  cursor: default;
+  /* The drum spins on wheel/touch, so the browser must not also scroll or
+     rubber-band the page underneath it. */
+  touch-action: none;
 }
 
-.wl-tile:hover .wl-media,
-.wl-tile:focus-visible .wl-media {
-  transform: scale(1.04);
-  filter: saturate(1.08) contrast(1);
-}
+/* ----------------------------------------------------------------- vignette */
 
-/* Agent tiles have no media at all — they're case-study-only work, so they're
-   built from type on a tinted ground. Reading as a different object class is a
-   feature: it reinforces the square as its own category. */
-.wl-tile--agent {
-  /* Agent tiles carry no media, so they're the one place the wall shows its
-     own material. A touch lighter than the room so the square still reads as
-     an object, not a hole. */
-  background: linear-gradient(155deg, #24272b 0%, #15171a 100%);
-  color: #f4f2ee;
-}
-
-.wl-agent-body {
+/*
+ * Softens all four edges of the viewport, so the wall dissolves into the room
+ * instead of ending on a hard rectangular cut.
+ *
+ * Two layers, because gradient and blur can't come from the same element:
+ *
+ *   .wl-vignette      a darkening gradient from each edge inward
+ *   .wl-vignette-blur a backdrop-filter blur, masked to the same edges
+ *
+ * The blur layer masks its own backdrop-filter with a mask-image, so the blur
+ * itself fades out toward the centre — without the mask, backdrop-filter is
+ * all-or-nothing across the whole element and the middle of the wall would go
+ * soft too.
+ *
+ * Both are pointer-events: none so they never intercept a click meant for the
+ * drum underneath.
+ */
+.wl-vignette,
+.wl-vignette-blur {
   position: absolute;
   inset: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: clamp(0.5rem, 0.9vw, 1rem);
-}
-
-.wl-agent-name {
-  font-family: 'Nunito', Inter, system-ui, sans-serif;
-  font-weight: 700;
-  line-height: 0.95;
-  letter-spacing: -0.02em;
-  font-size: clamp(0.85rem, 1.6vw, 2rem);
-}
-
-.wl-agent-glyph {
-  font-family: 'JetBrains Mono', Consolas, monospace;
-  font-size: clamp(0.5rem, 0.7vw, 0.7rem);
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  opacity: 0.55;
-}
-
-/* Only tiles big enough to hold it get the descriptor line. */
-.wl-agent-desc {
-  display: -webkit-box;
-  margin-top: 0.4rem;
-  font-family: 'JetBrains Mono', Consolas, monospace;
-  font-size: clamp(0.5rem, 0.62vw, 0.72rem);
-  line-height: 1.45;
-  opacity: 0.62;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* --------------------------------------------------------------- tile label */
-
-/* The title lives over the media and fades up on hover — this is where the
-   interaction budget goes, since nothing on the wall is allowed to reflow. */
-.wl-label {
-  position: absolute;
-  inset: auto 0 0 0;
-  padding: 0.85rem 0.8rem 0.7rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  background: linear-gradient(to top, rgba(4, 5, 6, 0.92) 0%, rgba(4, 5, 6, 0) 100%);
-  color: #fbf9f5;
-  border-radius: 0 0 var(--wl-radius) var(--wl-radius);
-  opacity: 0;
-  transform: translateY(0.5rem);
-  transition: opacity 320ms ease, transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 2;
   pointer-events: none;
 }
 
-.wl-tile:hover .wl-label,
-.wl-tile:focus-visible .wl-label {
-  opacity: 1;
-  transform: translateY(0);
+.wl-vignette {
+  background:
+    linear-gradient(to bottom, rgba(6, 7, 8, 0.92) 0%, rgba(6, 7, 8, 0) 18%),
+    linear-gradient(to top,    rgba(6, 7, 8, 0.92) 0%, rgba(6, 7, 8, 0) 18%),
+    linear-gradient(to right,  rgba(6, 7, 8, 0.85) 0%, rgba(6, 7, 8, 0) 14%),
+    linear-gradient(to left,   rgba(6, 7, 8, 0.85) 0%, rgba(6, 7, 8, 0) 14%);
 }
 
-.wl-label-title {
-  font-family: 'Nunito', Inter, system-ui, sans-serif;
-  font-weight: 700;
-  font-size: clamp(0.72rem, 1vw, 1.05rem);
-  line-height: 1.1;
-  letter-spacing: -0.01em;
-}
-
-.wl-label-meta {
-  font-family: 'JetBrains Mono', Consolas, monospace;
-  font-size: 0.58rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  opacity: 0.72;
-}
-
-/* ------------------------------------------------------- dimming behaviours */
-
-/* Hovering one tile drops every other tile to ~40%, so the hovered tile is the
-   only lit thing on the wall. */
-.wl-canvas[data-hovered='true'] .wl-tile:not(:hover) {
-  opacity: calc(var(--wl-edge) * 0.4);
-}
-
-/* Filtering DIMS, never removes. Removing tiles would tear a hole in the
-   tessellation and the wall would stop being a wall. */
-.wl-tile--muted {
-  opacity: calc(var(--wl-edge) * 0.14);
-  filter: grayscale(1);
-}
-
-.wl-canvas[data-hovered='true'] .wl-tile--muted:not(:hover) {
-  opacity: calc(var(--wl-edge) * 0.1);
+.wl-vignette-blur {
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  /*
+   * Mask the blur to the edges only. The gradients here are opacity ramps, not
+   * colour: white = blurred, transparent = untouched. Composited so the four
+   * edge ramps add together rather than the last one winning.
+   */
+  -webkit-mask-image:
+    linear-gradient(to bottom, #000 0%, transparent 16%),
+    linear-gradient(to top,    #000 0%, transparent 16%),
+    linear-gradient(to right,  #000 0%, transparent 12%),
+    linear-gradient(to left,   #000 0%, transparent 12%);
+  -webkit-mask-composite: source-over;
+  mask-image:
+    linear-gradient(to bottom, #000 0%, transparent 16%),
+    linear-gradient(to top,    #000 0%, transparent 16%),
+    linear-gradient(to right,  #000 0%, transparent 12%),
+    linear-gradient(to left,   #000 0%, transparent 12%);
+  mask-composite: add;
 }
 
 /* ------------------------------------------------------------------ chrome */
 
-/* Chrome floats over the wall instead of taking layout space, so the grid gets
-   the entire viewport to size against. pointer-events are handed back to the
-   controls only, leaving the tiles underneath fully hoverable. */
+/*
+ * Chrome floats over the wall. No scrim: the wall is full-bleed and any band
+ * here would cut across it, so the chips carry their own contrast instead.
+ */
 .wl-chrome {
   position: absolute;
   top: 0;
@@ -305,17 +133,14 @@
   flex-wrap: wrap;
   padding: 5rem 2rem 1rem;
   pointer-events: none;
-  /* No scrim: the wall runs full-bleed under the header, and any band here
-     would cut across it. The filter chips carry their own contrast instead. */
-  background: none;
 }
 
 .wl-chrome > * {
   pointer-events: auto;
 }
 
-/* Navigation is three glyphs. Shape already carries the taxonomy, so the
-   filters can be the shapes themselves rather than labelled pills. */
+/* Navigation is three glyphs, each a scale model of the tile shape it stands
+   for — shape already carries the taxonomy, so the links need no other label. */
 .wl-filters {
   display: flex;
   align-items: center;
@@ -336,22 +161,17 @@
   font-size: 0.6rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
+  text-decoration: none;
   cursor: pointer;
   transition: color 200ms ease, border-color 200ms ease, background-color 200ms ease;
 }
 
-.wl-filter:hover {
+.wl-filter:hover,
+.wl-filter:focus-visible {
   color: var(--wl-ink);
   border-color: rgba(255, 255, 255, 0.38);
 }
 
-.wl-filter[aria-pressed='true'] {
-  color: #08090a;
-  background: var(--wl-ink);
-  border-color: var(--wl-ink);
-}
-
-/* The glyph is a scale model of the tile shape it filters for. */
 .wl-glyph {
   display: block;
   background: currentColor;
@@ -367,13 +187,166 @@
   font-size: 0.6rem;
   letter-spacing: 0.14em;
   color: var(--wl-ink-soft);
+}
+
+/* ------------------------------------------------------------------ states */
+
+.wl-state {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
+  color: var(--wl-ink-soft);
+  text-align: center;
+}
+
+/* -------------------------------------------------------------- a11y index */
+
+/*
+ * The real content behind the canvas.
+ *
+ * The wall is a texture on a mesh: a screen reader sees nothing, a keyboard can
+ * focus nothing, a crawler indexes nothing. This list carries genuine links to
+ * every project so all three work. It is visually hidden but NOT display:none —
+ * that would drop it from the accessibility tree and the tab order, defeating
+ * the point.
+ *
+ * Focusing a link expands the list into view, so keyboard users can see where
+ * they are instead of chasing an invisible focus ring.
+ */
+.wl-a11y-index {
+  position: absolute;
+  left: 1rem;
+  bottom: 1rem;
+  z-index: 4;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.wl-a11y-index:focus-within {
+  width: auto;
+  height: auto;
+  max-width: min(28rem, calc(100vw - 2rem));
+  max-height: 60vh;
+  overflow-y: auto;
+  clip-path: none;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--wl-hairline);
+  background: rgba(8, 9, 10, 0.94);
+  backdrop-filter: blur(10px);
+}
+
+.wl-a11y-index a {
+  display: block;
+  padding: 0.3rem 0;
+  color: var(--wl-ink);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 0.82rem;
+  text-decoration: none;
+}
+
+.wl-a11y-index a:hover,
+.wl-a11y-index a:focus-visible {
+  text-decoration: underline;
+}
+
+/* ------------------------------------------------------------ mobile list */
+
+/*
+ * Mobile replaces the drum with a plain scrolling list: the cylinder needs a
+ * wide viewport to read, and standing up a WebGL context is a poor trade
+ * against a phone's battery. Tile shape still carries the taxonomy, via each
+ * item's aspect ratio.
+ */
+.wl-list {
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  padding: 5rem 1rem 3rem;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.wl-list-item a {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: 10px;
+  border: 1px solid var(--wl-hairline);
+  background: #101113;
+  color: var(--wl-ink);
+  text-decoration: none;
+}
+
+.wl-list-item img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+}
+
+/* Shape as taxonomy, preserved in the stacked layout. */
+.wl-list-item--web a { aspect-ratio: 2 / 1; }
+.wl-list-item--apps a { aspect-ratio: 3 / 4; }
+.wl-list-item--agents a { aspect-ratio: 1 / 1; }
+
+.wl-list-title,
+.wl-list-meta {
+  position: relative;
+  display: block;
+  padding: 0 0.8rem;
+}
+
+.wl-list-title {
+  padding-top: 0.7rem;
+  font-family: 'Nunito', Inter, system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.wl-list-meta {
+  padding-bottom: 0.8rem;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--wl-ink-soft);
+}
+
+/* Where there's artwork, the caption sits over it rather than under it. */
+.wl-list-item img + .wl-list-title {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 1.4rem;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
+}
+
+.wl-list-item img ~ .wl-list-meta {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0.5rem;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
 }
 
 /* ----------------------------------------------------------------- overlay */
 
-/* Click opens a panel rather than routing away, so the wall is never torn down
-   and rebuilt just to read one project. */
+/* Clicking a tile opens this rather than navigating, so the drum is never torn
+   down and rebuilt just to read one project. */
 .wl-overlay {
   position: fixed;
   inset: 0;
@@ -536,87 +509,22 @@
   to { opacity: 1; transform: none; }
 }
 
-/* ------------------------------------------------------------------ states */
-
-.wl-state {
-  font-family: 'JetBrains Mono', Consolas, monospace;
-  font-size: 0.68rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--wl-ink-soft);
-  padding: 5rem 0;
-  text-align: center;
-}
-
-/* ------------------------------------------------------------------ mobile */
-
-/* Curvature off below the breakpoint: a single scrolling column at each tile's
-   natural aspect ratio. 3D transforms on a phone buy nothing and cost a lot,
-   and a 10-column wall is unreadable at that width anyway. */
 @media (max-width: 900px) {
-  /* The desktop wall is a fixed, non-scrolling full-screen surface. On mobile
-     the tiles become a column that must scroll, so the stage stops being fixed
-     and hands scrolling back to the document. */
   .wl-stage {
     position: relative;
     inset: auto;
     height: auto;
     min-height: 100dvh;
-    padding: 1rem 1rem 2.5rem;
   }
 
-  .wl-viewport {
-    position: relative;
-    inset: auto;
-    perspective: none;
-    display: block;
-  }
-
-  /* Chrome rejoins the flow above the column instead of floating over it. */
   .wl-chrome {
     position: relative;
-    padding: 4.5rem 0 1.25rem;
-    background: none;
-    align-items: flex-end;
+    padding: 4.5rem 1rem 0.5rem;
+    justify-content: flex-start;
   }
 
-  .wl-canvas {
-    display: flex;
-    flex-direction: column;
-    gap: 0.7rem;
-    transform-style: flat;
-    width: 100%;
-  }
-
-  .wl-tile {
-    width: 100%;
-    /* Aspect ratio still carries the taxonomy, even stacked. */
-    aspect-ratio: var(--wl-ratio, 2 / 1);
-    transform: none !important;
-    opacity: 1;
-    visibility: visible !important;
-  }
-
-  /* Stacked tiles are big enough to fill, so the mat's letterboxing isn't
-     needed — the taxonomy is already carried by the tile's own ratio. */
-  .wl-mat {
-    padding: 0;
-  }
-
-  .wl-mat .wl-media {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: top center;
-  }
-
-  .wl-label {
-    opacity: 1;
-    transform: none;
-  }
-
-  .wl-canvas[data-hovered='true'] .wl-tile:not(:hover) {
-    opacity: 1;
+  .wl-list {
+    padding-top: 0.5rem;
   }
 
   .wl-panel {
@@ -631,12 +539,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .wl-tile,
-  .wl-media,
-  .wl-label {
-    transition: none;
-  }
-
   .wl-overlay,
   .wl-panel {
     animation: none;
