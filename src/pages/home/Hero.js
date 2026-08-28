@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
+import HeroPals from './HeroPals';
 // import HeroModules from '../../diagrams/HeroModules';
 
 const Hero = () => {
@@ -79,9 +80,12 @@ const Hero = () => {
           {/* Desktop: Full names with original layout */}
           <div className="hidden sm:block text-[10rem] md:text-[12rem] lg:text-[16rem] xl:text-[20rem]">
             <div ref={firstNameRef} className="leading-none">Nikolas</div>
-            <div ref={lastNameRef} className="leading-none -ml-16 md:-ml-24 lg:-ml-32 xl:-ml-40">Larson</div>
+            <div ref={lastNameRef} className="leading-none -ml-16 md:-ml-16 lg:-ml-24 xl:-ml-24 translate-x-1">Larson</div>
           </div>
         </div>
+
+        {/* The three agent pixel pals, perched in the bottom-right corner */}
+        <HeroPals />
 
         {/* 3D Modules - Overlaying on the right side */}
         {/* <HeroModules/> */}

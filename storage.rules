@@ -1,0 +1,33 @@
+rules_version = '2';
+
+// Portfolio site storage rules — mirrors firestore.rules:
+//  - Anyone can READ project images (the public site renders them).
+//  - Only allow-listed admin emails can WRITE, via the admin UI after Google
+//    sign-in (see ImageUpload / uploadProjectImage).
+// Keep the admin email list in sync with ADMIN_EMAILS in src/lib/adminAuth.js
+// and with firestore.rules.
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.lower() in [
+          'nickolars123@gmail.com'
+        ];
+    }
+
+    // Project images, written by the Notion sync script and the admin uploader.
+    match /projects/{slug}/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin()
+        && request.resource.size < 8 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    // Deny everything else by default.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

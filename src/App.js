@@ -28,7 +28,24 @@ function AppContent() {
     return path === '' ? 'home' : path.split('/')[0];
   };
 
-  const { scrollContainerRef, scrollContentRef } = useGSAPScrollSmooth(getCurrentPage());
+  const isAdmin = location.pathname.startsWith('/admin');
+
+  // pass null on admin so the hook stays mounted (hooks must run every render)
+  // but doesn't take over the document's scrolling
+  const { scrollContainerRef, scrollContentRef } = useGSAPScrollSmooth(
+    isAdmin ? null : getCurrentPage()
+  );
+
+  // The admin app is a separate surface: its own left-nav shell, no marketing
+  // chrome (top nav, footer, cursor dot) and no smooth-scroll container, which
+  // would otherwise fight its fixed sidebar.
+  if (isAdmin) {
+    return (
+      <Routes>
+        <Route path="/admin/*" element={<Admin />} />
+      </Routes>
+    );
+  }
 
   return (
     <div className="App bg-dark-950">
@@ -45,7 +62,6 @@ function AppContent() {
             <Route path="/web" element={<Web />} />
             <Route path="/web/:slug" element={<CaseStudyPage type="site" backTo="/web" backLabel="All web work" />} />
             <Route path="/contact" element={<Contact />} />
-            <Route path="/admin" element={<Admin />} />
             {/* Redirects from the old section names */}
             <Route path="/mobile" element={<Navigate to="/apps" replace />} />
             <Route path="/design" element={<Navigate to="/web" replace />} />

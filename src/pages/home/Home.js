@@ -1,20 +1,18 @@
 import React from 'react';
-import Hero from './Hero';
-import ExperienceMarquee from './ExperienceMarquee';
-import AgentsPreview from './AgentsPreview';
-import MobilePreview from './MobilePreview';
-import DesignPreview from './DesignPreview';
+import Wall from './Wall';
 
-const Home = () => {
-  return (
-    <div className="home">
-      <Hero />
-      <ExperienceMarquee />
-      <AgentsPreview />
-      <MobilePreview />
-      <DesignPreview />
-    </div>
-  );
-};
+/*
+ * The home page is the wall — one screen showing every project at once, with
+ * shape carrying the taxonomy. It replaces the old stacked hero + per-section
+ * preview scroll (Hero / ExperienceMarquee / AgentsPreview / MobilePreview /
+ * DesignPreview), which are still used nowhere else and kept in the tree for
+ * reference.
+ */
+
+const Home = () => (
+  <div className="home">
+    <Wall />
+  </div>
+);
 
 export default Home;

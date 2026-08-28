@@ -75,24 +75,33 @@ const TopNav = ({ currentPage, navigateToPage }) => {
     // Keep menu mounted for smooth transitions
   };
 
+  // The home page is one full-bleed wall that runs under the nav. A solid bar
+  // would slice a band across it, and the wall carries its own shape-glyph
+  // filters for the three sections — so on home the chrome goes transparent and
+  // the section tabs step aside rather than duplicating those filters.
+  const isHome = currentPage === 'home';
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-[9999]">
-      <div className="bg-dark-950/95 backdrop-blur-md border-b border-white/10">
+      <div className={isHome
+        ? 'bg-transparent'
+        : 'bg-dark-950/95 backdrop-blur-md border-b border-white/10'}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <div className="flex-shrink-0">
               <button 
                 onClick={() => handleNavClick('home')}
-                className="text-xl font-heading font-bold text-gradient-primary hover:opacity-80 transition-opacity focus:outline-none"
+                className="text-xl font-mark font-bold text-gradient-primary hover:opacity-80 transition-opacity focus:outline-none"
               >
                 NL
               </button>
             </div>
 
-            {/* Centered Navigation Links */}
-            <div 
-              className="hidden md:flex items-center space-x-2 relative"
+            {/* Centered Navigation Links — hidden on home, where the wall's
+                own glyph filters cover the same three sections. */}
+            <div
+              className={`${isHome ? 'hidden' : 'hidden md:flex'} items-center space-x-2 relative`}
               onMouseEnter={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
             >

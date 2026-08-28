@@ -173,10 +173,21 @@ body {
 
 /* Typography */
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'MuseoModerno', 'Inter', sans-serif;
+  /* Nunito — rounded-terminal grotesque for titles; Inter carries body copy */
+  font-family: 'Nunito', 'Inter', system-ui, sans-serif;
   font-weight: 700;
+  /* Nunito's rounded bowls need more air than a tight grotesque — heavy
+     negative tracking crowds the counters, so keep this light */
+  letter-spacing: -0.005em;
   line-height: 1.2;
   margin: 0;
+}
+
+/* the giant hero name still tightens up at display size, just not as far as a
+   grotesque would want */
+.hero h1, .hero h2,
+.hero .font-heading {
+  letter-spacing: -0.02em;
 }
 
 p {
@@ -333,5 +344,75 @@ code {
   
   .module-3d {
     transform: scale(0.7);
+  }
+}
+
+/* Hero pixel pals — gentle idle bob for the trio in the bottom-right corner */
+@keyframes hero-pal-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.hero-pal {
+  animation: hero-pal-bob 2.6s ease-in-out infinite;
+}
+
+/* the group only takes pointer events on the pals themselves, so the hero
+   behind them stays clickable */
+.hero-pals {
+  pointer-events: none;
+}
+
+/* one pal + its name label. Hovering a pal mutes its siblings to grayscale and
+   pushes them back slightly — same treatment as the off-focus agents panels
+   (.agt-slide), matched easing so the two read as one language. */
+.hero-pal-slot {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: auto;
+  filter: grayscale(0);
+  opacity: 1;
+  transform: scale(1);
+  transition: transform 0.62s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.62s ease, opacity 0.5s ease;
+  will-change: transform, filter, opacity;
+}
+
+.hero-pal-slot.is-muted {
+  filter: grayscale(1);
+  opacity: 0.45;
+  transform: scale(0.88);
+}
+
+/* the name, tucked above the sprite; slides up + fades in on hover */
+.hero-pal-name {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  white-space: nowrap;
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.85);
+  opacity: 0;
+  transform: translateY(4px);
+  pointer-events: none;
+  transition: opacity 0.32s ease, transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.hero-pal-slot:hover .hero-pal-name {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-pal {
+    animation: none;
+  }
+
+  .hero-pal-slot,
+  .hero-pal-name {
+    transition: none;
   }
 }
