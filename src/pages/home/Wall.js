@@ -1,10 +1,15 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import useProjects from '../../hooks/useProjects';
 import useWallCylinder from './useWallCylinder';
 import { KIND_META, SLOTS } from './wallLayout';
 import { loadBrandLogos, loadImage, tileImage } from './wallTexture';
-import WallPanel from './WallPanel';
+import {
+  useDetailTransition,
+  isPlainClick,
+} from '../../components/DetailTransition';
+import ViewSlider from '../../components/ViewSlider';
+import WallList from './WallList';
 import './Wall.css';
 
 /*
@@ -39,8 +44,16 @@ const Wall = () => {
   const { data: apps, loading: lApps, error: eApps } = useProjects('app');
   const { data: agents, loading: lAgents, error: eAgents } = useProjects('agent');
 
-  const [active, setActive] = useState(null);   // slot shown in the overlay
   const [entries, setEntries] = useState(null); // slots + loaded images
+  /*
+   * How the work is shown: the 3D wall ('gallery') or the flat year-grouped
+   * list ('list'). The switcher that changes it floats at the bottom of this
+   * same page, so the state belongs here rather than being threaded down from
+   * the router.
+   */
+  const [view, setView] = useState('gallery');
+  const startDetailTransition = useDetailTransition();
+  const navigate = useNavigate();
   /*
    * Narrow viewports get the SAME wall, not a different page. isMobile only
    * tunes how the drum is framed (see useWallCylinder) — a phone screen is a
@@ -112,24 +125,44 @@ const Wall = () => {
     };
   }, [assigned]);
 
-  // Raycasting hands back a slot index; map it to the entry to open.
+  /*
+   * Raycasting hands back a slot index; map it to its project and go.
+   *
+   * This used to open an overlay panel on top of the wall. It now runs the
+   * detail transition straight to the project's page — one click to the work
+   * rather than a summary card in between.
+   */
   const handlePick = useCallback(
     (slotIndex) => {
       const entry = (entries?.items || []).find((e) => e.index === slotIndex);
-      if (entry) setActive({ ...entry.slot, project: entry.project });
+      if (!entry) return;
+      const { project } = entry;
+      if (!project?.slug) return;
+      const base = KIND_META[KIND_FOR_TYPE[project.type] || 'web'].base;
+      const href = `${base}/${project.slug}`;
+      if (startDetailTransition) {
+        startDetailTransition(href, tileImage(project));
+      } else {
+        navigate(href);
+      }
     },
-    [entries]
+    [entries, startDetailTransition, navigate]
   );
 
+  const isList = view === 'list';
+
+  /*
+   * The cylinder is torn down in list view rather than merely hidden: it holds a
+   * WebGL context and a requestAnimationFrame loop, and leaving those running
+   * behind a display:none list would burn a GPU and a frame budget on something
+   * nobody can see.
+   */
   const { mountRef } = useWallCylinder({
     entries,
-    enabled: !!entries,
+    enabled: !!entries && !isList,
     onPick: handlePick,
     compact: isMobile,
   });
-
-  const handleClose = useCallback(() => setActive(null), []);
-
 
   // One entry per distinct project, for the accessible index and for mobile.
   const distinct = useMemo(() => {
@@ -144,7 +177,7 @@ const Wall = () => {
   const metaFor = (project) => KIND_META[KIND_FOR_TYPE[project.type] || 'web'];
 
   return (
-    <section className="wl-stage">
+    <section className={`wl-stage${isList ? ' wl-stage--list' : ''}`}>
 
       {loading ? (
         <p className="wl-state">Loading the wall…</p>
@@ -152,6 +185,13 @@ const Wall = () => {
         <p className="wl-state">The wall could not be loaded.</p>
       ) : !distinct.length ? (
         <p className="wl-state">No work to show yet.</p>
+      ) : isList ? (
+        /*
+         * List view. It replaces the canvas outright rather than overlaying it —
+         * and it needs no hidden a11y index, because every row is already a real
+         * link.
+         */
+        <WallList projects={distinct} />
       ) : (
         <>
           {/* The cylinder. Purely visual — everything it shows is also present
@@ -179,7 +219,17 @@ const Wall = () => {
               const meta = metaFor(project);
               return (
                 <li key={project.slug}>
-                  <Link to={`${meta.base}/${project.slug}`}>
+                  <Link
+                    to={`${meta.base}/${project.slug}`}
+                    onClick={(e) => {
+                      if (!isPlainClick(e) || !startDetailTransition) return;
+                      e.preventDefault();
+                      startDetailTransition(
+                        `${meta.base}/${project.slug}`,
+                        tileImage(project)
+                      );
+                    }}
+                  >
                     {project.title} — {meta.label}
                     {project.brand?.name ? ` (${project.brand.name})` : ''}
                   </Link>
@@ -190,7 +240,12 @@ const Wall = () => {
         </>
       )}
 
-      {active ? <WallPanel slot={active} onClose={handleClose} /> : null}
+      {/* The view switcher, bottom-centred. Only once there is work to show —
+          while loading or errored there is nothing to switch between. */}
+      {!loading && !error && distinct.length ? (
+        <ViewSlider view={view} onChange={setView} />
+      ) : null}
+
     </section>
   );
 };

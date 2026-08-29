@@ -1,0 +1,81 @@
+/*
+ * The full-viewport wash that plays when opening a project detail page.
+ *
+ * A gradient between the two colours sampled from the project's own asset, so
+ * every project enters in its own light rather than through a generic curtain.
+ */
+/*
+ * There is no separate wash element.
+ *
+ * The "wash" is the page background itself being revealed: a fixed layer
+ * painting the same gradient the themed body paints, clipped from the bottom
+ * and animated open. It was previously a standalone cover that duplicated the
+ * background's colours and then handed over to it — two surfaces that had to be
+ * kept in agreement. Making it literally the same paint removes the class of
+ * bug where they drift apart.
+ */
+.detail-wash {
+  position: fixed;
+  inset: 0;
+  /*
+   * Below the site nav (9999) so the chrome never blinks, but above the page
+   * content it is covering.
+   */
+  z-index: 9500;
+  pointer-events: none;
+  display: none;
+  /*
+   * REVEALED with clip-path, never scaled. A transform would scale the painted
+   * gradient with the element, squashing it into whatever sliver is showing —
+   * so the colour under a given pixel would shift as it rose, and it could not
+   * match the fixed, full-height background it becomes.
+   */
+  clip-path: inset(100% 0 0 0);
+  will-change: clip-path;
+  /*
+   * The SAME declaration as body.has-detail-theme below, reading the same
+   * variables. Not a copy of the colours — a copy of the paint.
+   */
+  background-image: linear-gradient(
+    to top,
+    var(--detail-a, #23262b) 0%,
+    var(--detail-b, #23262b) 100%
+  );
+  background-attachment: fixed;
+}
+
+/* ------------------------------------------------------- the page theme */
+
+/*
+ * The detail page's own background, carried over from the transition.
+ *
+ * A vertical gradient between the same two colours the wash used, but mixed far
+ * closer to the site's base dark (see PAGE_STRENGTH) — enough that the page
+ * feels tinted by the project, never enough to fight the text sitting on it.
+ *
+ * Applied to <body> because the layout's own `bg-dark-950` would otherwise
+ * paint straight over it; the layout drops that class when the theme is active
+ * (see CaseStudyLayout).
+ */
+body.has-detail-theme {
+  background-image: linear-gradient(
+    to top,
+    var(--detail-a, transparent) 0%,
+    var(--detail-b, transparent) 100%
+  );
+  background-attachment: fixed;
+}
+
+/*
+ * The app shell paints its own solid dark (`.App bg-dark-950` in App.js), and
+ * html carries one too — either would sit on top of the body gradient. Both go
+ * transparent while a detail theme is showing, and only then, so every other
+ * page keeps its opaque background.
+ */
+body.has-detail-theme .App {
+  background-color: transparent;
+}
+
+html:has(body.has-detail-theme) {
+  background-color: transparent;
+}

@@ -2,9 +2,9 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { gsap } from 'gsap';
 import useInfoReveal from '../../hooks/useInfoReveal';
+import { averageRegion, NEUTRAL_PICK } from '../../utils/pickTint';
 import './WebGallery.css';
 
-const NEUTRAL_PICK = '#23262b';
 const NEUTRAL_CORNERS = {
   tl: NEUTRAL_PICK,
   tr: NEUTRAL_PICK,
@@ -111,46 +111,6 @@ const WebGallery = ({ projects }) => {
     },
     [reduce, writeTint]
   );
-
-  // --- sample a tint from a region, favouring colorful pixels --------------
-  const averageRegion = (data, dim, x0, y0, x1, y1) => {
-    let r = 0;
-    let g = 0;
-    let b = 0;
-    let wsum = 0;
-    for (let y = y0; y < y1; y += 1) {
-      for (let x = x0; x < x1; x += 1) {
-        const k = (y * dim + x) * 4;
-        const rr = data[k];
-        const gg = data[k + 1];
-        const bb = data[k + 2];
-        const mx = Math.max(rr, gg, bb);
-        const mn = Math.min(rr, gg, bb);
-        if (mx < 18 || mn > 248) continue; // skip near-black / near-white
-        const chroma = mx - mn;
-        if (chroma < 8) continue; // effectively gray → don't let it dilute
-        const w = (chroma / 255) ** 1.5;
-        r += rr * w;
-        g += gg * w;
-        b += bb * w;
-        wsum += w;
-      }
-    }
-    if (wsum < 0.02) return null;
-    let ar = r / wsum;
-    let ag = g / wsum;
-    let ab = b / wsum;
-    const mean = (ar + ag + ab) / 3;
-    const SAT = 1.6;
-    ar = mean + (ar - mean) * SAT;
-    ag = mean + (ag - mean) * SAT;
-    ab = mean + (ab - mean) * SAT;
-    const luma = Math.max(1, 0.3 * ar + 0.59 * ag + 0.11 * ab);
-    const target = 140;
-    const scale = target / luma;
-    const clamp = (v) => Math.max(0, Math.min(255, Math.round(v * scale)));
-    return `rgb(${clamp(ar)},${clamp(ag)},${clamp(ab)})`;
-  };
 
   const samplePick = useCallback(
     (img, i) => {

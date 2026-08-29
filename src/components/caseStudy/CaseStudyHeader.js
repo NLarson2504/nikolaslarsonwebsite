@@ -20,10 +20,6 @@ const CaseStudyHeader = ({ project, caseStudy }) => {
 
   return (
     <header>
-      <h1 className="font-heading font-extrabold text-4xl md:text-6xl leading-[1.05] tracking-tight text-dark-50 text-balance max-w-[20ch] mb-4">
-        {project.title}
-      </h1>
-
       {caseStudy.dek && (
         <p className="text-lg md:text-xl text-dark-300 leading-relaxed max-w-prose mb-7">
           {caseStudy.dek}

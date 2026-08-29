@@ -10,6 +10,7 @@ import Contact from './pages/contact/Contact';
 import CaseStudyPage from './components/caseStudy/CaseStudyPage';
 import Admin from './pages/admin/Admin';
 import TopNav from './components/TopNav';
+import { DetailTransitionProvider } from './components/DetailTransition';
 import Footer from './components/Footer';
 import CursorDot from './components/CursorDot';
 import useGSAPScrollSmooth from './hooks/useGSAPScrollSmooth';
@@ -48,6 +49,7 @@ function AppContent() {
   }
 
   return (
+    <DetailTransitionProvider>
     <div className="App bg-dark-950">
       <CursorDot />
       <TopNav currentPage={getCurrentPage()} navigateToPage={navigateToPage} />
@@ -71,6 +73,7 @@ function AppContent() {
         </div>
       </div>
     </div>
+    </DetailTransitionProvider>
   );
 }
 

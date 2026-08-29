@@ -24,8 +24,14 @@ const CaseStudyLayout = ({ project, backTo, backLabel }) => {
   const tocRailRef = useFollowSticky({ top: 112 });
 
   return (
-    <div className="bg-dark-950 border-t border-white/5 min-h-screen text-left">
-      <div className="max-w-[72rem] mx-auto px-4 md:px-10 pt-24 md:pt-28 pb-24 grid grid-cols-1 lg:grid-cols-[11rem_minmax(0,42rem)_1fr] lg:gap-x-12">
+    <div className="bg-transparent border-t border-white/5 min-h-screen text-left">
+      <div className="max-w-[72rem] mx-auto px-4 md:px-10 pt-24 md:pt-28">
+        <h1 className="font-heading font-extrabold text-5xl sm:text-7xl md:text-8xl leading-[0.95] tracking-tight text-dark-50 text-balance text-center max-w-[14ch] mx-auto mb-14 md:mb-20">
+          {project.title}
+        </h1>
+      </div>
+
+      <div className="max-w-[72rem] mx-auto px-4 md:px-10 pb-24 grid grid-cols-1 lg:grid-cols-[11rem_minmax(0,42rem)_1fr] lg:gap-x-12">
         {/* Left rail — back link (follow-sticky on desktop) */}
         <aside className="hidden lg:block">
           <div ref={backRailRef}>
@@ -96,7 +102,7 @@ const CaseStudyLayout = ({ project, backTo, backLabel }) => {
 const BackLink = ({ to, label }) => (
   <Link
     to={to}
-    className="inline-flex items-center gap-2 font-mono text-xs tracking-wide uppercase text-dark-400 hover:text-dark-50 transition-colors focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-500 rounded-sm"
+    className="inline-flex items-center gap-2 font-mono text-xs tracking-wide uppercase text-dark-700 hover:text-dark-50 transition-colors focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-500 rounded-sm"
   >
     <span aria-hidden="true">←</span> {label}
   </Link>
