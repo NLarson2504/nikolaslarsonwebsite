@@ -139,12 +139,20 @@ const TopNav = ({ currentPage, navigateToPage }) => {
 
             {/* Contact CTA */}
             <div className="flex items-center">
+              {/* Glass rather than a solid white pill, matching the wall's
+                  section slider that sits beside it in this same nav. The
+                  ground, hover and current states live in .nav-cta-glass
+                  (index.css) because the lit-edge inset shadows can't be
+                  expressed as Tailwind utilities. Rounded-full, not -lg, to
+                  echo the slider's pill.
+
+                  Vertical padding also comes from that class (height-matched to
+                  the slider) — hence px-4 alone here rather than px-4 py-2, so
+                  a utility and the class aren't setting the same property. */}
               <button 
                 onClick={() => handleNavClick('contact')}
-                className={`px-4 py-2 rounded-lg font-sans text-sm font-medium transition-all duration-200 focus:outline-none ${
-                  currentPage === 'contact'
-                    ? 'bg-white text-dark-950'
-                    : 'bg-white text-dark-950 hover:bg-gray-100'
+                className={`px-4 rounded-full font-sans text-sm font-medium text-white focus:outline-none nav-cta-glass${
+                  currentPage === 'contact' ? ' is-current' : ''
                 }`}
               >
                 Contact
