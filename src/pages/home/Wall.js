@@ -1,5 +1,4 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import useProjects from '../../hooks/useProjects';
 import useWallCylinder from './useWallCylinder';
@@ -35,40 +34,13 @@ const MOBILE_QUERY = '(max-width: 900px)';
 // Firestore `type` -> the KIND_META key that describes it.
 const KIND_FOR_TYPE = { site: 'web', app: 'app', agent: 'agent' };
 
-// The slider's options, in order. `all` is first so it reads as the default
-// resting state at the far left.
-const FILTERS = [
-  { key: 'all', label: 'All' },
-  { key: 'web', label: 'Web' },
-  { key: 'app', label: 'Apps' },
-  { key: 'agent', label: 'Agents' },
-];
-
 const Wall = () => {
   const { data: sites, loading: lSites, error: eSites } = useProjects('site');
   const { data: apps, loading: lApps, error: eApps } = useProjects('app');
   const { data: agents, loading: lAgents, error: eAgents } = useProjects('agent');
 
   const [active, setActive] = useState(null);   // slot shown in the overlay
-  // Which section the wall is showing. 'all' is the default and sits leftmost.
-  const [filter, setFilter] = useState('all');
   const [entries, setEntries] = useState(null); // slots + loaded images
-  /*
-   * The slider thumb is MEASURED off the active button rather than computed as
-   * an even 1/n of the track.
-   *
-   * An even pitch assumes every label is the same width. They aren't — "Agents"
-   * is the widest by a clear margin, so forcing it into an average-sized quarter
-   * left it overflowing its own box: crowded against the track's right edge, and
-   * wider than the thumb that was supposed to sit under it.
-   *
-   * Letting the options size to their own text and reading the resulting
-   * offsetLeft/offsetWidth back out keeps the thumb exactly under whichever
-   * label is selected, whatever that label happens to be.
-   */
-  const trackRef = useRef(null);
-  const optionRefs = useRef({});
-  const [thumb, setThumb] = useState(null);
   /*
    * Narrow viewports get the SAME wall, not a different page. isMobile only
    * tunes how the drum is framed (see useWallCylinder) — a phone screen is a
@@ -88,31 +60,6 @@ const Wall = () => {
     mq.addEventListener('change', onChange);
     return () => mq.removeEventListener('change', onChange);
   }, []);
-
-  /*
-   * Keep the thumb aligned to the active option's real box.
-   *
-   * Layout effect, not a plain effect: this runs before paint, so the thumb is
-   * never seen a frame behind the label it belongs under. Fonts landing late
-   * would shift the labels after first measure, so re-measure on the font load
-   * and on resize too — both change the option widths without changing filter.
-   */
-  useLayoutEffect(() => {
-    const measure = () => {
-      const el = optionRefs.current[filter];
-      if (!el) return;
-      setThumb({ left: el.offsetLeft, width: el.offsetWidth });
-    };
-    measure();
-
-    window.addEventListener('resize', measure);
-    // `document.fonts` is absent in older browsers; the initial measure still
-    // holds there, just against the fallback face.
-    if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(measure).catch(() => {});
-    }
-    return () => window.removeEventListener('resize', measure);
-  }, [filter, isMobile]);
 
   /*
    * Assign projects to the pack's slots.
@@ -178,7 +125,6 @@ const Wall = () => {
     entries,
     enabled: !!entries,
     onPick: handlePick,
-    filter,
     compact: isMobile,
   });
 
@@ -199,50 +145,6 @@ const Wall = () => {
 
   return (
     <section className="wl-stage">
-      {/*
-        * The filter slider, along the bottom.
-        *
-        * A segmented control rather than links: switching sections dims the
-        * wall in place instead of navigating away, so the drum is never torn
-        * down and rebuilt. "All" sits first and is the default.
-        *
-        * The thumb is one element translated across the track, so the movement
-        * is a single transform rather than four elements restyling — and the
-        * label the thumb sits under stays legible because the thumb is glass,
-        * not a solid fill.
-        */}
-      {createPortal(
-        <nav className="wl-slider" aria-label="Filter work by section">
-        <div className="wl-slider-track" role="tablist" ref={trackRef}>
-          <span
-            className="wl-slider-thumb"
-            aria-hidden="true"
-            /* Hidden until measured, so it never flashes at the wrong width. */
-            style={
-              thumb
-                ? { left: `${thumb.left}px`, width: `${thumb.width}px` }
-                : { opacity: 0 }
-            }
-          />
-          {FILTERS.map((f) => (
-            <button
-              key={f.key}
-              type="button"
-              role="tab"
-              aria-selected={filter === f.key}
-              ref={(el) => {
-                optionRefs.current[f.key] = el;
-              }}
-              className={`wl-slider-option${filter === f.key ? ' is-active' : ''}`}
-              onClick={() => setFilter(f.key)}
-            >
-              {f.label}
-            </button>
-          ))}
-          </div>
-        </nav>,
-        document.body
-      )}
 
       {loading ? (
         <p className="wl-state">Loading the wall…</p>

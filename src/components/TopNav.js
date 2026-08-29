@@ -1,6 +1,23 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { gsap } from 'gsap';
 import HoverMenu from './HoverMenu';
+import NavSlider from './NavSlider';
+
+/*
+ * The section hover-menu is DISABLED for now.
+ *
+ * Hovering Web / Apps / Agents used to open a dropdown panel of that section's
+ * top-2 projects (components/HoverMenu.js, fed live from Firestore by
+ * hooks/useTopProjects). It's parked rather than deleted: flip this to true to
+ * bring it back, and everything below — the open/visible state, the hover
+ * handlers, the panel itself — is still wired for it.
+ *
+ * Worth revisiting once the nav settles. If it does come back, two things want
+ * a second look: the panel was built against the old solid nav bar, so it needs
+ * checking over the now-transparent one, and it anchored to three text links
+ * rather than to a centred glass pill, so its horizontal origin will be off.
+ */
+const HOVER_MENU_ENABLED = false;
 
 const TopNav = ({ currentPage, navigateToPage }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -62,6 +79,7 @@ const TopNav = ({ currentPage, navigateToPage }) => {
   }, [isMobileMenuOpen]);
 
   const handleMouseEnter = () => {
+    if (!HOVER_MENU_ENABLED) return;
     if (!hasEverOpened) {
       setHasEverOpened(true);
       setIsMenuOpen(true);
@@ -70,24 +88,21 @@ const TopNav = ({ currentPage, navigateToPage }) => {
   };
 
   const handleMouseLeave = () => {
+    if (!HOVER_MENU_ENABLED) return;
     setIsMenuVisible(false);
     setActiveSection(null);
     // Keep menu mounted for smooth transitions
   };
 
-  // The home page is one full-bleed wall that runs under the nav. A solid bar
-  // would slice a band across it, and the wall carries its own shape-glyph
-  // filters for the three sections — so on home the chrome goes transparent and
-  // the section tabs step aside rather than duplicating those filters.
-  const isHome = currentPage === 'home';
-
   return (
     <nav className="fixed top-0 left-0 right-0 z-[9999]">
-      <div className={isHome
-        ? 'bg-transparent'
-        : 'bg-dark-950/95 backdrop-blur-md border-b border-white/10'}>
+      {/* Transparent on every route, with no bottom border. The bar used to go
+          solid off the home page; now that its controls are themselves glass
+          pills, a filled strip behind them just boxed in the glass — the pills
+          carry their own blur, so they read against the page directly. */}
+      <div className="bg-transparent">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          <div className="relative flex justify-between items-center h-16">
             {/* Logo */}
             <div className="flex-shrink-0">
               <button 
@@ -98,43 +113,36 @@ const TopNav = ({ currentPage, navigateToPage }) => {
               </button>
             </div>
 
-            {/* Centered Navigation Links — hidden on home, where the wall's
-                own glyph filters cover the same three sections. */}
+            {/* Centered navigation: the glass segmented control.
+                This used to be three text links here plus a separate filter
+                slider that existed only on home and dimmed the wall in place.
+                They're now one control that navigates, shown on every route so
+                it persists across home / web / apps / agents rather than
+                appearing and disappearing. */}
             <div
-              className={`${isHome ? 'hidden' : 'hidden md:flex'} items-center space-x-2 relative`}
+              className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center"
               onMouseEnter={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
             >
-              <button 
-                onClick={() => handleNavClick('agents')}
-                onMouseEnter={() => setActiveSection('agents')}
-                className="px-3 py-2 rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-all duration-200 font-sans text-sm font-medium focus:outline-none"
-              >
-                Agents
-              </button>
-              <button
-                onClick={() => handleNavClick('apps')}
-                onMouseEnter={() => setActiveSection('apps')}
-                className="px-3 py-2 rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-all duration-200 font-sans text-sm font-medium focus:outline-none"
-              >
-                Apps
-              </button>
-              <button
-                onClick={() => handleNavClick('web')}
-                onMouseEnter={() => setActiveSection('web')}
-                className="px-3 py-2 rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-all duration-200 font-sans text-sm font-medium focus:outline-none"
-              >
-                Web
-              </button>
-              
-              {/* Hover Menu */}
-              {isMenuOpen && (
-                <HoverMenu 
-                  activeSection={activeSection}
-                  navigateToPage={navigateToPage}
-                  isVisible={isMenuVisible}
+              {/* Inner wrapper stays `relative` so the HoverMenu has a
+                  positioned ancestor to anchor to — the outer div is spending
+                  its own position on the centring. */}
+              <div className="relative flex items-center">
+                <NavSlider
+                  currentPage={currentPage}
+                  navigateToPage={handleNavClick}
+                  onHoverSection={HOVER_MENU_ENABLED ? setActiveSection : undefined}
                 />
-              )}
+
+                {/* Hover Menu — see HOVER_MENU_ENABLED above. */}
+                {HOVER_MENU_ENABLED && isMenuOpen && (
+                  <HoverMenu
+                    activeSection={activeSection}
+                    navigateToPage={navigateToPage}
+                    isVisible={isMenuVisible}
+                  />
+                )}
+              </div>
             </div>
 
             {/* Contact CTA */}

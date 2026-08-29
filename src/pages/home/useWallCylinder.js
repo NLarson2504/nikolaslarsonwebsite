@@ -91,7 +91,7 @@ const SPIN_PER_PX = 0.0016;
 const EASE = 0.14;
 const TAU = Math.PI * 2;
 
-export default function useWallCylinder({ entries, enabled = true, onPick, filter = 'all', compact = false }) {
+export default function useWallCylinder({ entries, enabled = true, onPick, compact = false }) {
   const mountRef = useRef(null);
   const pickRef = useRef(onPick);
   pickRef.current = onPick;
@@ -458,13 +458,16 @@ export default function useWallCylinder({ entries, enabled = true, onPick, filte
     const hover = { slot: -1, amount: 0, prevSlot: -1, prevAmount: 0 };
 
     /*
-     * Filter state, animated so switching sections eases rather than snaps.
-     * `fade` runs 0..1: 1 = the filter fully applied, 0 = everything lit.
+     * The wall is never filtered: every tile stays lit.
+     *
+     * The section slider that used to dim the drum to one kind is now site
+     * navigation (components/NavSlider.js), so nothing drives this any more.
+     * uFilter is pinned to 0, which short-circuits the shader's dimming branch
+     * entirely — the uniform is kept rather than cut out of the GLSL so the
+     * capability is one assignment away if a filter ever returns.
      */
-    const KIND_ID = { all: 0, web: 1, app: 2, agent: 3 };
-    const filterState = { id: KIND_ID[filter] ?? 0, fade: filter === 'all' ? 0 : 1 };
-    material.uniforms.uFilter.value = filterState.id;
-    material.uniforms.uFilterFade.value = filterState.fade;
+    material.uniforms.uFilter.value = 0;
+    material.uniforms.uFilterFade.value = 0;
 
     /*
      * Hover now costs two uniform writes — no texture repaint, no upload. This
@@ -852,21 +855,6 @@ export default function useWallCylinder({ entries, enabled = true, onPick, filte
         dirty = true;
       }
 
-      /*
-       * Ease the filter's dimming. The target id is set on mount and whenever
-       * `filter` changes (the effect re-runs), so this only animates the fade
-       * between "everything lit" and "one section lit".
-       */
-      const wantFade = filterState.id === 0 ? 0 : 1;
-      if (filterState.fade !== wantFade) {
-        const d = dt / 320;
-        filterState.fade = wantFade > filterState.fade
-          ? Math.min(1, filterState.fade + d)
-          : Math.max(0, filterState.fade - d);
-        material.uniforms.uFilterFade.value = filterState.fade;
-        dirty = true;
-      }
-
       // The cell just left always fades to nothing.
       if (hover.prevAmount > 0) {
         if (reduceMotion) {
@@ -929,7 +917,7 @@ export default function useWallCylinder({ entries, enabled = true, onPick, filte
       renderer.dispose();
       if (el.parentNode === mount) mount.removeChild(el);
     };
-  }, [entries, enabled, filter, compact]);
+  }, [entries, enabled, compact]);
 
   return { mountRef };
 }

@@ -253,9 +253,9 @@ code {
 /*
  * The nav's Contact CTA, as frosted glass.
  *
- * Deliberately the SAME recipe as the wall's section slider (.wl-slider-track
- * in pages/home/Wall.css): on the home route those two controls sit side by
- * side in the same transparent nav, so any difference in blur, saturation or
+ * Deliberately the SAME recipe as the nav's segmented control
+ * (.nav-slider-track in components/NavSlider.css): the two sit side by side in
+ * the same bar on every route, so any difference in blur, saturation or
  * edge-lighting reads as one of them being slightly wrong rather than as two
  * distinct styles.
  *

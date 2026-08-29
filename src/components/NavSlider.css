@@ -1,0 +1,140 @@
+/*
+ * The nav's segmented control: a single pill of frosted glass with a thumb that
+ * slides between the options, so changing section is one movement rather than
+ * four labels restyling themselves.
+ *
+ * Ported from the home wall's filter slider (.wl-slider in pages/home/Wall.css)
+ * when it became site navigation. The glass recipe here is deliberately
+ * identical to the Contact CTA's (.nav-cta-glass in index.css) — the two sit in
+ * the same bar, so any difference in blur, saturation or edge-lighting reads as
+ * one of them being subtly wrong rather than as two distinct styles.
+ *
+ * It is laid out INLINE in the nav's flex row. The old version was
+ * position:fixed and portalled to <body> because it floated over a full-bleed
+ * canvas; living in the bar, it just centres like any other nav child.
+ */
+.nav-slider {
+  display: flex;
+  align-items: center;
+}
+
+.nav-slider-track {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  /* Symmetric — the thumb is measured against this box, so uneven padding would
+     put the options and the pill on different origins. */
+  padding: 5px;
+  border-radius: 999px;
+  /* The glass: a translucent ground, a blurred backdrop, and a bright top edge
+     over a dark base, so the pill reads as a lit physical surface. */
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.22),
+    inset 0 -1px 0 0 rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.09),
+    0 10px 30px -10px rgba(0, 0, 0, 0.8);
+}
+
+/*
+ * The sliding thumb. One element that moves and resizes between the options, so
+ * switching sections animates a single pill — and because it is glass rather
+ * than a solid fill, the label underneath stays legible.
+ */
+.nav-slider-thumb {
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  /*
+   * `left` and `width` are set inline from the active button's measured box.
+   * They were once computed here as an even 1/n of the track, which only holds
+   * when every label is the same width — they aren't, so the thumb came out
+   * narrower than "Agents" and clipped it.
+   */
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
+    0 2px 8px -2px rgba(0, 0, 0, 0.6);
+  /* Width animates alongside left because the options are not equal widths —
+     the thumb resizes as it travels between them. */
+  transition:
+    left 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    width 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 200ms ease;
+  pointer-events: none;
+}
+
+.nav-slider-option {
+  position: relative;
+  z-index: 1;
+  /*
+   * Each option sizes to ITS OWN label plus padding — no forced equal share.
+   *
+   * Equal quarters were a real bug: sized off the average label, the quarter was
+   * too narrow for "Agents" (the widest), so that word overflowed toward the
+   * track's right edge and outgrew the thumb beneath it. With intrinsic widths
+   * every label gets the same padding either side, so they all breathe equally
+   * and the measured thumb always fits. `nowrap` stops a label from wrapping to
+   * two lines, which an intrinsic width would otherwise allow.
+   */
+  flex: 0 0 auto;
+  white-space: nowrap;
+  box-sizing: border-box;
+  padding: 0.6rem 1.1rem;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  text-align: center;
+  /* No default focus ring — a blue browser outline breaks the glass. Keyboard
+     focus is drawn inside the pill instead (see :focus-visible below). */
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  /*
+   * The site's sans face at medium weight — these are labels to read, not
+   * technical chrome. Letter-spacing stays at 0: tracking adds its gap after the
+   * final character too, which pushes text left of centre in its own box.
+   */
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: rgba(244, 242, 238, 0.55);
+  transition: color 260ms ease;
+}
+
+.nav-slider-option:hover {
+  color: rgba(244, 242, 238, 0.85);
+}
+
+.nav-slider-option.is-active {
+  color: #f4f2ee;
+}
+
+/*
+ * Keyboard focus is a soft white ring INSIDE the pill rather than a browser
+ * outline around it, so it reads as part of the glass. Mouse clicks don't
+ * trigger :focus-visible, so this only appears for keyboard users.
+ */
+.nav-slider-option:focus-visible {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+  border-radius: 999px;
+}
+
+/*
+ * Backdrop-filter needs something behind it to blur. Where it's unsupported the
+ * translucent ground alone reads as a dim grey chip, so lift it.
+ */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .nav-slider-track {
+    background: rgba(255, 255, 255, 0.12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-slider-thumb {
+    transition: none;
+  }
+}
