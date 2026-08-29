@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import CaseStudyHeader from './CaseStudyHeader';
+import CaseStudyHeader, { canEmbedSite } from './CaseStudyHeader';
+import SitePreview from './SitePreview';
 import CaseStudyStats from './CaseStudyStats';
 import CaseStudyToc from './CaseStudyToc';
 import CaseStudyBlock from './CaseStudyBlock';
@@ -18,6 +19,15 @@ const CaseStudyLayout = ({ project, backTo, backLabel }) => {
   const caseStudy = project.caseStudy || {};
   const sections = caseStudy.sections || [];
 
+  // The hero preview sits in a band wider than the reading column and wider
+  // than the rest of the page — a cramped iframe renders the site's own mobile
+  // layout, which isn't what the case study is showing off. Every project with
+  // something to show gets the band at that size: a live iframe where the site
+  // can be embedded, and the screenshot at identical dimensions where it can't.
+  const featured = caseStudy.featuredImage || project.image;
+  const embeddable = canEmbedSite(project);
+  const showBand = embeddable || Boolean(featured);
+
   // Native `position: sticky` can't work inside the site's GSAP smooth-scroll
   // transform, so the rails follow the eased scroll offset via JS instead.
   const tocRailRef = useFollowSticky({ top: 112 });
@@ -25,10 +35,21 @@ const CaseStudyLayout = ({ project, backTo, backLabel }) => {
   return (
     <div className="bg-transparent border-t border-white/5 min-h-screen text-left">
       <div className="max-w-[72rem] mx-auto px-4 md:px-10 pt-24 md:pt-28">
-        <h1 className="font-heading font-extrabold text-5xl sm:text-7xl md:text-8xl leading-[0.95] tracking-tight text-dark-50 text-balance text-center max-w-[14ch] mx-auto mb-14 md:mb-20">
+        <h1 className="font-heading font-extrabold text-6xl sm:text-8xl md:text-9xl lg:text-[10rem] leading-[0.92] tracking-tighter text-dark-50 text-balance text-center max-w-[13ch] mx-auto mb-14 md:mb-20">
           {project.title}
         </h1>
       </div>
+
+      {showBand && (
+        <div className="max-w-[110rem] mx-auto px-4 md:px-8 mb-16 md:mb-24">
+          <SitePreview
+            url={embeddable ? project.url : null}
+            visitUrl={project.url}
+            image={featured}
+            title={project.title}
+          />
+        </div>
+      )}
 
       <div className="max-w-[72rem] mx-auto px-4 md:px-10 pb-24 grid grid-cols-1 lg:grid-cols-[11rem_minmax(0,42rem)_1fr] lg:gap-x-12">
         {/* Left rail — empty now that the back control is the nav's orb, but
@@ -43,7 +64,11 @@ const CaseStudyLayout = ({ project, backTo, backLabel }) => {
             <BackLink to={backTo} label={backLabel} />
           </div>
 
-          <CaseStudyHeader project={project} caseStudy={caseStudy} />
+          <CaseStudyHeader
+            project={project}
+            caseStudy={caseStudy}
+            hidePreview={showBand}
+          />
 
           <CaseStudyStats stats={caseStudy.stats} />
 
