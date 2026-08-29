@@ -19,8 +19,16 @@ import React, { useEffect, useRef, useState } from 'react';
  * ~46rem height on a wide image makes `object-cover` scale it up to fill that
  * height and crop the sides off, so the image is left to fit the ratio and
  * `object-contain` keeps the whole screenshot visible.
- * `max-h-[88vh]` stops the frame from overflowing the viewport on short
- * screens.
+ *
+ * Only the iframe path paints a background, and it's white: an embedded site
+ * that hasn't painted its own background yet would otherwise show the page
+ * through it. The screenshot path stays transparent so the project's tinted
+ * page colour sits behind any letterboxing.
+ *
+ * Height is never capped here. A `max-height` against a fixed `aspect-ratio`
+ * makes the box widen to preserve the ratio once the cap bites, which pushed
+ * the frame off the right edge of the page — the band's own `max-w` is what
+ * bounds the size instead.
  *
  * We can't read cross-origin frame contents, so "did it load?" is inferred: if
  * the iframe hasn't fired `load` within a timeout, we assume it was blocked and
@@ -45,8 +53,10 @@ const SitePreview = ({ url, image, title, visitUrl = url }) => {
 
   return (
     <div
-      className={`relative rounded-2xl border border-white/10 overflow-hidden bg-dark-900 aspect-[4/3] sm:aspect-[16/10] lg:aspect-[16/9] max-h-[88vh] ${
-        showImage ? '' : 'min-h-[26rem] md:min-h-[40rem] lg:min-h-[46rem]'
+      className={`relative w-full max-w-full rounded-2xl border border-white/10 overflow-hidden aspect-[4/3] sm:aspect-[16/10] lg:aspect-[16/9] ${
+        showImage
+          ? ''
+          : 'bg-white min-h-[26rem] md:min-h-[40rem] lg:min-h-[46rem]'
       }`}
     >
       {!showImage && (
