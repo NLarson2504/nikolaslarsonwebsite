@@ -9,7 +9,7 @@ import {
   Button,
 } from './adminUI';
 import CaseStudyEditor from './CaseStudyEditor';
-import { computePriority } from '../../utils/projectPriority';
+import ImageUpload from './ImageUpload';
 
 /**
  * Full editor for a single project: shared fields, type-specific fields, and
@@ -47,16 +47,9 @@ const ProjectEditor = ({ project, brands, onChange, onSave, onDelete, onCancel, 
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Header row */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <h2 className="font-heading font-bold text-2xl text-dark-50">
-            {project.title || 'Untitled project'}
-          </h2>
-          <p className="font-mono text-xs text-dark-400 mt-1">
-            Priority score: <span className="text-primary-400">{computePriority(project)}</span>
-          </p>
-        </div>
+      {/* Action row — title lives in the shell header, priority in the
+          inspector rail, so this row is just save/cancel */}
+      <div className="flex items-center justify-end gap-4 flex-wrap">
         <div className="flex gap-2">
           <Button variant="ghost" type="button" onClick={onCancel} disabled={saving}>
             Cancel
@@ -136,7 +129,11 @@ const ProjectEditor = ({ project, brands, onChange, onSave, onDelete, onCancel, 
       </div>
 
       {/* Case study */}
-      <CaseStudyEditor value={project.caseStudy || null} onChange={(cs) => set({ caseStudy: cs })} />
+      <CaseStudyEditor
+        value={project.caseStudy || null}
+        onChange={(cs) => set({ caseStudy: cs })}
+        slug={project.slug}
+      />
 
       {/* Danger zone */}
       <div className="rounded-xl border border-red-500/20 bg-red-500/[0.03] p-5">
@@ -172,9 +169,14 @@ const TypeSpecificFields = ({ project, set }) => {
           <Field label="Platform">
             <TextInput value={project.platform} onChange={(v) => set({ platform: v })} />
           </Field>
-          <Field label="Icon path">
-            <TextInput value={project.icon} onChange={(v) => set({ icon: v })} />
-          </Field>
+          <div>
+            <ImageUpload
+              label="Icon"
+              value={project.icon}
+              onChange={(v) => set({ icon: v })}
+              slug={project.slug}
+            />
+          </div>
           <Field label="App Store URL">
             <TextInput value={project.appStoreUrl} onChange={(v) => set({ appStoreUrl: v })} />
           </Field>
@@ -202,9 +204,14 @@ const TypeSpecificFields = ({ project, set }) => {
         <Field label="Repository URL">
           <TextInput value={project.repositoryUrl} onChange={(v) => set({ repositoryUrl: v })} />
         </Field>
-        <Field label="Preview image path">
-          <TextInput value={project.image} onChange={(v) => set({ image: v })} />
-        </Field>
+        <div>
+          <ImageUpload
+            label="Preview image"
+            value={project.image}
+            onChange={(v) => set({ image: v })}
+            slug={project.slug}
+          />
+        </div>
         <Field label="Category">
           <TextInput value={project.category} onChange={(v) => set({ category: v })} />
         </Field>
@@ -214,9 +221,12 @@ const TypeSpecificFields = ({ project, set }) => {
 
   // agent
   return (
-    <Field label="Icon path">
-      <TextInput value={project.icon} onChange={(v) => set({ icon: v })} />
-    </Field>
+    <ImageUpload
+      label="Icon"
+      value={project.icon}
+      onChange={(v) => set({ icon: v })}
+      slug={project.slug}
+    />
   );
 };
 

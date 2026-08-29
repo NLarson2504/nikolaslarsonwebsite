@@ -114,8 +114,10 @@ module.exports = {
       fontFamily: {
         'sans': ['Inter', 'system-ui', 'sans-serif'],
         'mono': ['JetBrains Mono', 'Consolas', 'monospace'],
-        'display': ['MuseoModerno', 'Inter', 'sans-serif'],
-        'heading': ['MuseoModerno', 'Inter', 'sans-serif'],
+        'display': ['Nunito', 'Inter', 'system-ui', 'sans-serif'],
+        'heading': ['Nunito', 'Inter', 'system-ui', 'sans-serif'],
+        // the original site face, kept only for the NL logomark in the nav
+        'mark': ['MuseoModerno', 'Nunito', 'Inter', 'sans-serif'],
       },
       
       fontSize: {

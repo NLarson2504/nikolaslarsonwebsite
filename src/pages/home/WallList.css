@@ -1,0 +1,485 @@
+/*
+ * Home list view — the flat, scannable counterpart to the 3D wall.
+ *
+ * All wls-* so nothing here can collide with the wall's own wl-* rules.
+ *
+ * The hover treatment is the SAME mechanism as the web and apps pages, not an
+ * imitation of it: a page-level footlight field (.wls-ambient) whose four
+ * screen-blended radials rise from below the bottom edge, tinted per-corner from
+ * the hovered project's asset. The dividers between rows stay neutral — the
+ * colour belongs to the background, not to any border.
+ */
+
+.wls-root {
+  position: relative;
+  min-height: 100vh;
+  color: #f4f2ee;
+  /*
+   * Explicit, because it is INHERITED otherwise: App.css still carries
+   * `.App { text-align: center }` from the Create React App template, which
+   * every page sits inside. Without this the header count and the year markers
+   * centre themselves in their columns. Set here rather than by editing the
+   * global rule, which would shift every other page on the site.
+   */
+  text-align: left;
+  /*
+   * The shared two-column geometry. The header and every year band use these,
+   * so the year rail and the rows' left edge line up down the whole page — one
+   * change here moves both rather than two values drifting apart.
+   */
+  --wls-rail: 18rem;
+  --wls-gap: 2.5rem;
+}
+
+/* --------------------------------------------------------- global chrome */
+
+/*
+ * `is-wall-list` is set on <body> while the list view is mounted (see
+ * WallList.js). Two things hang off it, both concerning chrome that lives
+ * outside this component's tree.
+ */
+
+/* The footer belongs to the scrolling marketing pages. The list is a single
+   dense index with its own bottom treatment, and a bordered footer under it
+   just cut the page in half. It's rendered globally in App.js, so a body class
+   is the only hook this component has on it. */
+body.is-wall-list footer {
+  display: none;
+}
+
+/*
+ * The two orb tints, written from JS on hover. Declared on <body> because the
+ * ambient field is portalled there — the variables must resolve on an ancestor
+ * it actually has.
+ *
+ * Only bl/br, unlike the gallery pages' four: this page has two lights, and each
+ * takes the colour of its own half of the image.
+ */
+body {
+  --pick-bl: #23262b;
+  --pick-mid: #23262b;
+  --pick-br: #23262b;
+}
+
+/* ---------------------------------------------------------------- footlight */
+
+/*
+ * Light rises from the BOTTOM of the page and fades upward, dying out well
+ * before the navbar. Each corner tint is its own screen-blended layer, so where
+ * they overlap the light ADDS (like stage footlights crossing) into one
+ * continuous field rather than isolated blobs. Opacity is driven by GSAP.
+ */
+.wls-ambient {
+  position: fixed;
+  /*
+   * The LEFT wall, not the floor: the field hugs the left edge and reaches
+   * about a third of the way across. It runs the full height so both orbs have
+   * room to sit apart vertically.
+   */
+  inset: -10% auto -10% -10%;
+  width: 42%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  filter: blur(72px) saturate(1.55);
+  will-change: opacity;
+  /*
+   * Ramp left-to-right rather than bottom-up, so the light dies out before it
+   * reaches the rows. The rows start well inside this, and the year rail sits
+   * over the brightest part — which is the point: the glow washes the rail, not
+   * the text being read.
+   */
+  -webkit-mask-image: linear-gradient(to right, #000 0%, #000 12%, transparent 62%);
+  mask-image: linear-gradient(to right, #000 0%, #000 12%, transparent 62%);
+}
+
+.wls-ambient__c {
+  position: absolute;
+  inset: 0;
+  mix-blend-mode: screen;
+}
+
+/*
+ * Three orbs stacked down the left wall — upper, middle and lower. Origins sit
+ * just off the left edge so each reads as a light source outside the frame
+ * spilling inward, evenly spaced (20 / 50 / 80% of the height) and slightly
+ * tighter than when there were two, so three fit without fusing into one
+ * continuous column of glow.
+ *
+ * `circle` rather than an ellipse keeps them round at any aspect ratio; an
+ * elliptical radial stretches into a smear on a wide viewport.
+ *
+ * The class names still read bl/br — they are the two tint slots, not
+ * positions, and renaming them would mean touching the sampler and the CSS
+ * variables for no behavioural gain.
+ */
+.wls-ambient__bl {
+  background: radial-gradient(circle 28vmax at -6% 20%, var(--pick-bl) 0%, transparent 64%);
+}
+.wls-ambient__mid {
+  background: radial-gradient(circle 28vmax at -6% 50%, var(--pick-mid) 0%, transparent 64%);
+}
+.wls-ambient__br {
+  background: radial-gradient(circle 28vmax at -6% 80%, var(--pick-br) 0%, transparent 64%);
+}
+
+/* -------------------------------------------------------------- the content */
+
+.wls-inner {
+  position: relative;
+  /* Above the ambient field, which is at z 0. */
+  z-index: 1;
+  /*
+   * Full-bleed. There is deliberately no max-width and no auto margin: a
+   * centred 72rem column left a growing empty gutter on either side at any
+   * decent viewport width, which is the opposite of what a dense scanning list
+   * wants. The rows run edge to edge and only this small gutter holds them off
+   * the screen edge.
+   *
+   * Top clears the fixed nav; bottom clears the floating view switcher, which
+   * sits OVER the list rather than after it.
+   */
+  padding: 8rem 2.5rem 9rem;
+}
+
+/* ------------------------------------------------------------------ header */
+
+/*
+ * The header is the count alone, flush left at the page gutter.
+ *
+ * It deliberately does NOT share the year/rows grid below — putting it on that
+ * grid would indent it to the rows' column, and the ask was for it hard left.
+ */
+.wls-header {
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.13);
+  margin-bottom: 3.5rem;
+}
+
+/*
+ * Tabular figures matter here: the number animates through every value up to
+ * the total, and proportional digits would make the line jitter horizontally as
+ * it counts.
+ */
+.wls-header__count {
+  margin: 0;
+  font-family: 'Nunito', 'Inter', system-ui, sans-serif;
+  font-size: clamp(2.2rem, 5.2vw, 3.6rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.005em;
+  color: rgba(244, 242, 238, 0.42);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* ------------------------------------------------------------------- years */
+
+/*
+ * Each year is a two-column band: the year alone in the left rail, the projects
+ * in the right. `align-items: start` keeps the year pinned to the TOP of its
+ * band, level with the first row rather than floating beside the middle.
+ */
+.wls-group {
+  display: grid;
+  grid-template-columns: var(--wls-rail) 1fr;
+  gap: var(--wls-gap);
+  align-items: start;
+  margin-bottom: 4.5rem;
+}
+
+.wls-year {
+  font-family: 'Nunito', 'Inter', system-ui, sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  /* Held back from full white: the year is a marker the rows hang beneath, not
+     something to read before them. */
+  color: rgba(244, 242, 238, 0.55);
+  margin: 0;
+  /* Nudged down to sit optically level with the first row's name. Less than
+     before: at 1.5rem the year's own line box is taller, so it needs a smaller
+     offset to land on the same optical line. */
+  padding-top: 0.6rem;
+}
+
+.wls-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* -------------------------------------------------------------------- rows */
+
+.wls-row {
+  position: relative;
+  display: grid;
+  /* Name / tags / brand. The name column is sized to content so the tag group
+     starts at a consistent x down the list; the tag column takes the slack, and
+     the brand sits hard right. */
+  grid-template-columns: minmax(0, 15rem) 1fr auto;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 0.85rem 0;
+  text-decoration: none;
+  color: inherit;
+  /* Neutral, and it STAYS neutral on hover — the colour lives in the background
+     footlight, not in this line. Scoped to the right column only (the rows),
+     never running under the year rail. */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.wls-row:focus-visible {
+  outline: none;
+}
+
+/* ------------------------------------------------------------------ labels */
+
+/* Bold, and the only bold thing in the row — the name is what you scan for. */
+.wls-row__name {
+  font-family: 'Nunito', 'Inter', system-ui, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: -0.005em;
+  color: rgba(244, 242, 238, 0.92);
+  transition: color 260ms ease;
+}
+
+.wls-row:hover .wls-row__name,
+.wls-row:focus-visible .wls-row__name {
+  color: #f4f2ee;
+}
+
+/* ------------------------------------------------------------------- tags */
+
+.wls-row__tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/*
+ * Mono pills. The uppercase mono against the rounded sans of the names is what
+ * keeps these reading as metadata rather than as more content — same register
+ * the rest of the site uses for technical labels.
+ */
+.wls-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.32rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 0.58rem;
+  font-weight: 500;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: rgba(244, 242, 238, 0.62);
+  transition: background-color 260ms ease, color 260ms ease;
+}
+
+/* The kind pill leads each row and is outlined rather than filled, so the
+   taxonomy reads as a different class of label from the technologies. */
+.wls-tag--kind {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+  color: rgba(244, 242, 238, 0.78);
+}
+
+.wls-row:hover .wls-tag {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(244, 242, 238, 0.8);
+}
+
+.wls-row:hover .wls-tag--kind {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+  color: #f4f2ee;
+}
+
+/* ------------------------------------------------------------------ brand */
+
+.wls-row__brand {
+  justify-self: end;
+  font-family: 'Nunito', 'Inter', system-ui, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  color: rgba(244, 242, 238, 0.55);
+  transition: color 260ms ease;
+}
+
+.wls-row:hover .wls-row__brand {
+  color: #f4f2ee;
+}
+
+/* ----------------------------------------------------------------- preview */
+
+/*
+ * The dimmed asset preview that trails the cursor.
+ *
+ * Positioned by a rAF loop in WallList.js (transform is written directly, so
+ * there is deliberately no transition on it — the easing IS the lag). Only
+ * opacity animates here, for the fade-in.
+ */
+.wls-preview {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  /*
+   * Width is per-kind, because these assets are not the same shape. A web
+   * screenshot is landscape and reads fine at this width; an app screenshot is
+   * PORTRAIT, so the same width makes it tower over the row it belongs to. The
+   * modifier below cuts it down so both kinds occupy a comparable area.
+   */
+  width: 19rem;
+  max-width: 34vw;
+  pointer-events: none;
+  border-radius: 10px;
+  overflow: hidden;
+  /* Dimmed — it's an aid to recognition, not the subject. The row's text must
+     stay the thing being read. */
+  opacity: 0.38;
+  box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.9);
+  animation: wls-preview-in 260ms ease both;
+}
+
+.wls-preview img {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* Held back further so a bright screenshot can't overpower the list. */
+  filter: saturate(0.85) brightness(0.8);
+}
+
+/* App shots are portrait — narrower, so their height lands in the same range as
+   a landscape web shot rather than running the full column. */
+.wls-preview--app {
+  width: 9.5rem;
+  max-width: 20vw;
+}
+
+/*
+ * An agent's pal is a sprite, not a screenshot: it sizes to the canvas and drops
+ * the frame treatment (no rounded crop, no drop shadow, no dimming), because
+ * those read as a photo mount and this is a character sitting on the page.
+ */
+.wls-preview--agent {
+  width: auto;
+  max-width: none;
+  border-radius: 0;
+  box-shadow: none;
+  /* Brighter than a screenshot preview — the sprite is small and mostly
+     transparent, so it needs the presence. */
+  opacity: 0.85;
+  animation-name: wls-preview-in-agent;
+}
+
+.wls-pal {
+  display: block;
+  width: 9rem;
+  height: 9rem;
+  /* Nearest-neighbour, so the 16x16 grid stays crisp when scaled up. */
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+@keyframes wls-preview-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.38;
+  }
+}
+
+/* The shared keyframe lands on the screenshot opacity, which would undo the
+   agent preview's brighter value — so it fades to its own. Declared after the
+   base .wls-preview animation shorthand so this name wins. */
+@keyframes wls-preview-in-agent {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.85;
+  }
+}
+
+/* -------------------------------------------------------------- responsive */
+
+/* The rail is generous at full width; narrow it before dropping it entirely, so
+   the two-column structure survives as long as it usefully can. */
+@media (max-width: 1100px) {
+  .wls-root {
+    --wls-rail: 10rem;
+    --wls-gap: 2rem;
+  }
+
+
+  .wls-row {
+    grid-template-columns: minmax(0, 12rem) 1fr auto;
+  }
+}
+
+@media (max-width: 860px) {
+  /* The brand column goes first — the name and tags carry the row. */
+  .wls-row {
+    grid-template-columns: minmax(0, 11rem) 1fr;
+  }
+
+  .wls-row__brand {
+    display: none;
+  }
+}
+
+@media (max-width: 700px) {
+  .wls-inner {
+    padding: 6.5rem 1.25rem 9rem;
+  }
+
+  /* The rail collapses to a full-width marker above its rows — a side column
+     would leave the names almost no room. */
+  .wls-root {
+    --wls-rail: 1fr;
+    --wls-gap: 0.75rem;
+  }
+
+  .wls-header {
+    margin-bottom: 3rem;
+  }
+
+  .wls-group {
+    grid-template-columns: 1fr;
+    margin-bottom: 3rem;
+  }
+
+  .wls-year {
+    padding-top: 0;
+    padding-bottom: 0.25rem;
+  }
+
+  /*
+   * Rows stack: name over tags. Holding a side-by-side grid here squeezed the
+   * names to a couple of words with the pills wrapping into a tall ragged
+   * block beside them.
+   */
+  .wls-row {
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 0.55rem;
+    padding: 0.95rem 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wls-row__name {
+    transition: none;
+  }
+
+  .wls-preview {
+    animation: none;
+  }
+}

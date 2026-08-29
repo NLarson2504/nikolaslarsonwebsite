@@ -9,7 +9,7 @@ const Footer = () => {
         <div className="grid md:grid-cols-3 gap-8">
           {/* Brand Section */}
           <div className="md:col-span-1">
-            <div className="text-2xl font-heading font-bold text-gradient-primary mb-4">
+            <div className="text-2xl font-mark font-bold text-gradient-primary mb-4">
               NL
             </div>
             <p className="text-dark-300 text-sm font-sans leading-relaxed">

@@ -117,7 +117,7 @@
   transform: translateX(-180px);
 }
 .aw-info__name {
-  font-family: 'MuseoModerno', sans-serif;
+  font-family: 'Nunito', 'Inter', system-ui, sans-serif;
   font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1.08;
@@ -255,7 +255,7 @@
   justify-content: center;
   background: linear-gradient(180deg, #131416, #0b0c0d);
   color: #4b5563;
-  font-family: 'MuseoModerno', sans-serif;
+  font-family: 'Nunito', 'Inter', system-ui, sans-serif;
   font-weight: 700;
   padding: 24px;
   text-align: center;

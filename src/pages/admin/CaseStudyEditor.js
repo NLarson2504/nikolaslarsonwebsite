@@ -1,13 +1,19 @@
-import React from 'react';
-import { Field, TextInput, TextArea, Button } from './adminUI';
+import React, { useMemo, useRef, useState } from 'react';
+import { Field, TextInput, TextArea, Button, inputCls } from './adminUI';
+import { markdownToSections, sectionsToMarkdown } from '../../utils/caseStudyMarkdown';
+import CaseStudyBlock from '../../components/caseStudy/CaseStudyBlock';
+import ImageUpload from './ImageUpload';
 
 /**
- * Editor for a project's `caseStudy` object: dek, role, featured image, stats,
- * and an ordered list of sections, each with an ordered list of typed blocks
- * (paragraph / quote / image). Edits are lifted to the parent via onChange.
+ * Case study editor: a plain markdown document, the way a Notion page or a
+ * Linear ticket is written — one text surface, no block widgets or reordering
+ * arrows.
  *
- * `value` is the caseStudy object (or null when the project has none).
+ * Storage is unchanged (`sections[] → blocks[]`, what the public renderer and
+ * the table of contents read); markdown is only the editing surface, converted
+ * on the way in and out. See utils/caseStudyMarkdown.
  */
+
 const emptyCaseStudy = () => ({
   dek: '',
   role: '',
@@ -16,22 +22,48 @@ const emptyCaseStudy = () => ({
   sections: [],
 });
 
-const slugify = (s) =>
-  (s || '')
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+const STARTER = `## Overview
 
-const CaseStudyEditor = ({ value, onChange }) => {
+What this project is, in a couple of sentences.
+
+## The problem
+
+What made it hard.
+
+## The approach
+
+How you solved it.
+`;
+
+const CaseStudyEditor = ({ value, onChange, slug }) => {
+  const [tab, setTab] = useState('write'); // 'write' | 'preview'
+  const textareaRef = useRef(null);
+
+  // The markdown is derived from stored sections. Keeping the draft in local
+  // state while typing avoids re-serialising on every keystroke (which would
+  // fight the cursor); it's converted back to sections on each change.
+  const [draft, setDraft] = useState(() => sectionsToMarkdown(value?.sections || []));
+
+  const sections = useMemo(
+    () => markdownToSections(draft, value?.sections || []),
+    [draft, value?.sections]
+  );
+
   if (!value) {
     return (
       <div className="rounded-xl border border-white/10 bg-dark-900 p-5">
         <p className="text-sm text-dark-300 mb-3">
           This project has no case study. Adding one makes its card clickable.
         </p>
-        <Button type="button" variant="ghost" onClick={() => onChange(emptyCaseStudy())}>
-          + Add case study
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => {
+            setDraft(STARTER);
+            onChange({ ...emptyCaseStudy(), sections: markdownToSections(STARTER) });
+          }}
+        >
+          Add case study
         </Button>
       </div>
     );
@@ -39,41 +71,67 @@ const CaseStudyEditor = ({ value, onChange }) => {
 
   const patch = (fields) => onChange({ ...value, ...fields });
 
-  // --- stats ---
-  const stats = value.stats || [];
-  const setStat = (i, key, v) => {
-    const next = stats.map((s, idx) => (idx === i ? { ...s, [key]: v } : s));
-    patch({ stats: next });
+  const setMarkdown = (md) => {
+    setDraft(md);
+    patch({ sections: markdownToSections(md, value.sections || []) });
   };
+
+  /* wrap/insert helpers for the formatting bar ---------------------------- */
+  const surround = (before, after = before) => {
+    const el = textareaRef.current;
+    if (!el) return;
+    const { selectionStart: a, selectionEnd: b, value: v } = el;
+    const next = v.slice(0, a) + before + v.slice(a, b) + after + v.slice(b);
+    setMarkdown(next);
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(a + before.length, b + before.length);
+    });
+  };
+
+  const prefixLine = (prefix) => {
+    const el = textareaRef.current;
+    if (!el) return;
+    const { selectionStart: a, value: v } = el;
+    const start = v.lastIndexOf('\n', a - 1) + 1;
+    const next = v.slice(0, start) + prefix + v.slice(start);
+    setMarkdown(next);
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(a + prefix.length, a + prefix.length);
+    });
+  };
+
+  const onKeyDown = (e) => {
+    const mod = e.metaKey || e.ctrlKey;
+    if (!mod) return;
+    if (e.key === 'b') {
+      e.preventDefault();
+      surround('**');
+    } else if (e.key === 'i') {
+      e.preventDefault();
+      surround('_');
+    }
+  };
+
+  const stats = value.stats || [];
+  const setStat = (i, key, v) =>
+    patch({ stats: stats.map((s, idx) => (idx === i ? { ...s, [key]: v } : s)) });
   const addStat = () => patch({ stats: [...stats, { value: '', unit: '', label: '' }] });
   const removeStat = (i) => patch({ stats: stats.filter((_, idx) => idx !== i) });
 
-  // --- sections ---
-  const sections = value.sections || [];
-  const setSection = (i, fields) =>
-    patch({ sections: sections.map((s, idx) => (idx === i ? { ...s, ...fields } : s)) });
-  const addSection = () =>
-    patch({
-      sections: [...sections, { id: `section-${sections.length + 1}`, heading: '', blocks: [] }],
-    });
-  const removeSection = (i) => patch({ sections: sections.filter((_, idx) => idx !== i) });
-  const moveSection = (i, dir) => {
-    const j = i + dir;
-    if (j < 0 || j >= sections.length) return;
-    const next = [...sections];
-    [next[i], next[j]] = [next[j], next[i]];
-    patch({ sections: next });
-  };
+  const words = draft.trim() ? draft.trim().split(/\s+/).length : 0;
 
   return (
     <div className="rounded-xl border border-white/10 bg-dark-900 p-5">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-heading font-bold text-lg text-dark-50">Case study</h3>
+        <h3 className="text-[13px] font-semibold text-dark-100">Case study</h3>
         <Button type="button" variant="danger" onClick={() => onChange(null)}>
           Remove case study
         </Button>
       </div>
 
+      {/* --- meta --- */}
       <Field label="Dek (subtitle under the title)">
         <TextArea rows={2} value={value.dek} onChange={(v) => patch({ dek: v })} />
       </Field>
@@ -81,12 +139,15 @@ const CaseStudyEditor = ({ value, onChange }) => {
         <Field label="Role">
           <TextInput value={value.role} onChange={(v) => patch({ role: v })} />
         </Field>
-        <Field label="Featured image path" hint="e.g. /assets/images/web/foo.png">
-          <TextInput value={value.featuredImage} onChange={(v) => patch({ featuredImage: v })} />
-        </Field>
+        <ImageUpload
+          label="Featured image"
+          value={value.featuredImage}
+          onChange={(v) => patch({ featuredImage: v })}
+          slug={slug}
+        />
       </div>
 
-      {/* Stats */}
+      {/* --- stats --- */}
       <Field label="Stats (metric row)">
         <div className="flex flex-col gap-2">
           {stats.map((stat, i) => (
@@ -107,178 +168,113 @@ const CaseStudyEditor = ({ value, onChange }) => {
           <button
             type="button"
             onClick={addStat}
-            className="self-start mt-1 font-mono text-xs tracking-wide uppercase text-primary-400 hover:text-primary-300 transition-colors"
+            className="self-start mt-1 text-[12px] font-medium text-primary-400 hover:text-primary-300 transition-colors"
           >
             + Add stat
           </button>
         </div>
       </Field>
 
-      {/* Sections */}
-      <div className="mt-6">
-        <div className="flex items-center justify-between mb-3">
-          <span className="font-mono text-[11px] tracking-wider uppercase text-dark-400">
-            Sections
+      {/* --- the document --- */}
+      <div className="mt-5">
+        <div className="flex items-center gap-1 mb-2">
+          <Tab active={tab === 'write'} onClick={() => setTab('write')}>
+            Write
+          </Tab>
+          <Tab active={tab === 'preview'} onClick={() => setTab('preview')}>
+            Preview
+          </Tab>
+          <span className="ml-auto text-[11px] text-dark-500 tabular-nums">
+            {sections.length} section{sections.length === 1 ? '' : 's'} · {words} words
           </span>
-          <button
-            type="button"
-            onClick={addSection}
-            className="font-mono text-xs tracking-wide uppercase text-primary-400 hover:text-primary-300 transition-colors"
-          >
-            + Add section
-          </button>
         </div>
 
-        <div className="flex flex-col gap-4">
-          {sections.map((section, i) => (
-            <SectionEditor
-              key={i}
-              index={i}
-              total={sections.length}
-              section={section}
-              onChange={(fields) => setSection(i, fields)}
-              onRemove={() => removeSection(i)}
-              onMove={(dir) => moveSection(i, dir)}
-              slugify={slugify}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// --- one section, with its blocks ------------------------------------------
-
-const SectionEditor = ({ index, total, section, onChange, onRemove, onMove, slugify }) => {
-  const blocks = section.blocks || [];
-  const setBlock = (i, fields) =>
-    onChange({ blocks: blocks.map((b, idx) => (idx === i ? { ...b, ...fields } : b)) });
-  const addBlock = (type) => {
-    const base = { paragraph: { text: '' }, quote: { text: '', cite: '' }, image: { src: '', caption: '' } }[type];
-    onChange({ blocks: [...blocks, { type, ...base }] });
-  };
-  const removeBlock = (i) => onChange({ blocks: blocks.filter((_, idx) => idx !== i) });
-  const moveBlock = (i, dir) => {
-    const j = i + dir;
-    if (j < 0 || j >= blocks.length) return;
-    const next = [...blocks];
-    [next[i], next[j]] = [next[j], next[i]];
-    onChange({ blocks: next });
-  };
-
-  return (
-    <div className="rounded-lg border border-white/10 bg-dark-950 p-4">
-      <div className="flex items-start gap-2 mb-3">
-        <div className="flex-1 grid md:grid-cols-2 gap-3">
-          <Field label="Heading">
-            <TextInput
-              value={section.heading}
-              onChange={(v) =>
-                onChange({ heading: v, id: section.id || slugify(v) })
-              }
-            />
-          </Field>
-          <Field label="Anchor id" hint="Used in the URL / table of contents">
-            <TextInput value={section.id} onChange={(v) => onChange({ id: slugify(v) })} />
-          </Field>
-        </div>
-        <div className="flex flex-col gap-1 pt-6">
-          <MoveBtns index={index} total={total} onMove={onMove} />
-          <button
-            type="button"
-            onClick={onRemove}
-            className="px-2 py-1 rounded border border-white/10 text-dark-400 hover:text-red-400 hover:border-red-400/40 text-xs transition-colors"
-          >
-            Delete
-          </button>
-        </div>
-      </div>
-
-      {/* Blocks */}
-      <div className="flex flex-col gap-3 pl-1">
-        {blocks.map((block, i) => (
-          <div key={i} className="rounded border border-white/5 bg-dark-900 p-3">
-            <div className="flex items-center justify-between mb-2">
-              <span className="font-mono text-[10px] tracking-wider uppercase text-dark-500">
-                {block.type}
-              </span>
-              <div className="flex items-center gap-1">
-                <MoveBtns index={i} total={blocks.length} onMove={(dir) => moveBlock(i, dir)} small />
-                <button
-                  type="button"
-                  onClick={() => removeBlock(i)}
-                  className="px-2 py-0.5 rounded text-dark-400 hover:text-red-400 text-xs transition-colors"
-                  aria-label="Remove block"
-                >
-                  ×
-                </button>
-              </div>
+        {tab === 'write' ? (
+          <>
+            <div className="flex items-center gap-0.5 rounded-t-lg border border-b-0 border-white/10 bg-dark-950 px-1.5 py-1">
+              <ToolBtn label="Heading" onClick={() => prefixLine('## ')}>H</ToolBtn>
+              <ToolBtn label="Bold (⌘B)" onClick={() => surround('**')}>
+                <span className="font-bold">B</span>
+              </ToolBtn>
+              <ToolBtn label="Italic (⌘I)" onClick={() => surround('_')}>
+                <span className="italic font-serif">I</span>
+              </ToolBtn>
+              <ToolBtn label="Quote" onClick={() => prefixLine('> ')}>”</ToolBtn>
+              <ToolBtn label="Link" onClick={() => surround('[', '](url)')}>🔗</ToolBtn>
+              <ToolBtn label="Image" onClick={() => prefixLine('![caption](/assets/images/…)')}>
+                🖼
+              </ToolBtn>
             </div>
-            <BlockFields block={block} onChange={(fields) => setBlock(i, fields)} />
-          </div>
-        ))}
-      </div>
-
-      <div className="flex gap-3 mt-3 pl-1">
-        {['paragraph', 'quote', 'image'].map((t) => (
-          <button
-            key={t}
-            type="button"
-            onClick={() => addBlock(t)}
-            className="font-mono text-[11px] tracking-wide uppercase text-primary-400 hover:text-primary-300 transition-colors"
-          >
-            + {t}
-          </button>
-        ))}
+            <textarea
+              ref={textareaRef}
+              value={draft}
+              onChange={(e) => setMarkdown(e.target.value)}
+              onKeyDown={onKeyDown}
+              spellCheck
+              placeholder={STARTER}
+              className={`${inputCls} rounded-t-none min-h-[420px] leading-relaxed font-mono text-[13px] resize-y`}
+            />
+            <p className="mt-2 text-[11px] text-dark-500">
+              <code className="text-dark-400">##</code> starts a new section (and a table-of-contents
+              entry). <code className="text-dark-400">&gt;</code> quotes — a final{' '}
+              <code className="text-dark-400">— Name</code> line becomes the attribution.{' '}
+              <code className="text-dark-400">![caption](/path.png)</code> embeds an image.
+            </p>
+          </>
+        ) : (
+          <Preview sections={sections} />
+        )}
       </div>
     </div>
   );
 };
 
-const BlockFields = ({ block, onChange }) => {
-  switch (block.type) {
-    case 'paragraph':
-      return (
-        <TextArea rows={4} value={block.text} onChange={(v) => onChange({ text: v })} placeholder="Paragraph text…" />
-      );
-    case 'quote':
-      return (
-        <div className="flex flex-col gap-2">
-          <TextArea rows={3} value={block.text} onChange={(v) => onChange({ text: v })} placeholder="Quote…" />
-          <TextInput value={block.cite} onChange={(v) => onChange({ cite: v })} placeholder="Attribution (optional)" />
-        </div>
-      );
-    case 'image':
-      return (
-        <div className="flex flex-col gap-2">
-          <TextInput value={block.src} onChange={(v) => onChange({ src: v })} placeholder="/assets/images/… (leave blank for placeholder)" />
-          <TextInput value={block.caption} onChange={(v) => onChange({ caption: v })} placeholder="Caption (optional)" />
-        </div>
-      );
-    default:
-      return null;
-  }
-};
+const Tab = ({ active, onClick, children }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className={`px-2.5 py-1 rounded-md text-[12px] font-medium transition-colors ${
+      active ? 'bg-white/[0.08] text-dark-50' : 'text-dark-400 hover:text-dark-100'
+    }`}
+  >
+    {children}
+  </button>
+);
 
-const MoveBtns = ({ index, total, onMove, small }) => {
-  const cls = `rounded border border-white/10 text-dark-400 hover:text-dark-50 transition-colors disabled:opacity-30 ${
-    small ? 'px-1.5 text-xs' : 'px-2 py-0.5 text-xs'
-  }`;
+const ToolBtn = ({ label, onClick, children }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    title={label}
+    aria-label={label}
+    className="w-7 h-7 grid place-items-center rounded text-[12px] text-dark-400 hover:text-dark-50 hover:bg-white/[0.06] transition-colors"
+  >
+    {children}
+  </button>
+);
+
+/* Preview renders through the real CaseStudyBlock, so what you see here is
+   exactly what the public page will render. */
+const Preview = ({ sections }) => {
+  if (!sections.length) {
+    return (
+      <div className="rounded-lg border border-white/10 bg-dark-950 p-8 text-center text-[13px] text-dark-500">
+        Nothing to preview yet.
+      </div>
+    );
+  }
   return (
-    <div className={`flex ${small ? 'gap-0.5' : 'gap-1'}`}>
-      <button type="button" className={cls} onClick={() => onMove(-1)} disabled={index === 0} aria-label="Move up">
-        ↑
-      </button>
-      <button
-        type="button"
-        className={cls}
-        onClick={() => onMove(1)}
-        disabled={index === total - 1}
-        aria-label="Move down"
-      >
-        ↓
-      </button>
+    <div className="rounded-lg border border-white/10 bg-dark-950 p-6 max-h-[520px] overflow-y-auto">
+      {sections.map((section, i) => (
+        <section key={section.id || i} className="mb-8 last:mb-0">
+          {section.heading && (
+            <h2 className="text-lg font-semibold text-dark-50 mb-3">{section.heading}</h2>
+          )}
+          {(section.blocks || []).map((block, j) => (
+            <CaseStudyBlock key={j} block={block} />
+          ))}
+        </section>
+      ))}
     </div>
   );
 };

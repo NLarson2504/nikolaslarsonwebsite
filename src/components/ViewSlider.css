@@ -1,0 +1,123 @@
+/*
+ * The home view switcher — bottom-centred glass, twin to the nav's section
+ * control.
+ *
+ * The glass recipe is deliberately identical to .nav-slider-track and
+ * .nav-cta-glass: these are the site's three floating controls, and any drift in
+ * blur, saturation or edge-lighting between them reads as one being subtly
+ * wrong rather than as three distinct styles.
+ */
+
+.view-slider {
+  /* Fixed, not absolute: it floats over whichever home view is showing — the
+     wall pins itself to the viewport, and the list scrolls underneath. Either
+     way this stays put at the bottom edge. */
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: max(1.5rem, env(safe-area-inset-bottom));
+  /* Portalled to <body>, so its z-index now competes with the site nav
+     directly rather than being capped inside the stage. Just below the nav
+     (9999) and the project overlay panel. */
+  z-index: 9990;
+}
+
+.view-slider-track {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  /* Symmetric — the thumb is measured against this box, so uneven padding would
+     put the options and the pill on different origins. */
+  padding: 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.22),
+    inset 0 -1px 0 0 rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.09),
+    0 10px 30px -10px rgba(0, 0, 0, 0.8);
+}
+
+/* One element that moves and resizes between the options; glass rather than a
+   solid fill, so the label underneath stays legible. */
+.view-slider-thumb {
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  /* `left` and `width` come from the active button's measured box — see
+     ViewSlider.js. An even half-split would misfit both labels. */
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
+    0 2px 8px -2px rgba(0, 0, 0, 0.6);
+  transition:
+    left 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    width 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 200ms ease;
+  pointer-events: none;
+}
+
+.view-slider-option {
+  position: relative;
+  z-index: 1;
+  /* Intrinsic width, so each label gets the same air either side rather than
+     competing for a forced equal share. */
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  white-space: nowrap;
+  box-sizing: border-box;
+  padding: 0.55rem 1rem;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  /* No browser outline — it would break the glass. Keyboard focus is drawn
+     inside the pill instead. */
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: rgba(244, 242, 238, 0.55);
+  transition: color 260ms ease;
+}
+
+.view-slider-option svg {
+  display: block;
+  flex: 0 0 auto;
+  /* The icon is a quieter partner to its label — it repeats what the word
+     already says, so it shouldn't compete with it. */
+  opacity: 0.75;
+}
+
+.view-slider-option:hover {
+  color: rgba(244, 242, 238, 0.85);
+}
+
+.view-slider-option.is-active {
+  color: #f4f2ee;
+}
+
+.view-slider-option:focus-visible {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+  border-radius: 999px;
+}
+
+/* Backdrop-filter needs something behind it to blur; where it's unsupported the
+   translucent ground alone reads as a dim grey chip, so lift it. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .view-slider-track {
+    background: rgba(255, 255, 255, 0.12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .view-slider-thumb {
+    transition: none;
+  }
+}

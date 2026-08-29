@@ -173,10 +173,21 @@ body {
 
 /* Typography */
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'MuseoModerno', 'Inter', sans-serif;
+  /* Nunito — rounded-terminal grotesque for titles; Inter carries body copy */
+  font-family: 'Nunito', 'Inter', system-ui, sans-serif;
   font-weight: 700;
+  /* Nunito's rounded bowls need more air than a tight grotesque — heavy
+     negative tracking crowds the counters, so keep this light */
+  letter-spacing: -0.005em;
   line-height: 1.2;
   margin: 0;
+}
+
+/* the giant hero name still tightens up at display size, just not as far as a
+   grotesque would want */
+.hero h1, .hero h2,
+.hero .font-heading {
+  letter-spacing: -0.02em;
 }
 
 p {
@@ -237,6 +248,248 @@ code {
   background: rgba(15, 23, 42, 0.8);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(51, 65, 85, 0.3);
+}
+
+/*
+ * The detail-page back control: a round glass orb at the far left of the nav.
+ *
+ * Same glass recipe as the Contact CTA below and the nav's segmented control —
+ * the three float in the same bar, so any difference in blur, saturation or
+ * edge-lighting would read as one of them being subtly wrong.
+ *
+ * A circle rather than a pill because it holds a single glyph: an icon in a
+ * stretched pill reads as a button missing its label.
+ */
+.nav-back-orb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  color: rgba(244, 242, 238, 0.7);
+  background: rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.22),
+    inset 0 -1px 0 0 rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.09),
+    0 10px 30px -10px rgba(0, 0, 0, 0.8);
+  transition: background-color 200ms ease, color 200ms ease,
+    opacity 340ms ease, filter 340ms ease, transform 340ms cubic-bezier(0.22, 1, 0.36, 1);
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+
+  /*
+   * Resting (out) state — the orb enters from here.
+   *
+   * The blur is `filter`, NOT `backdrop-filter`: this element already spends
+   * its backdrop-filter on the glass above, and overriding that would dissolve
+   * the pill itself rather than blur it on its way in. `filter` blurs the orb's
+   * own pixels, which is the effect we want, and leaves the glass recipe alone.
+   *
+   * It slides in from the LEFT, toward the section pill it sits beside.
+   */
+  opacity: 0;
+  filter: blur(7px);
+  transform: translateX(-0.75rem);
+  pointer-events: none;
+}
+
+.nav-back-orb.is-in {
+  opacity: 1;
+  filter: blur(0);
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+.nav-back-orb:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #f4f2ee;
+}
+
+.nav-back-orb:focus-visible {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.7),
+    0 10px 30px -10px rgba(0, 0, 0, 0.8);
+  color: #f4f2ee;
+}
+
+/* Backdrop-filter needs something behind it to blur; where it's unsupported the
+   translucent ground alone reads as a dim grey chip, so lift it. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .nav-back-orb {
+    background: rgba(255, 255, 255, 0.18);
+  }
+}
+
+/*
+ * The detail-page brand mark: a ✕ and the brand's logo, sitting immediately
+ * right of the NL wordmark while a project page is open.
+ *
+ * Deliberately NOT glass, unlike .nav-back-orb and the pills in the centre of
+ * the bar. This sits in the wordmark's own cluster and reads as part of it — a
+ * breadcrumb, not a third control competing with the two floating pills. So:
+ * no ground, no blur, no edge lighting; the ✕ is drawn at the wordmark's own
+ * weight and the logo carries the colour.
+ *
+ * The ✕ is dimmed at rest and comes up on hover of the whole cluster, which is
+ * what signals it's the control rather than punctuation.
+ */
+.nav-brand-mark {
+  display: inline-flex;
+  align-items: center;
+  /*
+   * Matched by eye to the NL→✕ gap so the cluster reads as evenly spaced.
+   *
+   * Not the same number as the wrapper's: that gap is the wrapper's own
+   * `gap-2.5` (0.625rem) PLUS this button's left padding (0.125rem), and the ✕
+   * glyph is inset a little inside its 11px box besides. Setting this to
+   * 0.5rem to "match" left the logo visibly tighter to the ✕ than the ✕ is to
+   * the wordmark; 0.75rem lands them even.
+   */
+  gap: 0.75rem;
+  padding: 0.25rem 0.125rem;
+  border-radius: 0.5rem;
+  color: rgba(244, 242, 238, 0.45);
+  transition: color 200ms ease, opacity 340ms ease, filter 340ms ease,
+    transform 340ms cubic-bezier(0.22, 1, 0.36, 1);
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+
+  /*
+   * Resting (out) state. Slides in from the left — out of the NL wordmark it
+   * hangs off — so the cluster reads as unfolding from the logo rather than
+   * arriving from nowhere.
+   *
+   * `filter` blurs this and its logo together as one mark, which is the point:
+   * the ✕ and the brand should land as a single object, not two.
+   */
+  opacity: 0;
+  filter: blur(7px);
+  transform: translateX(-0.6rem);
+  pointer-events: none;
+}
+
+.nav-brand-mark.is-in {
+  opacity: 1;
+  filter: blur(0);
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+.nav-brand-mark:hover {
+  color: rgba(244, 242, 238, 0.95);
+}
+
+/* The logo sits a touch back at rest so the wordmark keeps the eye, and comes
+   fully forward with the rest of the cluster on hover. */
+.nav-brand-mark img {
+  opacity: 0.85;
+}
+
+.nav-brand-mark:hover img {
+  opacity: 1;
+}
+
+.nav-brand-mark:focus-visible {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+  color: #f4f2ee;
+}
+
+/*
+ * Reduced motion keeps the opacity fade but drops the blur and the travel —
+ * appearing and disappearing outright is more jarring here than a plain
+ * cross-fade, so the controls still announce themselves, just without movement.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .nav-back-orb,
+  .nav-brand-mark {
+    transition: opacity 200ms ease, color 200ms ease, background-color 200ms ease;
+    filter: none;
+    transform: none;
+  }
+
+  .nav-back-orb.is-in,
+  .nav-brand-mark.is-in {
+    filter: none;
+    transform: none;
+  }
+}
+
+/*
+ * The nav's Contact CTA, as frosted glass.
+ *
+ * Deliberately the SAME recipe as the nav's segmented control
+ * (.nav-slider-track in components/NavSlider.css): the two sit side by side in
+ * the same bar on every route, so any difference in blur, saturation or
+ * edge-lighting reads as one of them being slightly wrong rather than as two
+ * distinct styles.
+ *
+ * It is not the generic .bg-glass above — that is a flatter, borderless
+ * treatment used on cards over quiet backgrounds. This one carries the same
+ * lit-surface inset edges as the slider so it holds up over the moving wall.
+ *
+ * The ground is a touch brighter than the slider's (0.10 vs 0.06) and the text
+ * stays full-strength white: this is still the primary call to action, so it
+ * should sit slightly forward of the filter control beside it rather than
+ * disappearing into the same plane.
+ */
+.nav-cta-glass {
+  /*
+   * Height-matched to the wall slider beside it, NOT set by eye.
+   *
+   * That control stacks 5px of track padding + 0.6rem of option padding on each
+   * side of a ~15.7px line box, so it stands ~45px tall. This button's Tailwind
+   * `py-2` gave it 8px + a 20px `text-sm` line box = 36px — 9px shorter, which
+   * read as the CTA sitting low against the taller pill next to it.
+   *
+   * 0.78rem (12.5px) a side over the same 20px line box lands at ~45px, so the
+   * two pills share a baseline and a cap height across the nav. Declared here
+   * rather than as a Tailwind utility so it stays next to the numbers it was
+   * derived from — if the slider's padding moves, this is the other half of
+   * that change.
+   */
+  padding-top: 0.78rem;
+  padding-bottom: 0.78rem;
+  background: rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.22),
+    inset 0 -1px 0 0 rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.09),
+    0 10px 30px -10px rgba(0, 0, 0, 0.8);
+  transition: background-color 200ms ease, box-shadow 200ms ease;
+}
+
+.nav-cta-glass:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+/* Pressed/current state: the ground brightens further rather than the button
+   swapping to a solid fill, so the glass never flips to an opaque chip. */
+.nav-cta-glass.is-current {
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.32),
+    inset 0 -1px 0 0 rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.16),
+    0 10px 30px -10px rgba(0, 0, 0, 0.8);
+}
+
+/*
+ * Backdrop-filter needs something behind it to blur. The nav is transparent on
+ * home (over the wall) but solid elsewhere, and on a plain dark page the blur
+ * resolves to nothing — so the translucent ground alone would read as a dim
+ * grey chip. Browsers without backdrop-filter hit the same problem.
+ */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .nav-cta-glass {
+    background: rgba(255, 255, 255, 0.18);
+  }
 }
 
 /* 3D Module Styles */
@@ -333,5 +586,75 @@ code {
   
   .module-3d {
     transform: scale(0.7);
+  }
+}
+
+/* Hero pixel pals — gentle idle bob for the trio in the bottom-right corner */
+@keyframes hero-pal-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.hero-pal {
+  animation: hero-pal-bob 2.6s ease-in-out infinite;
+}
+
+/* the group only takes pointer events on the pals themselves, so the hero
+   behind them stays clickable */
+.hero-pals {
+  pointer-events: none;
+}
+
+/* one pal + its name label. Hovering a pal mutes its siblings to grayscale and
+   pushes them back slightly — same treatment as the off-focus agents panels
+   (.agt-slide), matched easing so the two read as one language. */
+.hero-pal-slot {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: auto;
+  filter: grayscale(0);
+  opacity: 1;
+  transform: scale(1);
+  transition: transform 0.62s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.62s ease, opacity 0.5s ease;
+  will-change: transform, filter, opacity;
+}
+
+.hero-pal-slot.is-muted {
+  filter: grayscale(1);
+  opacity: 0.45;
+  transform: scale(0.88);
+}
+
+/* the name, tucked above the sprite; slides up + fades in on hover */
+.hero-pal-name {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  white-space: nowrap;
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.85);
+  opacity: 0;
+  transform: translateY(4px);
+  pointer-events: none;
+  transition: opacity 0.32s ease, transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.hero-pal-slot:hover .hero-pal-name {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-pal {
+    animation: none;
+  }
+
+  .hero-pal-slot,
+  .hero-pal-name {
+    transition: none;
   }
 }
