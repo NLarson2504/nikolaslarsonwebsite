@@ -251,6 +251,175 @@ code {
 }
 
 /*
+ * The detail-page back control: a round glass orb at the far left of the nav.
+ *
+ * Same glass recipe as the Contact CTA below and the nav's segmented control —
+ * the three float in the same bar, so any difference in blur, saturation or
+ * edge-lighting would read as one of them being subtly wrong.
+ *
+ * A circle rather than a pill because it holds a single glyph: an icon in a
+ * stretched pill reads as a button missing its label.
+ */
+.nav-back-orb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  color: rgba(244, 242, 238, 0.7);
+  background: rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.22),
+    inset 0 -1px 0 0 rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.09),
+    0 10px 30px -10px rgba(0, 0, 0, 0.8);
+  transition: background-color 200ms ease, color 200ms ease,
+    opacity 340ms ease, filter 340ms ease, transform 340ms cubic-bezier(0.22, 1, 0.36, 1);
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+
+  /*
+   * Resting (out) state — the orb enters from here.
+   *
+   * The blur is `filter`, NOT `backdrop-filter`: this element already spends
+   * its backdrop-filter on the glass above, and overriding that would dissolve
+   * the pill itself rather than blur it on its way in. `filter` blurs the orb's
+   * own pixels, which is the effect we want, and leaves the glass recipe alone.
+   *
+   * It slides in from the LEFT, toward the section pill it sits beside.
+   */
+  opacity: 0;
+  filter: blur(7px);
+  transform: translateX(-0.75rem);
+  pointer-events: none;
+}
+
+.nav-back-orb.is-in {
+  opacity: 1;
+  filter: blur(0);
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+.nav-back-orb:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #f4f2ee;
+}
+
+.nav-back-orb:focus-visible {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.7),
+    0 10px 30px -10px rgba(0, 0, 0, 0.8);
+  color: #f4f2ee;
+}
+
+/* Backdrop-filter needs something behind it to blur; where it's unsupported the
+   translucent ground alone reads as a dim grey chip, so lift it. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .nav-back-orb {
+    background: rgba(255, 255, 255, 0.18);
+  }
+}
+
+/*
+ * The detail-page brand mark: a ✕ and the brand's logo, sitting immediately
+ * right of the NL wordmark while a project page is open.
+ *
+ * Deliberately NOT glass, unlike .nav-back-orb and the pills in the centre of
+ * the bar. This sits in the wordmark's own cluster and reads as part of it — a
+ * breadcrumb, not a third control competing with the two floating pills. So:
+ * no ground, no blur, no edge lighting; the ✕ is drawn at the wordmark's own
+ * weight and the logo carries the colour.
+ *
+ * The ✕ is dimmed at rest and comes up on hover of the whole cluster, which is
+ * what signals it's the control rather than punctuation.
+ */
+.nav-brand-mark {
+  display: inline-flex;
+  align-items: center;
+  /*
+   * Matched by eye to the NL→✕ gap so the cluster reads as evenly spaced.
+   *
+   * Not the same number as the wrapper's: that gap is the wrapper's own
+   * `gap-2.5` (0.625rem) PLUS this button's left padding (0.125rem), and the ✕
+   * glyph is inset a little inside its 11px box besides. Setting this to
+   * 0.5rem to "match" left the logo visibly tighter to the ✕ than the ✕ is to
+   * the wordmark; 0.75rem lands them even.
+   */
+  gap: 0.75rem;
+  padding: 0.25rem 0.125rem;
+  border-radius: 0.5rem;
+  color: rgba(244, 242, 238, 0.45);
+  transition: color 200ms ease, opacity 340ms ease, filter 340ms ease,
+    transform 340ms cubic-bezier(0.22, 1, 0.36, 1);
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+
+  /*
+   * Resting (out) state. Slides in from the left — out of the NL wordmark it
+   * hangs off — so the cluster reads as unfolding from the logo rather than
+   * arriving from nowhere.
+   *
+   * `filter` blurs this and its logo together as one mark, which is the point:
+   * the ✕ and the brand should land as a single object, not two.
+   */
+  opacity: 0;
+  filter: blur(7px);
+  transform: translateX(-0.6rem);
+  pointer-events: none;
+}
+
+.nav-brand-mark.is-in {
+  opacity: 1;
+  filter: blur(0);
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+.nav-brand-mark:hover {
+  color: rgba(244, 242, 238, 0.95);
+}
+
+/* The logo sits a touch back at rest so the wordmark keeps the eye, and comes
+   fully forward with the rest of the cluster on hover. */
+.nav-brand-mark img {
+  opacity: 0.85;
+}
+
+.nav-brand-mark:hover img {
+  opacity: 1;
+}
+
+.nav-brand-mark:focus-visible {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+  color: #f4f2ee;
+}
+
+/*
+ * Reduced motion keeps the opacity fade but drops the blur and the travel —
+ * appearing and disappearing outright is more jarring here than a plain
+ * cross-fade, so the controls still announce themselves, just without movement.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .nav-back-orb,
+  .nav-brand-mark {
+    transition: opacity 200ms ease, color 200ms ease, background-color 200ms ease;
+    filter: none;
+    transform: none;
+  }
+
+  .nav-back-orb.is-in,
+  .nav-brand-mark.is-in {
+    filter: none;
+    transform: none;
+  }
+}
+
+/*
  * The nav's Contact CTA, as frosted glass.
  *
  * Deliberately the SAME recipe as the nav's segmented control

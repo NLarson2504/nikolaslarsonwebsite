@@ -20,7 +20,6 @@ const CaseStudyLayout = ({ project, backTo, backLabel }) => {
 
   // Native `position: sticky` can't work inside the site's GSAP smooth-scroll
   // transform, so the rails follow the eased scroll offset via JS instead.
-  const backRailRef = useFollowSticky({ top: 112 });
   const tocRailRef = useFollowSticky({ top: 112 });
 
   return (
@@ -32,17 +31,15 @@ const CaseStudyLayout = ({ project, backTo, backLabel }) => {
       </div>
 
       <div className="max-w-[72rem] mx-auto px-4 md:px-10 pb-24 grid grid-cols-1 lg:grid-cols-[11rem_minmax(0,42rem)_1fr] lg:gap-x-12">
-        {/* Left rail — back link (follow-sticky on desktop) */}
-        <aside className="hidden lg:block">
-          <div ref={backRailRef}>
-            <BackLink to={backTo} label={backLabel} />
-          </div>
-        </aside>
+        {/* Left rail — empty now that the back control is the nav's orb, but
+            kept so the three-column grid keeps its proportions. */}
+        <aside className="hidden lg:block" aria-hidden="true" />
 
         {/* Reading column */}
         <article className="min-w-0">
-          {/* Inline back link for narrow screens */}
-          <div className="lg:hidden mb-6">
+          {/* Inline back link, narrow screens only — the nav's back orb sits in
+              the centred group, which is hidden below md. */}
+          <div className="md:hidden mb-6">
             <BackLink to={backTo} label={backLabel} />
           </div>
 

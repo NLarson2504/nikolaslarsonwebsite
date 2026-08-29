@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import useProject from '../../hooks/useProject';
 import CaseStudyLayout from './CaseStudyLayout';
 import { useDetailTheme } from '../DetailTransition';
+import { usePublishDetailBrand } from '../DetailBrand';
 import { tileImage } from '../../pages/home/wallTexture';
 
 /**
@@ -32,6 +33,14 @@ const CaseStudyPage = ({ type, backTo, backLabel }) => {
    * with the real colours the moment the asset is known.
    */
   useDetailTheme(project ? tileImage(project) : null);
+
+  /*
+   * Hand the project's brand to the nav, which shows it beside the wordmark
+   * while a detail page is open. Published from here rather than from
+   * CaseStudyLayout so it's set as soon as the project resolves, and cleared
+   * when this route unmounts.
+   */
+  usePublishDetailBrand(project?.brand);
 
   /*
    * Nothing renders while loading — no skeleton, no spinner.

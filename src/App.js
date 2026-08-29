@@ -11,6 +11,7 @@ import CaseStudyPage from './components/caseStudy/CaseStudyPage';
 import Admin from './pages/admin/Admin';
 import TopNav from './components/TopNav';
 import { DetailTransitionProvider } from './components/DetailTransition';
+import { DetailBrandProvider } from './components/DetailBrand';
 import Footer from './components/Footer';
 import CursorDot from './components/CursorDot';
 import useGSAPScrollSmooth from './hooks/useGSAPScrollSmooth';
@@ -27,6 +28,33 @@ function AppContent() {
   const getCurrentPage = () => {
     const path = location.pathname.slice(1);
     return path === '' ? 'home' : path.split('/')[0];
+  };
+
+  /*
+   * Detail routes are `/<section>/<slug>` — one segment deeper than a section
+   * page. On those the nav shows a back orb, derived from the path here rather
+   * than threaded up from the route element.
+   */
+  const segments = location.pathname.split('/').filter(Boolean);
+  const isDetail =
+    segments.length === 2 && ['web', 'apps', 'agents'].includes(segments[0]);
+
+  /*
+   * Back goes to the previous entry in history, not to a fixed section page —
+   * so arriving from the home wall returns to the wall (in whichever view you
+   * left it), and arriving from a section page returns there.
+   *
+   * The fallback matters: a detail page opened directly, or shared as a link,
+   * has nothing to go back TO, and navigate(-1) would leave the site entirely.
+   * `key === 'default'` is React Router's signal that this is the first entry
+   * in the session, so that case falls back to the section page instead.
+   */
+  const goBack = () => {
+    if (location.key === 'default') {
+      navigate(`/${segments[0] || ''}`);
+    } else {
+      navigate(-1);
+    }
   };
 
   const isAdmin = location.pathname.startsWith('/admin');
@@ -50,9 +78,15 @@ function AppContent() {
 
   return (
     <DetailTransitionProvider>
+    <DetailBrandProvider>
     <div className="App bg-dark-950">
       <CursorDot />
-      <TopNav currentPage={getCurrentPage()} navigateToPage={navigateToPage} />
+      <TopNav
+        currentPage={getCurrentPage()}
+        navigateToPage={navigateToPage}
+        showBack={isDetail}
+        onBack={goBack}
+      />
       <div ref={scrollContainerRef} className="scroll-container">
         <div ref={scrollContentRef} className="scroll-content">
           <Routes>
@@ -73,6 +107,7 @@ function AppContent() {
         </div>
       </div>
     </div>
+    </DetailBrandProvider>
     </DetailTransitionProvider>
   );
 }

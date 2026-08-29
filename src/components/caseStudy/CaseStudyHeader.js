@@ -2,15 +2,17 @@ import React from 'react';
 import SitePreview from './SitePreview';
 
 /**
- * Case study title block: headline, dek, a mono meta byline (brand · role ·
- * stack · status), and an optional featured image.
+ * Case study title block: headline, dek, and an optional featured image.
+ *
+ * There used to be a mono meta byline here (brand · role · stack · status) in a
+ * bordered strip under the dek. It's gone: the brand now rides in the nav
+ * beside the wordmark for the whole length of the page, so repeating it at the
+ * top read as saying the same thing twice.
  *
  * `project` is the joined project doc (with `project.brand`); `caseStudy` is
  * project.caseStudy.
  */
 const CaseStudyHeader = ({ project, caseStudy }) => {
-  const brand = project.brand;
-  const stack = (project.technologies || []).slice(0, 3).join(' · ');
   const featured = caseStudy.featuredImage || project.image;
   // Sites get a live iframe preview (falling back to the screenshot); apps and
   // other types keep the static featured image. `noEmbed` opts a site out of the
@@ -25,28 +27,6 @@ const CaseStudyHeader = ({ project, caseStudy }) => {
           {caseStudy.dek}
         </p>
       )}
-
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-3.5 py-4 border-y border-white/5 font-mono text-xs text-dark-400">
-        {brand && (
-          <span className="inline-flex items-center gap-2 text-dark-300">
-            {brand.logo ? (
-              <img
-                src={brand.logo}
-                alt=""
-                className="w-5 h-5 rounded object-contain bg-dark-800"
-              />
-            ) : (
-              <span className="w-5 h-5 rounded bg-gradient-to-br from-primary-500 to-accent-500" />
-            )}
-            {brand.name}
-          </span>
-        )}
-        {caseStudy.role && <span>Role — {caseStudy.role}</span>}
-        {stack && <span>Stack — {stack}</span>}
-        {project.status && (
-          <span className="text-primary-400">Status — {project.status}</span>
-        )}
-      </div>
 
       {isSite ? (
         <SitePreview url={project.url} image={featured} title={project.title} />

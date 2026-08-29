@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { gsap } from 'gsap';
 import HoverMenu from './HoverMenu';
 import NavSlider from './NavSlider';
+import { useDetailBrand } from './DetailBrand';
 
 /*
  * The section hover-menu is DISABLED for now.
@@ -19,7 +20,44 @@ import NavSlider from './NavSlider';
  */
 const HOVER_MENU_ENABLED = false;
 
-const TopNav = ({ currentPage, navigateToPage }) => {
+/*
+ * How long the detail controls take to blur/slide in and out. Must match the
+ * transition duration on .nav-back-orb / .nav-brand-mark in index.css — this
+ * timer is what keeps them mounted long enough for the exit to be seen.
+ */
+const DETAIL_CHROME_MS = 340;
+
+const TopNav = ({ currentPage, navigateToPage, showBack, onBack }) => {
+  // Whose page you're on, published by the detail route (components/DetailBrand).
+  const detailBrand = useDetailBrand();
+
+  /*
+   * The back orb and the brand mark animate in AND out, so they can't simply be
+   * `{showBack && ...}` — that unmounts them the instant you leave, and an exit
+   * animation on an unmounted node never runs.
+   *
+   * So mounting and visibility are tracked separately: `mountDetailChrome` keeps
+   * them in the tree, `detailChromeIn` drives the class that plays the blur and
+   * slide. On the way in, the two are set a frame apart so the browser has a
+   * chance to paint the "out" state first and actually transition from it. On
+   * the way out, unmounting waits for the transition to finish.
+   */
+  const [mountDetailChrome, setMountDetailChrome] = useState(showBack);
+  const [detailChromeIn, setDetailChromeIn] = useState(showBack);
+
+  useEffect(() => {
+    if (showBack) {
+      setMountDetailChrome(true);
+      // Next frame, so the entry transition has an "out" state to start from.
+      const raf = requestAnimationFrame(() => setDetailChromeIn(true));
+      return () => cancelAnimationFrame(raf);
+    }
+
+    setDetailChromeIn(false);
+    const timer = setTimeout(() => setMountDetailChrome(false), DETAIL_CHROME_MS);
+    return () => clearTimeout(timer);
+  }, [showBack]);
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMenuVisible, setIsMenuVisible] = useState(false);
   const [activeSection, setActiveSection] = useState(null);
@@ -103,14 +141,65 @@ const TopNav = ({ currentPage, navigateToPage }) => {
       <div className="bg-transparent">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="relative flex justify-between items-center h-16">
-            {/* Logo */}
-            <div className="flex-shrink-0">
-              <button 
+            {/* Logo, plus — on a detail page only — a close mark and the
+                brand whose page you're on. Same gate as the back orb
+                (`showBack`), so the wordmark stands alone everywhere else.
+
+                Reads as a breadcrumb: NL ✕ <brand>. The ✕ is separator and
+                control at once — clicking anywhere in the cluster leaves the
+                detail page, which is what the mark promises. */}
+            <div className="flex-shrink-0 flex items-center gap-2.5">
+              <button
                 onClick={() => handleNavClick('home')}
                 className="text-xl font-mark font-bold text-gradient-primary hover:opacity-80 transition-opacity focus:outline-none"
               >
                 NL
               </button>
+
+              {mountDetailChrome && (
+                <button
+                  type="button"
+                  onClick={onBack}
+                  aria-label={
+                    detailBrand?.name ? `Close ${detailBrand.name}` : 'Close'
+                  }
+                  // Hidden from the tab order and the a11y tree while it's on
+                  // its way out — it's still painted, but no longer a control.
+                  aria-hidden={!detailChromeIn}
+                  tabIndex={detailChromeIn ? undefined : -1}
+                  className={`nav-brand-mark${detailChromeIn ? ' is-in' : ''}`}
+                >
+                  <svg
+                    viewBox="0 0 16 16"
+                    width="11"
+                    height="11"
+                    aria-hidden="true"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                  >
+                    <path d="M4 4l8 8M12 4l-8 8" />
+                  </svg>
+
+                  {/* The brand itself: its logo when there is one, its name as
+                      a wordmark when there isn't. Absent while the project is
+                      still loading — the ✕ appears immediately with the route,
+                      and the brand fills in beside it. */}
+                  {detailBrand &&
+                    (detailBrand.logo ? (
+                      <img
+                        src={detailBrand.logo}
+                        alt={detailBrand.name || ''}
+                        className="w-6 h-6 rounded object-contain"
+                      />
+                    ) : (
+                      <span className="font-sans text-sm font-medium text-white/80">
+                        {detailBrand.name}
+                      </span>
+                    ))}
+                </button>
+              )}
             </div>
 
             {/* Centered navigation: the glass segmented control.
@@ -127,7 +216,35 @@ const TopNav = ({ currentPage, navigateToPage }) => {
               {/* Inner wrapper stays `relative` so the HoverMenu has a
                   positioned ancestor to anchor to — the outer div is spending
                   its own position on the centring. */}
-              <div className="relative flex items-center">
+              <div className="relative flex items-center gap-2.5">
+                {/* Back orb, sitting just left of the section pill. Shown only
+                    on detail routes — App decides, from the path — and blurred
+                    in and out with the brand mark on the left (see
+                    mountDetailChrome above). */}
+                {mountDetailChrome && (
+                  <button
+                    type="button"
+                    onClick={onBack}
+                    aria-label="Back"
+                    aria-hidden={!detailChromeIn}
+                    tabIndex={detailChromeIn ? undefined : -1}
+                    className={`nav-back-orb${detailChromeIn ? ' is-in' : ''}`}
+                  >
+                    <svg
+                      viewBox="0 0 16 16"
+                      width="15"
+                      height="15"
+                      aria-hidden="true"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M10 3.5 5.5 8l4.5 4.5" />
+                    </svg>
+                  </button>
+                )}
                 <NavSlider
                   currentPage={currentPage}
                   navigateToPage={handleNavClick}
