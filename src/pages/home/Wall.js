@@ -10,6 +10,7 @@ import {
 } from '../../components/DetailTransition';
 import ViewSlider from '../../components/ViewSlider';
 import WallList from './WallList';
+import { useIntroHold } from '../../components/LogoIntro';
 import './Wall.css';
 
 /*
@@ -66,6 +67,16 @@ const Wall = () => {
 
   const loading = lSites || lApps || lAgents;
   const error = eSites || eApps || eAgents;
+
+  /*
+   * Whether the 3D drum has painted its first frame (see useWallCylinder's
+   * onReady). This is the real "the wall is here" moment — `entries` only means
+   * the images have decoded, and everything after it (compositing the pack
+   * canvas, uploading the texture, compiling the shader, the first render) is
+   * a visible beat of its own on a cold load.
+   */
+  const [wallPainted, setWallPainted] = useState(false);
+  const handleWallReady = useCallback(() => setWallPainted(true), []);
 
   useEffect(() => {
     const mq = window.matchMedia(MOBILE_QUERY);
@@ -152,6 +163,25 @@ const Wall = () => {
   const isList = view === 'list';
 
   /*
+   * Hold the first-load intro open until there is genuinely a wall to reveal.
+   *
+   * In gallery view that means waiting for the drum's first painted frame, not
+   * merely for the data: releasing on `entries` handed the page over while
+   * Three.js was still building the scene, so the intro lifted onto an empty
+   * stage and the wall popped in after it.
+   *
+   * List view and mobile never mount the cylinder, so there `entries` IS the
+   * ready signal — waiting on a frame that will never come would pin the intro
+   * open until its own timeout.
+   *
+   * The intro covers the viewport throughout, which is why the `wl-state`
+   * loading line is never seen on a cold first load; it still serves every
+   * other case (an in-session return, reduced motion, a refetch).
+   */
+  const wallReady = isList ? !!entries : wallPainted;
+  useIntroHold(!error && !wallReady);
+
+  /*
    * The cylinder is torn down in list view rather than merely hidden: it holds a
    * WebGL context and a requestAnimationFrame loop, and leaving those running
    * behind a display:none list would burn a GPU and a frame budget on something
@@ -162,6 +192,7 @@ const Wall = () => {
     enabled: !!entries && !isList,
     onPick: handlePick,
     compact: isMobile,
+    onReady: handleWallReady,
   });
 
   // One entry per distinct project, for the accessible index and for mobile.
@@ -196,7 +227,11 @@ const Wall = () => {
         <>
           {/* The cylinder. Purely visual — everything it shows is also present
               as real links in the index below. */}
-          <div className="wl-canvas-mount" ref={mountRef} aria-hidden="true" />
+          <div
+            className={`wl-canvas-mount${wallPainted ? ' is-in' : ''}`}
+            ref={mountRef}
+            aria-hidden="true"
+          />
 
           {/* Edge treatment: a blur pass and a darkening gradient on all four
               sides, so the wall dissolves into the room rather than ending on a

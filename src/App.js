@@ -14,6 +14,7 @@ import { DetailTransitionProvider } from './components/DetailTransition';
 import { DetailBrandProvider } from './components/DetailBrand';
 import Footer from './components/Footer';
 import CursorDot from './components/CursorDot';
+import LogoIntro from './components/LogoIntro';
 import useGSAPScrollSmooth from './hooks/useGSAPScrollSmooth';
 import imagePreloader from './utils/imagePreloader';
 
@@ -77,6 +78,13 @@ function AppContent() {
   }
 
   return (
+    /*
+     * The first-load intro wraps everything, nav included: it flies its NL to
+     * the nav's own logo, so it has to sit above it, and it covers the page
+     * while the home wall is still fetching. It plays once per session and
+     * lets pages hold it open — see components/LogoIntro.
+     */
+    <LogoIntro>
     <DetailTransitionProvider>
     <DetailBrandProvider>
     <div className="App bg-dark-950">
@@ -109,6 +117,7 @@ function AppContent() {
     </div>
     </DetailBrandProvider>
     </DetailTransitionProvider>
+    </LogoIntro>
   );
 }
 
