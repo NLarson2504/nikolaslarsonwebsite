@@ -1,0 +1,88 @@
+/* First-load intro. A single NL mark: it draws in at centre screen, holds,
+   then flies to where the nav's own NL sits and hands off to it.
+
+   The whole thing is one fixed overlay above the nav (which is z-[9999]), so
+   the travelling mark passes over the page rather than under it. Scoped to
+   .li-*. */
+
+.li-root {
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
+  background: #08090a;
+  overflow: hidden;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* The field the mark sits on — in two halves.
+
+   They split down the middle and slide off to left and right, opening like
+   doors on the wall behind. One solid panel fading out did the same job
+   optically but read as a dimmer being turned down; the wall deserves to be
+   uncovered rather than faded up to.
+
+   Each half is its own layer so the two can travel in opposite directions,
+   and each is 50.5% wide — the half-percent overlap keeps a hairline of page
+   from showing through the seam before they part. */
+.li-veil {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50.5%;
+  background: #08090a;
+  will-change: transform;
+}
+.li-veil--l {
+  left: 0;
+}
+.li-veil--r {
+  right: 0;
+}
+
+/* A soft bloom behind the mark, in the logo's own two accents. Purely
+   atmospheric — it never travels; it dies with the veil. */
+.li-glow {
+  position: absolute;
+  width: min(70vw, 42rem);
+  height: min(70vw, 42rem);
+  border-radius: 999px;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(59, 130, 246, 0.28),
+    rgba(217, 70, 239, 0.16) 45%,
+    transparent 70%
+  );
+  filter: blur(40px);
+  opacity: 0;
+}
+
+/* The mark itself. Positioned dead centre by the flex parent, then moved by
+   GSAP with x/y/scale only — so the flight is transform-only and stays on the
+   compositor.
+
+   Font and gradient are deliberately the nav's: font-mark (MuseoModerno) and
+   the same 135° accent ramp as .text-gradient-primary. The hand-off only works
+   if the two are the same object. */
+.li-mark {
+  position: relative;
+  font-family: 'MuseoModerno', 'Nunito', 'Inter', sans-serif;
+  font-weight: 700;
+  line-height: 1;
+  /* Sized so that scaling to the nav's text-xl (1.25rem) is a clean shrink
+     rather than a blur — GSAP animates scale down to nav size at the end. */
+  font-size: clamp(4.5rem, 16vw, 11rem);
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #3b82f6, #d946ef);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  will-change: transform, opacity;
+  /* hidden at first paint so nothing flashes at full size before GSAP runs */
+  opacity: 0;
+}
+
+/* Nothing to animate for reduced motion: the intro is skipped outright in JS
+   and this never mounts. */
