@@ -89,6 +89,17 @@ const darken = (value, amount) => {
  */
 const TINT_STRENGTH = 0.35;
 
+/*
+ * Monotonic id handed to each themed page mount. Used only to answer "is the
+ * theme on <body> still mine?" when a page unmounts, so a departing page can't
+ * clear the colours an arriving one has already set.
+ */
+let themeOwnerSeq = 0;
+const nextThemeOwner = () => {
+  themeOwnerSeq += 1;
+  return themeOwnerSeq;
+};
+
 const pickPair = (img) => {
   try {
     const s = 96;
@@ -153,6 +164,13 @@ export const DetailTransitionProvider = ({ children }) => {
         body.style.setProperty('--detail-a', darken(pair[0], TINT_STRENGTH));
         body.style.setProperty('--detail-b', darken(pair[1], TINT_STRENGTH));
         body.classList.add('has-detail-theme');
+        /*
+         * Claim the theme on the OUTGOING page's behalf-of-nobody: this stamp
+         * belongs to no mount yet, so when the page being left unmounts it sees
+         * an owner that isn't its own and leaves these colours alone. The
+         * arriving page then re-stamps it with its own id on mount.
+         */
+        body.dataset.detailThemeOwner = 'transition';
 
         runningRef.current = true;
 
@@ -271,6 +289,10 @@ export const useDetailTransition = () => useContext(DetailTransitionContext);
  * samples the project's own asset so the page is themed however you got to it.
  */
 export const useDetailTheme = (image) => {
+  // Identity for this mount, used to decide whether the teardown below still
+  // owns the theme currently on <body>. A ref (not state) so it is stable for
+  // the life of the mount and never triggers a render.
+  const ownerRef = useRef(nextThemeOwner());
   /*
    * Applying and clearing are deliberately SEPARATE effects.
    *
@@ -289,12 +311,35 @@ export const useDetailTheme = (image) => {
       body.style.setProperty('--detail-a', darken(pair[0], TINT_STRENGTH));
       body.style.setProperty('--detail-b', darken(pair[1], TINT_STRENGTH));
       body.classList.add('has-detail-theme');
+      // Claim the theme, so a later unmount knows whether it still owns it.
+      body.dataset.detailThemeOwner = String(ownerRef.current);
     };
 
     if (!image) {
-      // No asset yet (or none at all): hold the neutral tint so the page is
-      // already themed while it loads rather than snapping in later.
-      apply([NEUTRAL_PICK, NEUTRAL_PICK]);
+      /*
+       * No asset yet. Two very different situations reach here, and they must
+       * not be treated the same:
+       *
+       *  - Arrived via the transition. The wash has ALREADY set this project's
+       *    colours on <body> and is painting them full-screen. `project` is
+       *    still undefined for the moment the Firestore fetch is in flight, so
+       *    this effect runs with a null image — and writing the neutral tint
+       *    here would overwrite those colours with flat grey, then swap back to
+       *    the real ones when the fetch lands. That grey-and-back is the blip
+       *    seen right after the wash finishes: the animation was fine, the
+       *    background changed underneath it.
+       *
+       *  - Arrived by direct URL or refresh. Nothing has themed the page, so
+       *    the neutral tint is genuinely wanted — it holds a themed surface
+       *    while the data loads instead of showing the untinted page.
+       *
+       * `has-detail-theme` distinguishes them: it is only present when someone
+       * has already set colours, so leave those alone and let the real ones
+       * arrive in place.
+       */
+      if (!document.body.classList.contains('has-detail-theme')) {
+        apply([NEUTRAL_PICK, NEUTRAL_PICK]);
+      }
     } else {
       const img = new Image();
       img.crossOrigin = 'anonymous';
@@ -309,10 +354,25 @@ export const useDetailTheme = (image) => {
     };
   }, [image]);
 
-  // Teardown, on unmount only, so the tint doesn't follow you off the page.
+  /*
+   * Teardown, on unmount only, so the tint doesn't follow you off the page.
+   *
+   * But it must not clear a theme that belongs to the NEXT page. React unmounts
+   * the outgoing route after the incoming transition has already set its
+   * colours, so an unconditional clear here strips them and the background
+   * flashes untinted until the new page re-applies them — a blip after the wash
+   * has finished, which is exactly when it is most visible.
+   *
+   * The generation counter distinguishes the two. Every theme application
+   * stamps <body> with the value it wrote; this cleanup only clears if that
+   * stamp is still the one THIS mount set. If a newer application has since
+   * bumped it, the theme on screen belongs to someone else and is left alone.
+   */
   useEffect(
     () => () => {
       const body = document.body;
+      if (body.dataset.detailThemeOwner !== String(ownerRef.current)) return;
+      delete body.dataset.detailThemeOwner;
       body.classList.remove('has-detail-theme');
       body.style.removeProperty('--detail-a');
       body.style.removeProperty('--detail-b');

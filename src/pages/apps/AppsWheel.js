@@ -1,6 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { gsap } from 'gsap';
+import {
+  useDetailTransition,
+  isPlainClick,
+} from '../../components/DetailTransition';
+import { tileImage } from '../home/wallTexture';
 import useInfoReveal from '../../hooks/useInfoReveal';
 import './AppsWheel.css';
 
@@ -22,6 +27,11 @@ const NEUTRAL_CORNERS = {
  * lagging dot behind it.
  */
 const AppsWheel = ({ projects }) => {
+
+  // Opening a case study plays the same wash as the home wall. Without this the
+  // Link navigated straight away and the route swapped with nothing covering
+  // it — the raw page change that read as a blip.
+  const startDetailTransition = useDetailTransition();
   const count = projects.length;
 
   // With enough real apps (6+) the ring reads round on its own, so no ghost-slat
@@ -371,6 +381,16 @@ const AppsWheel = ({ projects }) => {
                 <Link
                   className="aw-info__btn aw-info__btn--primary"
                   to={`/apps/${current.slug}`}
+                  onClick={(e) => {
+                    // Real href preserved for middle-click / new tab; only the
+                    // plain left click is intercepted.
+                    if (!isPlainClick(e) || !startDetailTransition) return;
+                    e.preventDefault();
+                    startDetailTransition(
+                      `/apps/${current.slug}`,
+                      tileImage(current)
+                    );
+                  }}
                 >
                   Case study <span className="aw-arrow">→</span>
                 </Link>

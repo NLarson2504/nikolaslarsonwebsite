@@ -7,6 +7,11 @@ import React, {
 } from 'react';
 import { Link } from 'react-router-dom';
 import { gsap } from 'gsap';
+import {
+  useDetailTransition,
+  isPlainClick,
+} from '../../components/DetailTransition';
+import { tileImage } from '../home/wallTexture';
 import PageTemplate from '../../components/PageTemplate';
 import CollectionState from '../../components/CollectionState';
 import useProjects from '../../hooks/useProjects';
@@ -68,6 +73,11 @@ const sampleTint = (img) => {
 };
 
 const Agents = () => {
+
+  // Opening a case study plays the same wash as the home wall. Without this the
+  // Link navigated straight away and the route swapped with nothing covering
+  // it — the raw page change that read as a blip.
+  const startDetailTransition = useDetailTransition();
   const { data: agentsData, loading, error } = useProjects('agent');
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -221,6 +231,16 @@ const Agents = () => {
                       <Link
                         className="ag-info__btn"
                         to={`/agents/${current.slug}`}
+                        onClick={(e) => {
+                          // Real href preserved for middle-click / new tab;
+                          // only the plain left click is intercepted.
+                          if (!isPlainClick(e) || !startDetailTransition) return;
+                          e.preventDefault();
+                          startDetailTransition(
+                            `/agents/${current.slug}`,
+                            tileImage(current)
+                          );
+                        }}
                       >
                         Case study <span className="ag-arrow">→</span>
                       </Link>

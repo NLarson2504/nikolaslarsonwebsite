@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import smoothScrollState from './smoothScrollState';
 
-const useGSAPScrollSmooth = (currentPage) => {
+const useGSAPScrollSmooth = (currentPage, pathname) => {
   const scrollContainerRef = useRef(null);
   const scrollContentRef = useRef(null);
   const smoothScrollRef = useRef(null);
@@ -17,8 +17,36 @@ const useGSAPScrollSmooth = (currentPage) => {
   useEffect(() => {
     if (!scrollContainerRef.current || !scrollContentRef.current) return;
 
-    // Scroll to top when page changes
+    /*
+     * Land at the top with NOTHING left to animate.
+     *
+     * Order matters here. `window.scrollTo(0, 0)` alone is not enough: the
+     * eased loop below drives the content off `scrollData.current`, which still
+     * holds the previous page's offset, so it would ease from there down to 0
+     * over ~1.9s — a slow slide that outlasts the detail transition's cover
+     * (which lifts 0.55s after navigating) and shows up as a blip just as the
+     * new page is revealed.
+     *
+     * So the eased state is zeroed and the transform written synchronously, in
+     * the same frame as the scroll reset. There is then no difference for the
+     * loop to interpolate and the page is simply already at the top when the
+     * cover comes off.
+     *
+     * The body height is cleared too: it still describes the OUTGOING page's
+     * length, and leaving it means the browser can clamp the scroll position
+     * against a stale range mid-reset. `updateHeight()` sets the real value a
+     * few lines below, once the new content is measurable.
+     */
+    document.body.style.height = '';
     window.scrollTo(0, 0);
+    scrollDataRef.current.current = 0;
+    scrollDataRef.current.target = 0;
+    scrollDataRef.current.isScrolling = false;
+    smoothScrollState.offset = 0;
+    gsap.set(scrollContentRef.current, {
+      transform: 'translate3d(0, 0, 0)',
+      force3D: true,
+    });
 
     // Check if device is mobile
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
@@ -181,7 +209,16 @@ const useGSAPScrollSmooth = (currentPage) => {
       smoothScrollState.enabled = false;
       smoothScrollState.offset = 0;
     };
-  }, [currentPage]);
+    /*
+     * Keyed on the full pathname, not just the section.
+     *
+     * `currentPage` is only the first path segment, so moving from `/web` to
+     * `/web/campuslm` left it unchanged and this whole effect never re-ran —
+     * the new page inherited the old one's scroll offset, body height and
+     * pending ease. That inheritance was the blip. A detail page is a different
+     * document as far as scrolling is concerned, so it gets a fresh setup.
+     */
+  }, [currentPage, pathname]);
 
   return { scrollContainerRef, scrollContentRef };
 };

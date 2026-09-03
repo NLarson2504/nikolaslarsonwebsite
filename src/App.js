@@ -63,7 +63,8 @@ function AppContent() {
   // pass null on admin so the hook stays mounted (hooks must run every render)
   // but doesn't take over the document's scrolling
   const { scrollContainerRef, scrollContentRef } = useGSAPScrollSmooth(
-    isAdmin ? null : getCurrentPage()
+    isAdmin ? null : getCurrentPage(),
+    isAdmin ? null : location.pathname
   );
 
   // The admin app is a separate surface: its own left-nav shell, no marketing
