@@ -116,35 +116,75 @@ const SitePreview = ({ url, image, title }) => {
 
   return (
     <div
-      className={`relative w-full max-w-full rounded-2xl border border-white/10 overflow-hidden aspect-[4/3] sm:aspect-[16/10] lg:aspect-[16/9] ${
+      className={`preview-glass relative w-full max-w-full rounded-2xl p-2 sm:p-3 ${
         showImage
-          ? ''
-          : 'bg-white min-h-[26rem] md:min-h-[40rem] lg:min-h-[46rem]'
+          ? 'block'
+          : 'flex min-h-[26rem] md:min-h-[40rem] lg:min-h-[46rem]'
       }`}
     >
-      {!showImage && (
-        <iframe
-          title={`${title} live preview`}
-          src={url}
-          loading="lazy"
-          sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-          referrerPolicy="no-referrer"
-          className="absolute inset-0 w-full h-full border-0"
-          onLoad={() => {
-            setLoaded(true);
-            setBlocked(false);
-          }}
-          onError={() => setBlocked(true)}
-        />
-      )}
+      {/* Inner media well. The shell's padding is what insets the media from
+          the frame rather than letting it run to the edge, the way the gallery
+          cards do — so the shell reads as a lit glass frame around the preview
+          instead of a border drawn on it. The well owns the clipping; the shell
+          owns the material.
 
-      {showImage && image && (
-        <img
-          src={image}
-          alt={title}
-          className="absolute inset-0 w-full h-full object-contain object-top"
-        />
-      )}
+          The two paths size very differently, and conflating them was what
+          broke the fit:
+
+          - Image path: the well has NO aspect ratio and the image is a normal
+            in-flow block, so the image's own dimensions set the well's height
+            and the shell wraps it. Forcing a 4/3 -> 16/9 ratio here and pinning
+            the image `absolute inset-0 object-contain` meant the well was a
+            fixed-ratio box with the picture letterboxed inside it: the rounded
+            corners clipped the *well*, but the visible edge was the letterboxed
+            image sitting inset from those corners, so the image's own corners
+            stayed square — and the leftover bands read as the container not
+            fitting its content.
+          - Iframe path: an iframe has no intrinsic size to wrap, so it keeps
+            the absolute fill and takes its height from the shell's `min-h`.
+
+          The radii are concentric, not merely both-rounded: an inner corner
+          bevels cleanly inside an outer one only when
+          `inner = outer - padding`. The shell is `rounded-2xl` (16px) with 8px
+          padding, so the well is 8px; at `sm` the padding grows to 12px, so the
+          well drops to 4px. `overflow-hidden` on the well clips whichever media
+          it holds to that curve — and now that the image fills the well edge to
+          edge, the clip lands on the picture itself. */}
+      <div
+        className={`relative w-full min-w-0 overflow-hidden rounded-[8px] sm:rounded-[4px] ${
+          showImage ? '' : 'self-stretch bg-white'
+        }`}
+      >
+        {!showImage && (
+          <iframe
+            title={`${title} live preview`}
+            src={url}
+            loading="lazy"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+            referrerPolicy="no-referrer"
+            className="absolute inset-0 w-full h-full border-0"
+            onLoad={() => {
+              setLoaded(true);
+              setBlocked(false);
+            }}
+            onError={() => setBlocked(true)}
+          />
+        )}
+
+        {/* In flow and `w-full h-auto`: the screenshot keeps its own aspect
+            ratio, fills the well's width, and sets its height — so the glass
+            frame ends up exactly as tall as the picture, with no letterbox
+            band at either edge and the bevel cutting the image's real corners.
+            `block` kills the inline-image baseline gap that would otherwise
+            leave a few stray pixels under it inside the frame. */}
+        {showImage && image && (
+          <img
+            src={image}
+            alt={title}
+            className="block w-full h-auto"
+          />
+        )}
+      </div>
     </div>
   );
 };

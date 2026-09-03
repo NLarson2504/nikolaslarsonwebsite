@@ -492,6 +492,38 @@ code {
   }
 }
 
+/*
+ * Glass shell for the case-study hero preview. Same material as
+ * `.nav-cta-glass` — translucent white ground, blur + saturate backdrop, and a
+ * top/bottom inset hairline that reads as a lit edge — so the preview frame and
+ * the nav pills are recognisably the same surface.
+ *
+ * The nav rule's padding is deliberately NOT reused: those values exist to
+ * height-match the wall slider beside it, which has nothing to do with this
+ * frame. Padding here is the media inset instead, set in the component.
+ *
+ * The drop shadow is deeper than the nav's because this element is ~40rem tall
+ * rather than a 45px pill — the nav's `-10px` spread would vanish at this size.
+ */
+.preview-glass {
+  background: rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.22),
+    inset 0 -1px 0 0 rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.09),
+    0 30px 80px -20px rgba(0, 0, 0, 0.8);
+}
+
+/* Matches the nav's fallback: with no backdrop-filter the translucent ground
+   alone reads as a flat grey panel, so lift it. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .preview-glass {
+    background: rgba(255, 255, 255, 0.18);
+  }
+}
+
 /* 3D Module Styles */
 .module-3d {
   position: relative;
