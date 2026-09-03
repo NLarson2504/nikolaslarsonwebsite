@@ -9,6 +9,7 @@ import {
 } from 'firebase/firestore';
 import { db, storage } from './firebase';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { clearProjectsCache } from '../hooks/projectsCache';
 
 /**
  * Admin data access for projects and brands. Reads are open; writes require an
@@ -32,15 +33,20 @@ export const fetchProject = async (id) => {
 export const createProject = async (data) => {
   const ref = doc(collection(db, 'projects'));
   await setDoc(ref, sanitize(data));
+  clearProjectsCache();
   return ref.id;
 };
 
 export const saveProject = async (id, data) => {
   await updateDoc(doc(db, 'projects', id), sanitize(data));
+  // The public pages cache projects for the life of the tab; an edit here has
+  // to drop that or the site keeps serving what was read before the save.
+  clearProjectsCache();
 };
 
 export const deleteProject = async (id) => {
   await deleteDoc(doc(db, 'projects', id));
+  clearProjectsCache();
 };
 
 // --- Brands -----------------------------------------------------------------
@@ -53,10 +59,12 @@ export const fetchAllBrands = async () => {
 // Brands use a human id (e.g. "tarragon") as the doc id.
 export const saveBrand = async (id, data) => {
   await setDoc(doc(db, 'brands', id), sanitize(data), { merge: true });
+  clearProjectsCache();
 };
 
 export const deleteBrand = async (id) => {
   await deleteDoc(doc(db, 'brands', id));
+  clearProjectsCache();
 };
 
 // Strip the client-only `id` and `brand` (joined) fields, and drop `undefined`

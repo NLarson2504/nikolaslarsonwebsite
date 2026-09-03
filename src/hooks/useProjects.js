@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react';
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '../lib/firebase';
-import { sortByPriority } from '../utils/projectPriority';
+import { fetchProjects, getCachedProjects } from './projectsCache';
 
 /**
  * Loads projects of a given type from the single `projects` collection and
@@ -14,51 +12,54 @@ import { sortByPriority } from '../utils/projectPriority';
  * A project may reference a brand that is shared across types (e.g. Tarragon
  * has agents, an app, and a site). The joined brand is exposed as `project.brand`.
  *
- * Returns { data, loading, error }, sorted by `order` ascending.
+ * Reads are cached for the life of the tab (see projectsCache). The important
+ * consequence is the SYNCHRONOUS seed below: once a type has been loaded, a
+ * later mount starts with the data already in hand and `loading` false, so
+ * returning to a page never re-shows its loading state. Seeding in an effect
+ * instead would still render one frame with `loading` true — enough to flash
+ * "Loading the wall…" on every return to the home page, which is the whole
+ * problem this exists to fix.
+ *
+ * Returns { data, loading, error }, sorted by priority.
  */
 const useProjects = (type) => {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Synchronous seed: already-cached data is present on the very first render.
+  const cached = getCachedProjects(type);
+  const [data, setData] = useState(cached || []);
+  const [loading, setLoading] = useState(!cached);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     let active = true;
 
-    const load = async () => {
-      setLoading(true);
+    const hit = getCachedProjects(type);
+    if (hit) {
+      // Cache hit (including a type switch on an already-loaded type): adopt it
+      // without ever entering the loading state.
+      setData(hit);
+      setLoading(false);
       setError(null);
-      try {
-        // Fetch brands once and index by id for an in-memory join. This avoids
-        // an N+1 of per-project brand reads and keeps brand info edited in one
-        // place.
-        const brandsSnap = await getDocs(collection(db, 'brands'));
-        const brandsById = {};
-        brandsSnap.forEach((d) => {
-          brandsById[d.id] = { id: d.id, ...d.data() };
-        });
+      return () => {
+        active = false;
+      };
+    }
 
-        const projectsSnap = await getDocs(
-          query(collection(db, 'projects'), where('type', '==', type))
-        );
+    setLoading(true);
+    setError(null);
+
+    fetchProjects(type)
+      .then((projects) => {
         if (!active) return;
-
-        const projects = projectsSnap.docs.map((d) => {
-          const project = { id: d.id, ...d.data() };
-          return { ...project, brand: brandsById[project.brandId] || null };
-        });
-
-        // Rank by weighted priority (importance), not insertion order.
-        setData(sortByPriority(projects));
-      } catch (err) {
+        setData(projects);
+        setLoading(false);
+      })
+      .catch((err) => {
         if (!active) return;
         console.error(`Failed to load "${type}" projects from Firestore:`, err);
         setError(err);
-      } finally {
-        if (active) setLoading(false);
-      }
-    };
+        setLoading(false);
+      });
 
-    load();
     return () => {
       active = false;
     };

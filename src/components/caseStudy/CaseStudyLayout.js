@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import CaseStudyHeader from './CaseStudyHeader';
 import SitePreview from './SitePreview';
+import AppPreview from './AppPreview';
 import CaseStudyStats from './CaseStudyStats';
 import CaseStudyToc from './CaseStudyToc';
 import CaseStudyBlock from './CaseStudyBlock';
@@ -25,7 +26,18 @@ const CaseStudyLayout = ({ project, backTo, backLabel }) => {
   // live iframe embedding was removed (see SitePreview), so the band needs an
   // image to be worth rendering at all.
   const featured = caseStudy.featuredImage || project.image;
-  const showBand = Boolean(featured);
+
+  /*
+   * App projects show a row of phone screenshots instead of one wide capture.
+   *
+   * They carry `screenshots` (two to four tall phone shots) and no `image`, so
+   * the web preview had nothing landscape to show — a single phone screenshot
+   * either stretched across the frame or sat as a thin strip in the middle of
+   * it. AppPreview fills the same band with the screens laid out in a row.
+   */
+  const shots = project.screenshots || [];
+  const isApp = project.type === 'app' && shots.length > 0;
+  const showBand = isApp || Boolean(featured);
 
   // Native `position: sticky` can't work inside the site's GSAP smooth-scroll
   // transform, so the rails follow the eased scroll offset via JS instead.
@@ -59,11 +71,15 @@ const CaseStudyLayout = ({ project, backTo, backLabel }) => {
           every frame, so the fade has to be on the element it shares. */}
       {showBand && (
         <div className="max-w-[110rem] mx-auto px-4 md:px-8 mb-16 md:mb-24">
-          <SitePreview
-            url={project.url}
-            image={featured}
-            title={project.title}
-          />
+          {isApp ? (
+            <AppPreview screenshots={shots} title={project.title} />
+          ) : (
+            <SitePreview
+              url={project.url}
+              image={featured}
+              title={project.title}
+            />
+          )}
         </div>
       )}
 
