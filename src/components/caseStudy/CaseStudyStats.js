@@ -8,8 +8,14 @@ import React from 'react';
 const CaseStudyStats = ({ stats = [] }) => {
   if (!stats.length) return null;
 
+  // `data-reveal-stagger` opts the cards into an individual left-to-right sweep
+  // on entrance rather than the whole row arriving at once.
   return (
-    <div className="grid gap-3.5 my-8 grid-cols-1 sm:grid-cols-3">
+    <div
+      data-reveal
+      data-reveal-stagger
+      className="grid gap-3.5 my-8 grid-cols-1 sm:grid-cols-3"
+    >
       {stats.map((stat, index) => (
         <div
           key={index}

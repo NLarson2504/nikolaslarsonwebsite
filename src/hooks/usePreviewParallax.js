@@ -39,25 +39,38 @@ const usePreviewParallax = ({ strength = 0.05, minWidth = 768 } = {}) => {
     const mq = window.matchMedia(`(min-width: ${minWidth}px)`);
     if (reduce) return undefined;
 
+    /*
+     * The parallax and the entrance reveal both animate this element's Y, so
+     * they must not run at once: the reveal tweens y 34 -> 0 while this loop
+     * would be writing its own y every frame, and the reveal would be silently
+     * overwritten — the panel would sit still and simply appear.
+     *
+     * The reveal marks the element `data-revealed` when it finishes; until then
+     * this loop leaves the transform alone and lets the entrance own it.
+     */
     const setY = gsap.quickSetter(media, 'y', 'px');
 
-    // The overscan is declared in CSS as `--preview-overscan` and read back
-    // here rather than hardcoded, so the two can't drift apart: change the CSS
-    // and the clamp follows. It is the TOTAL vertical slack (the media overhangs
-    // the well by half of it at each edge), so travel is bounded by half.
-    // Reduced motion sets it to 0, which zeroes the drift with no extra branch.
-    // Read once — getComputedStyle forces style resolution, and this runs every
-    // frame.
-    const rawOverscan = parseFloat(
-      getComputedStyle(media).getPropertyValue('--preview-overscan')
-    );
-    const overscan = Number.isFinite(rawOverscan) && rawOverscan > 0
-      ? rawOverscan / 2
-      : 0;
+    /*
+     * How far the frame may drift, in px.
+     *
+     * This used to be read from `--preview-overscan`, back when the drift moved
+     * the screenshot INSIDE a pinned frame: the travel had to stay within the
+     * hidden overscan or it would pull a bare strip into the clip. The whole
+     * frame moves now, so there is no clip to run out of and no bare edge to
+     * expose — the limit is purely a matter of taste, keeping the panel from
+     * wandering far enough to open a visible gap against the content around it.
+     */
+    const MAX_DRIFT = 26;
+
     let rafId = null;
     let current = 0;
 
     const tick = () => {
+      // Entrance still playing (or not yet started): don't touch the transform.
+      if (!media.hasAttribute('data-revealed')) {
+        rafId = requestAnimationFrame(tick);
+        return;
+      }
       if (!mq.matches) {
         if (current !== 0) {
           current = 0;
@@ -89,8 +102,8 @@ const usePreviewParallax = ({ strength = 0.05, minWidth = 768 } = {}) => {
         // Clamp to the slack the media actually has above and below the well.
         // That, and only that, is how far it can travel before the leading edge
         // pulls a bare strip into the frame.
-        if (target > overscan) target = overscan;
-        if (target < -overscan) target = -overscan;
+        if (target > MAX_DRIFT) target = MAX_DRIFT;
+        if (target < -MAX_DRIFT) target = -MAX_DRIFT;
 
         // Ease toward the target rather than snapping to it. On mobile the rect
         // tracks raw scroll, which is jumpy; this keeps the drift smooth there

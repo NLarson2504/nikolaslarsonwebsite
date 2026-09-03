@@ -2,6 +2,18 @@ import React from 'react';
 import usePreviewParallax from '../../hooks/usePreviewParallax';
 
 /**
+ * Point several refs at one node. The parallax hook wants a element to measure
+ * and an element to move; here they are the same node, and a ref can only be
+ * assigned once in JSX.
+ */
+const mergeRefs = (...refs) => (node) => {
+  refs.forEach((ref) => {
+    if (typeof ref === 'function') ref(node);
+    else if (ref) ref.current = node;
+  });
+};
+
+/**
  * The big hero preview at the top of a case study: the project's captured
  * screenshot in a glass frame, linking to the live site.
  *
@@ -38,14 +50,28 @@ import usePreviewParallax from '../../hooks/usePreviewParallax';
  * either one serves as the link target.
  */
 const SitePreview = ({ url, image, title, visitUrl = url }) => {
-  // Parallax drifts the media inside the frame; the frame itself stays put.
+  // Parallax drifts the whole glass frame against the page.
   const { frameRef, mediaRef } = usePreviewParallax();
 
   const href = visitUrl || url;
   const canVisit = Boolean(href);
 
   return (
-    <div className="preview-glass relative block w-full max-w-full rounded-2xl p-2 sm:p-3">
+    /*
+     * The parallax moves the GLASS FRAME itself, not the picture inside it.
+     * `frameRef` measures position, `mediaRef` receives the transform, and both
+     * are this element: the whole panel — glass, bevel, shadow and screenshot —
+     * drifts against the page as one object, which is what reads as the frame
+     * sitting at a different depth. Drifting the image inside a pinned frame
+     * instead made the picture slide behind a static window, which is a
+     * different (and much subtler) effect.
+     */
+    <div
+      ref={mergeRefs(frameRef, mediaRef)}
+      data-reveal
+      data-reveal-order="1"
+      className="preview-glass relative block w-full max-w-full rounded-2xl p-2 sm:p-3"
+    >
       {/* Inner media well. The shell's padding is what insets the media from
           the frame rather than letting it run to the edge, the way the gallery
           cards do — so the shell reads as a lit glass frame around the preview
@@ -74,7 +100,6 @@ const SitePreview = ({ url, image, title, visitUrl = url }) => {
           cmd/middle-click, "open in new tab", and keyboard activation all work
           the way they should. */}
       <a
-        ref={frameRef}
         href={canVisit ? href : undefined}
         target={canVisit ? '_blank' : undefined}
         rel={canVisit ? 'noreferrer' : undefined}
@@ -82,17 +107,11 @@ const SitePreview = ({ url, image, title, visitUrl = url }) => {
         data-preview-hover={canVisit ? 'true' : undefined}
         className="site-preview__well relative block w-full min-w-0 overflow-hidden rounded-[8px] sm:rounded-[4px]"
       >
-        {/* The screenshot is wrapped so the parallax transform lands on the
-            wrapper, leaving the image itself to size the well. The wrapper is
-            scaled up a few percent from its centre: the drift moves the media
-            vertically inside the clip, and without that overscan the travel
-            would expose a bare strip at the leading edge. Scale rather than a
-            negative inset keeps the well's own box — and so the frame's fit —
-            untouched. */}
+        {/* The image sizes the well directly. No overscan wrapper any more:
+            the whole frame moves now, so nothing travels inside the clip and
+            there is no leading edge to cover. */}
         {image && (
-          <div ref={mediaRef} className="site-preview__media">
-            <img src={image} alt={title} className="block w-full h-auto" />
-          </div>
+          <img src={image} alt={title} className="block w-full h-auto" />
         )}
       </a>
     </div>
