@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import useProjects from '../../hooks/useProjects';
 import useWallCylinder from './useWallCylinder';
-import { KIND_META, SLOTS } from './wallLayout';
+import { KIND_META, fillPack } from './wallLayout';
 import { loadBrandLogos, loadImage, tileImage } from './wallTexture';
 import {
   useDetailTransition,
@@ -91,19 +91,17 @@ const Wall = () => {
    * The pack has more slots (27) than there are real projects (14), so projects
    * repeat across the surface — the wall is a surface of work, not a list. Each
    * category's slots walk that category's projects in priority order and wrap.
+   *
+   * fillPack visits slots in VIEW_ORDER — nearest the opening view first —
+   * rather than in the order SLOTS happens to be written. The camera opens on
+   * the MIDDLE of the pack straddling the seam, not its top-left corner, so
+   * array order buried the highest-priority work off screen above and handed
+   * the centre of frame to whatever came last in each pool.
    */
-  const assigned = useMemo(() => {
-    const pools = { web: sites, app: apps, agent: agents };
-    const cursors = { web: 0, app: 0, agent: 0 };
-
-    return SLOTS.map((slot, index) => {
-      const pool = pools[slot.kind];
-      if (!pool || !pool.length) return null;
-      const project = pool[cursors[slot.kind] % pool.length];
-      cursors[slot.kind] += 1;
-      return { slot, project, index };
-    }).filter(Boolean);
-  }, [sites, apps, agents]);
+  const assigned = useMemo(
+    () => fillPack({ web: sites, app: apps, agent: agents }).filter(Boolean),
+    [sites, apps, agents]
+  );
 
   /*
    * Preload every image before the texture is painted.

@@ -3,14 +3,12 @@ import React, { useEffect, useRef, useState } from 'react';
 /**
  * The big hero preview at the top of a case study. Given a `url` it tries to
  * embed the site in an iframe; if the site blocks framing (X-Frame-Options /
- * frame-ancestors) or doesn't load in time, it falls back to the `image`
- * screenshot with a "Visit site" overlay.
+ * frame-ancestors), is down, or doesn't load in time, it falls back to the
+ * `image` screenshot.
  *
  * Passing no `url` renders the image on its own at exactly the same size — that
  * covers projects that can't be embedded (`noEmbed`) and non-web projects,
  * which get the identical large frame rather than a smaller inline figure.
- * `visitUrl` keeps the "Visit site" link working when the embed is skipped but
- * the project still has a live address.
  *
  * The frame is deliberately large — the layout gives it a full-bleed band wider
  * than the reading column. The min-heights apply only to the live iframe, where
@@ -30,12 +28,23 @@ import React, { useEffect, useRef, useState } from 'react';
  * the frame off the right edge of the page — the band's own `max-w` is what
  * bounds the size instead.
  *
- * We can't read cross-origin frame contents, so "did it load?" is inferred: if
- * the iframe hasn't fired `load` within a timeout, we assume it was blocked and
- * show the fallback. A successful `load` clears the fallback.
+ * "Did it load?" is inferred from two signals, because we can't read
+ * cross-origin frame contents:
+ *
+ *  1. A timeout. If the iframe hasn't fired `load` in time, we assume it was
+ *     blocked and show the screenshot. A successful `load` clears it.
+ *  2. A status probe. An error page (503 Service Unavailable, 502, 404, …)
+ *     still fires `load` on the iframe — the frame "loaded", it just holds the
+ *     host's error page — so the timeout alone would leave a Service
+ *     Unavailable screen sitting in the hero. A CORS-mode `fetch` reads the
+ *     real status where the server allows it, and any non-OK status pins the
+ *     fallback on. A fetch that *throws* is ambiguous (a perfectly healthy site
+ *     with no CORS headers throws too), so a throw is ignored and the timeout
+ *     stays the judge.
  */
-const SitePreview = ({ url, image, title, visitUrl = url }) => {
+const SitePreview = ({ url, image, title }) => {
   const [blocked, setBlocked] = useState(false);
+  const [unavailable, setUnavailable] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const timerRef = useRef(null);
 
@@ -49,7 +58,61 @@ const SitePreview = ({ url, image, title, visitUrl = url }) => {
     return () => clearTimeout(timerRef.current);
   }, [loaded, url]);
 
-  const showImage = blocked || !url;
+  // Probe whether the site is actually serving, because an error page (503
+  // SERVICE_UNAVAILABLE, 502, 404, ...) still fires `load` on the iframe — the
+  // frame "loaded", it just holds the host's error page — so the load timeout
+  // alone leaves a Service Unavailable screen sitting in the hero.
+  //
+  // Two probes run, because neither covers every host on its own:
+  //
+  //  1. `fetch`. Reads the real status, but only when the server sends CORS
+  //     headers. Without them the request throws, and a throw is ambiguous — a
+  //     perfectly healthy site with no CORS policy throws too — so a throw is
+  //     ignored here and left to probe 2.
+  //  2. An image load. Not subject to CORS at all. A host that is down serves
+  //     its error page for *every* path, so a URL that should be an image comes
+  //     back as the error document instead and fails to decode, firing
+  //     `onerror`. A healthy site returns a real favicon and fires `onload`.
+  //     This is what catches a paused Vercel deployment, which sends a 503 with
+  //     no CORS headers and no framing restrictions.
+  //
+  // A cache-buster keeps a previously-cached favicon from masking an outage.
+  useEffect(() => {
+    if (!url) return undefined;
+    setUnavailable(false);
+
+    let cancelled = false;
+    const controller = new AbortController();
+    const abortTimer = setTimeout(() => controller.abort(), 6000);
+
+    fetch(url, { method: 'GET', signal: controller.signal })
+      .then((response) => {
+        if (!cancelled && !response.ok) setUnavailable(true);
+      })
+      .catch(() => {});
+
+    const probe = new Image();
+    probe.onerror = () => {
+      if (!cancelled) setUnavailable(true);
+    };
+    try {
+      const faviconUrl = new URL('/favicon.ico', url);
+      faviconUrl.searchParams.set('_probe', Date.now());
+      probe.src = faviconUrl.href;
+    } catch {
+      // Malformed URL — nothing to probe, leave it to the load timeout.
+    }
+
+    return () => {
+      cancelled = true;
+      clearTimeout(abortTimer);
+      controller.abort();
+      probe.onerror = null;
+      probe.src = '';
+    };
+  }, [url]);
+
+  const showImage = blocked || unavailable || !url;
 
   return (
     <div
@@ -81,25 +144,6 @@ const SitePreview = ({ url, image, title, visitUrl = url }) => {
           alt={title}
           className="absolute inset-0 w-full h-full object-contain object-top"
         />
-      )}
-
-      {/* Visit-site affordance: always available on the fallback, and a subtle
-          corner chip over the live frame so the site is reachable in a new tab. */}
-      {visitUrl && (
-        <a
-          href={visitUrl}
-          target="_blank"
-          rel="noreferrer"
-          className={
-            showImage
-              ? 'absolute inset-0 flex items-end justify-end p-4 bg-gradient-to-t from-black/40 to-transparent'
-              : 'absolute top-3 right-3'
-          }
-        >
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/50 backdrop-blur px-3.5 py-2 font-mono text-[11px] uppercase tracking-wider text-dark-100 hover:bg-black/70 transition-colors">
-            Visit site <span aria-hidden>↗</span>
-          </span>
-        </a>
       )}
     </div>
   );

@@ -44,7 +44,6 @@ const CaseStudyLayout = ({ project, backTo, backLabel }) => {
         <div className="max-w-[110rem] mx-auto px-4 md:px-8 mb-16 md:mb-24">
           <SitePreview
             url={embeddable ? project.url : null}
-            visitUrl={project.url}
             image={featured}
             title={project.title}
           />
