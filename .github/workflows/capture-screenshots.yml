@@ -1,0 +1,69 @@
+# Keeps the case-study hero screenshots current.
+#
+# The site is a static GitHub Pages build with no server of its own, so there is
+# nowhere to render a live preview at request time — and we deliberately do not
+# want one: embedding a third-party site in the page meant inheriting whatever
+# it decided to serve (a login redirect, an outage page, an infinite self-embed).
+# Capturing on a schedule instead means a bad render can be caught here, once,
+# rather than by every visitor.
+#
+# The job renders each `type: 'site'` project through Microlink, uploads the PNG
+# to Firebase Storage, and repoints the project's `image` field at it. Projects
+# marked `noCapture: true` in Firestore are skipped, as are any whose URL is not
+# serving a healthy 2xx at run time — a stale screenshot beats a wrong one.
+
+name: Capture site screenshots
+
+on:
+  schedule:
+    # Mondays at 07:00 UTC. Screenshots only need to track site redesigns, so
+    # weekly is plenty; bump it if a project starts changing more often.
+    - cron: '0 7 * * 1'
+  # Manual runs, for right after shipping a redesign.
+  workflow_dispatch:
+
+# One capture at a time: concurrent runs would race on the same Storage objects
+# and Firestore fields.
+concurrency:
+  group: capture-screenshots
+  cancel-in-progress: false
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # The script only needs firebase-admin, not the app's full dependency tree.
+      - name: Install firebase-admin
+        run: npm install --no-save firebase-admin
+
+      # The service account JSON is a repo secret (Settings > Secrets and
+      # variables > Actions > FIREBASE_SERVICE_ACCOUNT). It is written to a file
+      # because firebase-admin's applicationDefault() reads a path, then removed
+      # in a step that runs even if the capture fails.
+      - name: Write service account
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$FIREBASE_SERVICE_ACCOUNT" ]; then
+            echo "::error::FIREBASE_SERVICE_ACCOUNT secret is not set"
+            exit 1
+          fi
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
+
+      - name: Capture
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
+          # Optional: raises Microlink's rate limits. Works without it.
+          MICROLINK_KEY: ${{ secrets.MICROLINK_KEY }}
+        run: node scripts/captureScreenshots.js
+
+      - name: Remove service account
+        if: always()
+        run: rm -f "$RUNNER_TEMP/sa.json"

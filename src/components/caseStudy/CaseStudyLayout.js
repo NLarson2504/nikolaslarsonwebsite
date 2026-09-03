@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import CaseStudyHeader, { canEmbedSite } from './CaseStudyHeader';
+import CaseStudyHeader from './CaseStudyHeader';
 import SitePreview from './SitePreview';
 import CaseStudyStats from './CaseStudyStats';
 import CaseStudyToc from './CaseStudyToc';
@@ -20,13 +20,11 @@ const CaseStudyLayout = ({ project, backTo, backLabel }) => {
   const sections = caseStudy.sections || [];
 
   // The hero preview sits in a band wider than the reading column and wider
-  // than the rest of the page — a cramped iframe renders the site's own mobile
-  // layout, which isn't what the case study is showing off. Every project with
-  // something to show gets the band at that size: a live iframe where the site
-  // can be embedded, and the screenshot at identical dimensions where it can't.
+  // than the rest of the page. It shows the project's captured screenshot —
+  // live iframe embedding was removed (see SitePreview), so the band needs an
+  // image to be worth rendering at all.
   const featured = caseStudy.featuredImage || project.image;
-  const embeddable = canEmbedSite(project);
-  const showBand = embeddable || Boolean(featured);
+  const showBand = Boolean(featured);
 
   // Native `position: sticky` can't work inside the site's GSAP smooth-scroll
   // transform, so the rails follow the eased scroll offset via JS instead.
@@ -43,7 +41,7 @@ const CaseStudyLayout = ({ project, backTo, backLabel }) => {
       {showBand && (
         <div className="max-w-[110rem] mx-auto px-4 md:px-8 mb-16 md:mb-24">
           <SitePreview
-            url={embeddable ? project.url : null}
+            url={project.url}
             image={featured}
             title={project.title}
           />

@@ -68,6 +68,50 @@ function getBuffer(url) {
   });
 }
 
+/**
+ * Is the site actually serving its real content right now?
+ *
+ * This guard exists because Microlink reports `status: "success"` for any page
+ * it manages to render — including an error page. A paused Vercel deployment
+ * (503 DEPLOYMENT_PAUSED) screenshots perfectly happily, and the result would
+ * silently overwrite a good stored screenshot with a picture of the outage.
+ * Unattended on a schedule, that is a one-way loss: the good image is gone and
+ * nothing in the log says anything went wrong.
+ *
+ * A stale screenshot is always better than a wrong one, so anything other than
+ * a clean 2xx means skip this project and keep what is already stored.
+ *
+ * Redirects are followed so a site that has legitimately moved still captures;
+ * it's the final status that decides.
+ */
+function checkHealth(url, depth = 0) {
+  return new Promise((resolve) => {
+    if (depth > 5) {
+      resolve({ ok: false, reason: 'too many redirects' });
+      return;
+    }
+    const req = https.get(url, { timeout: 15000 }, (res) => {
+      const { statusCode, headers } = res;
+      res.resume(); // drain; we only need the status line
+      if (statusCode >= 300 && statusCode < 400 && headers.location) {
+        const next = new URL(headers.location, url).href;
+        resolve(checkHealth(next, depth + 1));
+        return;
+      }
+      resolve(
+        statusCode >= 200 && statusCode < 300
+          ? { ok: true }
+          : { ok: false, reason: `HTTP ${statusCode}` }
+      );
+    });
+    req.on('timeout', () => {
+      req.destroy();
+      resolve({ ok: false, reason: 'timeout' });
+    });
+    req.on('error', (e) => resolve({ ok: false, reason: e.message }));
+  });
+}
+
 async function shoot(url) {
   const api =
     'https://api.microlink.io/?' +
@@ -94,6 +138,7 @@ async function shoot(url) {
 async function main() {
   const snap = await db.collection('projects').where('type', '==', 'site').get();
   let done = 0;
+  let skipped = 0;
 
   for (const d of snap.docs) {
     const p = d.data();
@@ -102,6 +147,15 @@ async function main() {
       continue;
     }
     try {
+      // Never overwrite a good screenshot with a picture of an outage.
+      // eslint-disable-next-line no-await-in-loop
+      const health = await checkHealth(p.url);
+      if (!health.ok) {
+        console.warn(`  SKIP ${p.slug}: ${health.reason} — keeping existing image`);
+        skipped += 1;
+        continue;
+      }
+
       // eslint-disable-next-line no-await-in-loop
       const buf = await shoot(p.url);
       const dest = `projects/${p.slug}/screenshot-1.png`;
@@ -124,7 +178,7 @@ async function main() {
     }
   }
 
-  console.log(`\nDone. Captured ${done} site(s).`);
+  console.log(`\nDone. Captured ${done} site(s); skipped ${skipped} unhealthy.`);
   process.exit(0);
 }
 

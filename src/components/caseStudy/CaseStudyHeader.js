@@ -1,14 +1,6 @@
 import React from 'react';
 
 /**
- * True when a project can be embedded live. `noEmbed` opts a site out (e.g. a
- * login-gated app that could expose real data) so it shows its screenshot
- * instead — still in the big band, just never in an iframe.
- */
-export const canEmbedSite = (project) =>
-  project.type === 'site' && project.url && !project.noEmbed;
-
-/**
  * Case study dek and optional featured image.
  *
  * There used to be a mono meta byline here (brand · role · stack · status) in a
