@@ -64,6 +64,28 @@ const usePreviewParallax = ({ strength = 0.05, minWidth = 768 } = {}) => {
 
     let rafId = null;
     let current = 0;
+    // Whether the loop has taken over from the entrance yet. The first frame
+    // after handover seeds `current` from the real resting position instead of
+    // easing up to it from zero — see the tick below.
+    let adopted = false;
+
+    /*
+     * Publish the resting offset for this scroll position so the entrance can
+     * finish ON it rather than on zero. With the reveal landing where the
+     * parallax wants the panel, the handover above becomes a no-op and there is
+     * no correction to see at all.
+     */
+    const restingY = () => {
+      const rect = frame.getBoundingClientRect();
+      const vh = window.innerHeight;
+      const centre = rect.top + rect.height / 2;
+      const progress = (vh / 2 - centre) / vh;
+      let t = progress * rect.height * strength;
+      if (t > MAX_DRIFT) t = MAX_DRIFT;
+      if (t < -MAX_DRIFT) t = -MAX_DRIFT;
+      return t;
+    };
+    if (media) media.__previewRestY = restingY;
 
     const tick = () => {
       // Entrance still playing (or not yet started): don't touch the transform.
@@ -104,6 +126,41 @@ const usePreviewParallax = ({ strength = 0.05, minWidth = 768 } = {}) => {
         // pulls a bare strip into the frame.
         if (target > MAX_DRIFT) target = MAX_DRIFT;
         if (target < -MAX_DRIFT) target = -MAX_DRIFT;
+
+        /*
+         * On the very first frame after the entrance hands over, ADOPT the
+         * target rather than easing toward it.
+         *
+         * `current` starts at 0 because that is where the reveal leaves the
+         * panel, but the parallax's correct resting offset at the current
+         * scroll position is not 0 — it can be ~10px away. Easing from 0 to
+         * that value made the panel visibly drift into place a beat after the
+         * fade finished, which read as a pop. Seeding `current` with the target
+         * means the handover is a no-op on screen: the loop simply continues
+         * holding the position the panel is already in.
+         */
+        /*
+         * On the first frame after the entrance hands over, adopt the resting
+         * offset directly instead of easing to it.
+         *
+         * The reveal lands the panel at y = 0, but this loop's resting offset
+         * at the current scroll position is typically a few px away. Easing
+         * from 0 to it made the panel drift into place a beat after the fade
+         * had visibly finished — the pop. There is nothing to interpolate here:
+         * the entrance is over, and this is simply where the panel belongs at
+         * this scroll position, so take it in one step while the eye is still
+         * settling rather than animating a correction nobody asked for.
+         *
+         * `revealRestY` (below) keeps that step at zero in the common case by
+         * telling the reveal where to land in the first place.
+         */
+        if (!adopted) {
+          adopted = true;
+          current = target;
+          setY(current);
+          rafId = requestAnimationFrame(tick);
+          return;
+        }
 
         // Ease toward the target rather than snapping to it. On mobile the rect
         // tracks raw scroll, which is jumpy; this keeps the drift smooth there

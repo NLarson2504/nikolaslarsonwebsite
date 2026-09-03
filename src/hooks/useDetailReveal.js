@@ -170,6 +170,10 @@ export default function useDetailReveal({ rootRef, revealKey, ready = true }) {
 
           const startAt = i * 0.1;
 
+        // Set by usePreviewParallax on any element it drives, so the entrance
+        // can finish exactly where that loop wants the element to sit.
+        const targetRestY = !isRow ? node.__previewRestY : null;
+
           /*
            * Opacity/position and blur are SEPARATE tweens, on purpose.
            *
@@ -185,7 +189,18 @@ export default function useDetailReveal({ rootRef, revealKey, ready = true }) {
             targets,
             { y: 28, autoAlpha: 0 },
             {
-              y: 0,
+              /*
+               * Land on the parallax's resting offset, not on 0.
+               *
+               * An element that shares its transform with the preview parallax
+               * publishes `__previewRestY`. Finishing at 0 and letting that
+               * loop then ease the panel to its real offset made it drift a
+               * beat after the fade had finished — a visible pop. Ending on the
+               * value the parallax already wants makes the handover invisible.
+               * Everything else has no such function and simply lands at 0.
+               */
+              y: () =>
+                typeof targetRestY === "function" ? targetRestY() : 0,
               autoAlpha: 1,
               duration: 0.85,
               /*
