@@ -58,6 +58,9 @@ const MIN_HOLD_MS = 1100;
 // How long the mark takes to fly from centre to the nav.
 const FLIGHT_S = 0.9;
 
+// One full revolution of the mark while it waits.
+const SPIN_S = 3.4;
+
 /*
  * And never longer than this. If the wall is wedged — offline, a Firestore
  * error, a hung image, a WebGL context that never comes back — the intro still
@@ -125,6 +128,7 @@ const LogoIntro = ({ children }) => {
   const veilRRef = useRef(null);
   const glowRef = useRef(null);
   const markRef = useRef(null);
+  const spinRef = useRef(null);
   const pulseRef = useRef(null);
   /*
    * Latches the moment the exit starts.
@@ -234,10 +238,38 @@ const LogoIntro = ({ children }) => {
        * and it's why the wall's own loading line is never needed. It's killed
        * by the exit below, which retakes control of the same properties.
        */
-      pulseRef.current = gsap
-        .timeline({ repeat: -1, yoyo: true, delay: 1 })
-        .to(markRef.current, { scale: 1.035, duration: 1.5, ease: 'sine.inOut' }, 0)
-        .to(glowRef.current, { opacity: 0.55, duration: 1.5, ease: 'sine.inOut' }, 0);
+      pulseRef.current = gsap.timeline({ repeat: -1, delay: 0.6 });
+
+      /*
+       * The mark turns on its own Y axis for as long as the fetch takes. This
+       * is the waiting state — it replaces a breathing scale pulse, which read
+       * as a spinner standing in for progress; a solid object rotating reads
+       * as something being held up for you to look at.
+       *
+       * On .li-mark3d, never on .li-mark: the flight measures the latter.
+       *
+       * Linear, and a whole 360 per cycle, so the loop is seamless — an eased
+       * revolution visibly hesitates each time it comes back around.
+       */
+      pulseRef.current.to(
+        spinRef.current,
+        { rotationY: 360, duration: SPIN_S, ease: 'none', repeat: -1 },
+        0
+      );
+
+      // The bloom still breathes, half a beat off the spin so the two don't
+      // pulse in lockstep.
+      pulseRef.current.to(
+        glowRef.current,
+        {
+          opacity: 0.55,
+          duration: 1.5,
+          ease: 'sine.inOut',
+          repeat: -1,
+          yoyo: true,
+        },
+        0
+      );
     }, rootRef);
 
     return () => {
@@ -275,7 +307,38 @@ const LogoIntro = ({ children }) => {
      * wall resolved quickly.
      */
     pulseRef.current?.kill();
-    gsap.killTweensOf([mark, glowRef.current]);
+    gsap.killTweensOf([mark, glowRef.current, spinRef.current]);
+
+    /*
+     * Settle the spin face-on before the hand-off.
+     *
+     * The nav's NL is flat, so the mark has to arrive flat too — landing
+     * mid-rotation would swap a foreshortened mark for a square one at the
+     * moment the two are supposed to be indistinguishable.
+     *
+     * Shortest way round, which is the whole point. Driving to a fixed 360
+     * meant the travel depended on where the loop happened to be when the data
+     * landed: from 350 that was a 10 degree nudge, but from 10 it was a
+     * near-complete revolution squeezed into the settle — and the mark visibly
+     * hung at centre before committing to the nav. Normalising to [-180, 180]
+     * caps it at half a turn however the timing falls, so the exit takes the
+     * same beat every load.
+     *
+     * It also finishes inside the first half of the flight rather than running
+     * its whole length: the mark should be square well before it reaches the
+     * corner, not still straightening up as it arrives.
+     */
+    const spin = spinRef.current;
+    if (spin) {
+      const turned = gsap.getProperty(spin, 'rotationY') % 360;
+      // e.g. 350 -> -10 (nudge forward), 10 -> 10 (nudge back).
+      const delta = turned > 180 ? turned - 360 : turned;
+      gsap.to(spin, {
+        rotationY: `-=${delta}`,
+        duration: FLIGHT_S * 0.45,
+        ease: 'power2.out',
+      });
+    }
 
     gsap.context(() => {
       const target = document.querySelector('[data-nav-logo]');
@@ -422,7 +485,19 @@ const LogoIntro = ({ children }) => {
           <div className="li-veil li-veil--r" ref={veilRRef} />
           <div className="li-glow" ref={glowRef} />
           <div className="li-mark" ref={markRef}>
-            NL
+            {/* The flight owns .li-mark and measures it, so the spin lives on
+                this inner node instead: rotating the measured element would
+                give the hand-off a foreshortened box to aim at. */}
+            <div className="li-mark3d" ref={spinRef}>
+              {/* One backing copy, not a stack of them. A stack of discrete
+                  slices splays under perspective — each sits at a different
+                  depth, so each projects at a slightly different scale and
+                  they slide across each other as the mark turns, reading as
+                  several NLs shearing rather than one thick one. A single
+                  plate with a text-shadow edge holds together at every angle. */}
+              <span className="li-mark-edge" aria-hidden="true">NL</span>
+              <span className="li-mark-face">NL</span>
+            </div>
           </div>
         </div>
       )}
