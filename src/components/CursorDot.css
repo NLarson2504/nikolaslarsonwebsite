@@ -29,6 +29,84 @@
   opacity: 0;
 }
 
+/* Preview hover: the dot swells into a glass disc carrying a diagonal
+   top-right arrow — the "opens the live site" cue, shown on the case-study
+   preview frame.
+
+   The disc's own `mix-blend-mode` is off: `difference` would invert the glass
+   material itself, and a blend mode on this element would also flatten the
+   backdrop-filter into the blend rather than letting it sample the page.
+
+   The arrow instead lives in a child span with its own `difference` blend, so
+   it subtracts against whatever is directly behind it — the glass disc over a
+   dark screenshot, or over a light one — and stays legible either way. That is
+   why the glyph is a child element and not this element's background-image: a
+   background can't blend independently of the box that paints it. */
+.site-cursor.is-preview {
+  opacity: 1;
+  width: 44px;
+  height: 44px;
+  /* Glass, matching the preview frame and nav pills: a translucent white
+     ground over a blurred, saturated backdrop rather than a solid chip. The
+     inset hairlines are the same lit-edge treatment `.preview-glass` and
+     `.nav-cta-glass` use, scaled down for a 44px disc. */
+  background-color: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px) saturate(1.6);
+  -webkit-backdrop-filter: blur(12px) saturate(1.6);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.14),
+    0 8px 24px -6px rgba(0, 0, 0, 0.6);
+  mix-blend-mode: normal;
+  transition: width 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+    height 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 0.3s ease, opacity 0.2s ease;
+}
+
+/* The arrow glyph. Hidden unless the disc is showing — it is always in the
+   markup so the component only toggles a class on the parent.
+
+   `difference` against a white mask means the glyph paints as the inverse of
+   its backdrop: near-black over a light screenshot, near-white over a dark one.
+   It is a mask rather than an <img> so the blend applies to a solid painted
+   shape; blending a multi-channel PNG would tint rather than invert cleanly. */
+.site-cursor__glyph {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 18px;
+  height: 18px;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  background-color: #fff;
+  mix-blend-mode: difference;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 17 17 7'/%3E%3Cpath d='M8 7h9v9'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 17 17 7'/%3E%3Cpath d='M8 7h9v9'/%3E%3C/svg%3E");
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: 50% 50%;
+  mask-position: 50% 50%;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  transition: opacity 0.2s ease;
+}
+.site-cursor.is-preview .site-cursor__glyph {
+  opacity: 1;
+}
+
+/* Backdrop-filter needs something behind it to blur; where it is unsupported
+   the translucent ground alone reads as a dim smudge over the screenshot, so
+   lift it to a legible frosted white — same fallback shape as the nav's. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .site-cursor.is-preview {
+    background-color: rgba(255, 255, 255, 0.3);
+  }
+}
+
+.site-cursor.is-preview.is-hot {
+  opacity: 1;
+}
+
 /* touch devices have no hovering pointer — hide entirely */
 @media (pointer: coarse) {
   .site-cursor { display: none; }

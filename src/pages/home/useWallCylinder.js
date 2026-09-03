@@ -91,10 +91,20 @@ const SPIN_PER_PX = 0.0016;
 const EASE = 0.14;
 const TAU = Math.PI * 2;
 
-export default function useWallCylinder({ entries, enabled = true, onPick, compact = false }) {
+export default function useWallCylinder({
+  entries,
+  enabled = true,
+  onPick,
+  compact = false,
+  onReady,
+}) {
   const mountRef = useRef(null);
   const pickRef = useRef(onPick);
   pickRef.current = onPick;
+  // Kept in a ref so a changing callback identity can't tear down and rebuild
+  // the whole WebGL scene — this effect's deps are deliberately coarse.
+  const readyRef = useRef(onReady);
+  readyRef.current = onReady;
 
   // Hover/spin state lives in refs: it changes every frame and must never
   // trigger a React render.
@@ -878,6 +888,20 @@ export default function useWallCylinder({ entries, enabled = true, onPick, compa
     renderer.render(scene, camera);
     raf = requestAnimationFrame(tick);
 
+    /*
+     * Announce that the wall is genuinely on screen.
+     *
+     * Not when the effect runs — everything above (compositing the pack canvas,
+     * uploading a 4096x3072 texture, compiling the shader) is synchronous but
+     * far from instant, and the first frame isn't presented until the browser
+     * paints. So this waits a frame past the first render: by the time it
+     * fires, the drum has been composited at least once and is there to be
+     * revealed. The intro holds until then — see components/LogoIntro.
+     */
+    const readySignal = requestAnimationFrame(() => {
+      if (running) readyRef.current?.();
+    });
+
     /* ----------------------------------------------------------- resize */
 
     const onResize = () => {
@@ -896,6 +920,7 @@ export default function useWallCylinder({ entries, enabled = true, onPick, compa
     return () => {
       running = false;
       if (raf) cancelAnimationFrame(raf);
+      cancelAnimationFrame(readySignal);
       window.removeEventListener('resize', onResize);
       window.removeEventListener('keydown', onKey);
       el.removeEventListener('pointermove', onPointerMove);

@@ -1,0 +1,165 @@
+/* First-load intro. A single NL mark: it draws in at centre screen, holds,
+   then flies to where the nav's own NL sits and hands off to it.
+
+   The whole thing is one fixed overlay above the nav (which is z-[9999]), so
+   the travelling mark passes over the page rather than under it. Scoped to
+   .li-*. */
+
+.li-root {
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
+  background: #08090a;
+  overflow: hidden;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* The field the mark sits on — in two halves.
+
+   They split down the middle and slide off to left and right, opening like
+   doors on the wall behind. One solid panel fading out did the same job
+   optically but read as a dimmer being turned down; the wall deserves to be
+   uncovered rather than faded up to.
+
+   Each half is its own layer so the two can travel in opposite directions,
+   and each is 50.5% wide — the half-percent overlap keeps a hairline of page
+   from showing through the seam before they part. */
+.li-veil {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50.5%;
+  background: #08090a;
+  will-change: transform;
+}
+.li-veil--l {
+  left: 0;
+}
+.li-veil--r {
+  right: 0;
+}
+
+/* A soft bloom behind the mark, in the logo's own two accents. Purely
+   atmospheric — it never travels; it dies with the veil. */
+.li-glow {
+  position: absolute;
+  width: min(70vw, 42rem);
+  height: min(70vw, 42rem);
+  border-radius: 999px;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(59, 130, 246, 0.28),
+    rgba(217, 70, 239, 0.16) 45%,
+    transparent 70%
+  );
+  filter: blur(40px);
+  opacity: 0;
+  /* Promoted so the blur is rasterized once instead of on every frame.
+
+     A 40px blur over a min(70vw, 42rem) box is a large surface, and its
+     opacity breathes continuously alongside the mark's spin — un-promoted,
+     the two competed for the same frame budget and the rotation hitched on
+     wide viewports, where the blurred area is biggest. */
+  will-change: opacity;
+}
+
+/* The mark itself. Positioned dead centre by the flex parent, then moved by
+   GSAP with x/y/scale only — so the flight is transform-only and stays on the
+   compositor.
+
+   Font and gradient are deliberately the nav's: font-mark (MuseoModerno) and
+   the same 135° accent ramp as .text-gradient-primary. The hand-off only works
+   if the two are the same object. */
+.li-mark {
+  position: relative;
+  font-family: 'MuseoModerno', 'Nunito', 'Inter', sans-serif;
+  font-weight: 700;
+  line-height: 1;
+  /* Sized so that scaling to the nav's text-xl (1.25rem) is a clean shrink
+     rather than a blur — GSAP animates scale down to nav size at the end. */
+  font-size: clamp(4.5rem, 16vw, 11rem);
+  letter-spacing: -0.02em;
+  will-change: transform, opacity;
+  /* hidden at first paint so nothing flashes at full size before GSAP runs */
+  opacity: 0;
+
+  /* The stage for the spin. The perspective lives here, on the element the
+     flight owns, so the depth is fixed relative to the mark rather than to the
+     viewport — the extrusion looks the same wherever on screen the mark is,
+     including mid-flight to the nav.
+
+     Generous (relative to the mark's own size) on purpose: a short perspective
+     throws the far layers into a wide splay and the mark reads as a fan of
+     cards rather than one solid object. */
+  perspective: 1400px;
+}
+
+/* The rotating body. GSAP drives rotationY here and nowhere else. */
+.li-mark3d {
+  position: relative;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+/* Face and depth layers occupy the same box: the face is in normal flow and
+   gives the stack its size, and every depth copy is absolutely positioned onto
+   it and pushed back in Z. */
+.li-mark-face {
+  position: relative;
+  display: block;
+  background: linear-gradient(135deg, #3b82f6, #d946ef);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  /* Sits at the front of the stack, with the edge behind it.
+
+     translateZ also promotes this to its own compositor layer, which is what
+     keeps the spin smooth: background-clip: text is an expensive paint, and
+     without a layer of its own the browser re-rasterizes the gradient-filled
+     glyphs on every frame as the rotation changes their projected size. With
+     one it rasterizes once and the spin only transforms the cached texture. */
+  transform: translateZ(0.01px);
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+/* The mark's thickness.
+
+   One copy sitting a few px behind the face, carrying a stepped text-shadow
+   that fills the gap between the two into a continuous edge. The shadow is
+   painted in the element's own 2D plane, so unlike a stack of 3D slices it
+   cannot splay or slide as the mark turns — the edge stays welded to the
+   letterform at every angle.
+
+   Flat colour, from the dark end of the accent ramp: this is the side of the
+   object rather than another copy of its front, and a gradient here would have
+   the ramp restarting behind the face and sparkling under rotation. */
+.li-mark-edge {
+  position: absolute;
+  inset: 0;
+  display: block;
+  color: #232a5e;
+  transform: translateZ(-10px);
+  /* Its own layer, for the same reason as the face and more urgently:
+     text-shadow is a CPU paint that cannot be composited, so an un-promoted
+     edge repaints every offset copy of the glyphs on every frame of the
+     rotation — which is exactly what made the spin stutter. Promoted, the
+     stack is rasterized once and the spin is pure compositing.
+
+     Four steps rather than seven, too: past about 4px the added copies are
+     hidden behind the face at every angle the mark actually reaches, so they
+     cost paint without being seen. */
+  will-change: transform;
+  backface-visibility: hidden;
+  text-shadow:
+    1px 0 0 #212858,
+    2px 0 0 #1f2552,
+    3px 0 0 #1c2249,
+    4px 0 0 #181d40;
+}
+
+/* Nothing to animate for reduced motion: the intro is skipped outright in JS
+   and this never mounts. */

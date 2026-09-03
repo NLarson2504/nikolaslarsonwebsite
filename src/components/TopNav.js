@@ -151,6 +151,10 @@ const TopNav = ({ currentPage, navigateToPage, showBack, onBack }) => {
             <div className="flex-shrink-0 flex items-center gap-2.5">
               <button
                 onClick={() => handleNavClick('home')}
+                /* The first-load intro flies its own NL to this exact element
+                   and cross-fades onto it, so it needs to be findable from
+                   outside the React tree — see components/LogoIntro. */
+                data-nav-logo
                 className="text-xl font-mark font-bold text-gradient-primary hover:opacity-80 transition-opacity focus:outline-none"
               >
                 NL

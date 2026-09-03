@@ -42,9 +42,16 @@ const CursorDot = () => {
 
     // grow into the "hot" state over anything clickable
     const INTERACTIVE = 'a, button, [role="button"], input, textarea, select, label, summary';
+    // Opt-in cue: elements marking themselves as a site preview swap the dot
+    // for a white disc with a diagonal "opens the live site" arrow.
+    const PREVIEW = '[data-preview-hover]';
     const over = (e) => {
-      if (e.target.closest && e.target.closest(INTERACTIVE)) {
+      if (!e.target.closest) return;
+      if (e.target.closest(INTERACTIVE)) {
         dot.classList.add('is-hot');
+      }
+      if (e.target.closest(PREVIEW)) {
+        dot.classList.add('is-preview');
       }
     };
     const out = (e) => {
@@ -53,8 +60,14 @@ const CursorDot = () => {
       if (!to || !to.closest || !to.closest(INTERACTIVE)) {
         dot.classList.remove('is-hot');
       }
+      if (!to || !to.closest || !to.closest(PREVIEW)) {
+        dot.classList.remove('is-preview');
+      }
     };
-    const leaveWindow = () => dot.classList.remove('is-visible');
+    const leaveWindow = () => {
+      dot.classList.remove('is-visible');
+      dot.classList.remove('is-preview');
+    };
     const enterWindow = () => seen && dot.classList.add('is-visible');
 
     const loop = () => {
@@ -81,7 +94,14 @@ const CursorDot = () => {
     };
   }, []);
 
-  return <div className="site-cursor" ref={dotRef} aria-hidden="true" />;
+  return (
+    <div className="site-cursor" ref={dotRef} aria-hidden="true">
+      {/* The arrow shown on preview hover. Always in the markup — the effect
+          above only toggles classes on the parent — and blended separately from
+          the disc so it inverts against whatever is behind it. */}
+      <span className="site-cursor__glyph" />
+    </div>
+  );
 };
 
 export default CursorDot;

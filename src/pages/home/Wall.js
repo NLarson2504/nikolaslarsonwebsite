@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import useProjects from '../../hooks/useProjects';
 import useWallCylinder from './useWallCylinder';
-import { KIND_META, SLOTS } from './wallLayout';
+import { KIND_META, fillPack } from './wallLayout';
 import { loadBrandLogos, loadImage, tileImage } from './wallTexture';
 import {
   useDetailTransition,
@@ -10,6 +10,7 @@ import {
 } from '../../components/DetailTransition';
 import ViewSlider from '../../components/ViewSlider';
 import WallList from './WallList';
+import { useIntroHold } from '../../components/LogoIntro';
 import './Wall.css';
 
 /*
@@ -67,6 +68,16 @@ const Wall = () => {
   const loading = lSites || lApps || lAgents;
   const error = eSites || eApps || eAgents;
 
+  /*
+   * Whether the 3D drum has painted its first frame (see useWallCylinder's
+   * onReady). This is the real "the wall is here" moment — `entries` only means
+   * the images have decoded, and everything after it (compositing the pack
+   * canvas, uploading the texture, compiling the shader, the first render) is
+   * a visible beat of its own on a cold load.
+   */
+  const [wallPainted, setWallPainted] = useState(false);
+  const handleWallReady = useCallback(() => setWallPainted(true), []);
+
   useEffect(() => {
     const mq = window.matchMedia(MOBILE_QUERY);
     const onChange = (e) => setIsMobile(e.matches);
@@ -80,19 +91,17 @@ const Wall = () => {
    * The pack has more slots (27) than there are real projects (14), so projects
    * repeat across the surface — the wall is a surface of work, not a list. Each
    * category's slots walk that category's projects in priority order and wrap.
+   *
+   * fillPack visits slots in VIEW_ORDER — nearest the opening view first —
+   * rather than in the order SLOTS happens to be written. The camera opens on
+   * the MIDDLE of the pack straddling the seam, not its top-left corner, so
+   * array order buried the highest-priority work off screen above and handed
+   * the centre of frame to whatever came last in each pool.
    */
-  const assigned = useMemo(() => {
-    const pools = { web: sites, app: apps, agent: agents };
-    const cursors = { web: 0, app: 0, agent: 0 };
-
-    return SLOTS.map((slot, index) => {
-      const pool = pools[slot.kind];
-      if (!pool || !pool.length) return null;
-      const project = pool[cursors[slot.kind] % pool.length];
-      cursors[slot.kind] += 1;
-      return { slot, project, index };
-    }).filter(Boolean);
-  }, [sites, apps, agents]);
+  const assigned = useMemo(
+    () => fillPack({ web: sites, app: apps, agent: agents }).filter(Boolean),
+    [sites, apps, agents]
+  );
 
   /*
    * Preload every image before the texture is painted.
@@ -152,6 +161,25 @@ const Wall = () => {
   const isList = view === 'list';
 
   /*
+   * Hold the first-load intro open until there is genuinely a wall to reveal.
+   *
+   * In gallery view that means waiting for the drum's first painted frame, not
+   * merely for the data: releasing on `entries` handed the page over while
+   * Three.js was still building the scene, so the intro lifted onto an empty
+   * stage and the wall popped in after it.
+   *
+   * List view and mobile never mount the cylinder, so there `entries` IS the
+   * ready signal — waiting on a frame that will never come would pin the intro
+   * open until its own timeout.
+   *
+   * The intro covers the viewport throughout, which is why the `wl-state`
+   * loading line is never seen on a cold first load; it still serves every
+   * other case (an in-session return, reduced motion, a refetch).
+   */
+  const wallReady = isList ? !!entries : wallPainted;
+  useIntroHold(!error && !wallReady);
+
+  /*
    * The cylinder is torn down in list view rather than merely hidden: it holds a
    * WebGL context and a requestAnimationFrame loop, and leaving those running
    * behind a display:none list would burn a GPU and a frame budget on something
@@ -162,6 +190,7 @@ const Wall = () => {
     enabled: !!entries && !isList,
     onPick: handlePick,
     compact: isMobile,
+    onReady: handleWallReady,
   });
 
   // One entry per distinct project, for the accessible index and for mobile.
@@ -196,7 +225,11 @@ const Wall = () => {
         <>
           {/* The cylinder. Purely visual — everything it shows is also present
               as real links in the index below. */}
-          <div className="wl-canvas-mount" ref={mountRef} aria-hidden="true" />
+          <div
+            className={`wl-canvas-mount${wallPainted ? ' is-in' : ''}`}
+            ref={mountRef}
+            aria-hidden="true"
+          />
 
           {/* Edge treatment: a blur pass and a darkening gradient on all four
               sides, so the wall dissolves into the room rather than ending on a

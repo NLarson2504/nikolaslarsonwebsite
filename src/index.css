@@ -492,6 +492,81 @@ code {
   }
 }
 
+/*
+ * Glass shell for the case-study hero preview. Same material as
+ * `.nav-cta-glass` — translucent white ground, blur + saturate backdrop, and a
+ * top/bottom inset hairline that reads as a lit edge — so the preview frame and
+ * the nav pills are recognisably the same surface.
+ *
+ * The nav rule's padding is deliberately NOT reused: those values exist to
+ * height-match the wall slider beside it, which has nothing to do with this
+ * frame. Padding here is the media inset instead, set in the component.
+ *
+ * The drop shadow is deeper than the nav's because this element is ~40rem tall
+ * rather than a 45px pill — the nav's `-10px` spread would vanish at this size.
+ */
+.preview-glass {
+  background: rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.22),
+    inset 0 -1px 0 0 rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.09),
+    0 30px 80px -20px rgba(0, 0, 0, 0.8);
+}
+
+/* Matches the nav's fallback: with no backdrop-filter the translucent ground
+   alone reads as a flat grey panel, so lift it. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .preview-glass {
+    background: rgba(255, 255, 255, 0.18);
+  }
+}
+
+/* Parallax overscan for the hero screenshot. The media drifts vertically inside
+   the well's clip; scaling it a few percent from its centre gives that travel
+   somewhere to come from, so the leading edge never pulls a bare strip into
+   view. The well keeps its exact fit around the image — only this inner wrapper
+   is scaled. `will-change` keeps it on the compositor, since the transform is
+   rewritten every frame while the frame is on screen. */
+/* Parallax headroom for the hero screenshot.
+ *
+ * The media drifts vertically inside the well's clip, so it needs to be taller
+ * than the well — otherwise the travel pulls a bare strip in at the leading
+ * edge. That headroom comes from cropping the well's HEIGHT, not from scaling
+ * the image.
+ *
+ * An earlier version used `scale: 1.06`, which was wrong in a way that showed:
+ * `scale` is uniform, so buying ~25px of vertical headroom also cropped ~39px
+ * off each SIDE — on a wide UI screenshot like CampusLM that clipped the
+ * sidebar and the right edge of the content. Growing the frame taller would not
+ * have helped, because the loss was horizontal and came from the same scale.
+ *
+ * So: the image keeps its natural width (`width: 100%` of the well, no
+ * transform), the well is shortened by `--preview-overscan` via a negative
+ * margin on the media, and the drift moves within exactly that slack. Nothing
+ * is ever cropped horizontally, and the image is never distorted — a
+ * non-uniform `scale: 1 1.06` would have stretched it.
+ */
+.site-preview__media {
+  --preview-overscan: 28px;
+  /* Pull the media up by half the overscan and let the well's height come up
+     short by the whole of it: the media then overhangs equally top and bottom,
+     which is the travel room the parallax clamps itself to. */
+  margin-top: calc(var(--preview-overscan) / -2);
+  margin-bottom: calc(var(--preview-overscan) / -2);
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* No drift, so no headroom needed — show the screenshot at its true size. */
+  .site-preview__media {
+    --preview-overscan: 0px;
+    will-change: auto;
+  }
+}
+
 /* 3D Module Styles */
 .module-3d {
   position: relative;

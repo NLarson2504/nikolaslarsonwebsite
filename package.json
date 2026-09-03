@@ -24,6 +24,7 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
+    "capture": "GOOGLE_APPLICATION_CREDENTIALS=./serviceAccount.json node scripts/captureScreenshots.js",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {

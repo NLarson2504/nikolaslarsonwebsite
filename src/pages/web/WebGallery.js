@@ -2,6 +2,11 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { gsap } from 'gsap';
 import useInfoReveal from '../../hooks/useInfoReveal';
+import {
+  useDetailTransition,
+  isPlainClick,
+} from '../../components/DetailTransition';
+import { tileImage } from '../home/wallTexture';
 import { averageRegion, NEUTRAL_PICK } from '../../utils/pickTint';
 import './WebGallery.css';
 
@@ -28,6 +33,11 @@ const NEUTRAL_CORNERS = {
  */
 const WebGallery = ({ projects }) => {
   const count = projects.length;
+
+  // Opening a case study plays the same wash as the home wall. Without this the
+  // Link navigated straight away and the route swapped with nothing covering
+  // it — the raw page change that read as a blip.
+  const startDetailTransition = useDetailTransition();
 
   // To keep the drum round with only a few projects, we repeat the real cards
   // around the ring rather than padding with empty ghost slats — so every facet
@@ -381,6 +391,17 @@ const WebGallery = ({ projects }) => {
                 <Link
                   className="wg-info__btn wg-info__btn--primary"
                   to={`/web/${current.slug}`}
+                  onClick={(e) => {
+                    // The <Link> keeps its real href so middle-click, "open in
+                    // new tab" and screen readers still work; only the plain
+                    // left click is intercepted so the wash can cover the move.
+                    if (!isPlainClick(e) || !startDetailTransition) return;
+                    e.preventDefault();
+                    startDetailTransition(
+                      `/web/${current.slug}`,
+                      tileImage(current)
+                    );
+                  }}
                 >
                   Case study <span className="wg-arrow">→</span>
                 </Link>

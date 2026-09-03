@@ -53,6 +53,42 @@
 }
 
 /*
+ * The drum's entrance, played behind the intro's opening doors.
+ *
+ * It starts pushed back and slightly soft, then settles as the two halves of
+ * the loading field pull apart — so the wall is arriving rather than merely
+ * being uncovered, and the reveal has depth to it instead of being a flat
+ * wipe. The transform is a scale only: the canvas is already centred by its
+ * absolute inset, and scaling about the centre reads as the cylinder coming
+ * toward the viewer.
+ *
+ * `.is-in` is set the moment the drum reports its first painted frame, which
+ * is the same signal that releases the intro — see Wall.js and LogoIntro.
+ */
+.wl-canvas-mount {
+  opacity: 0;
+  transform: scale(1.12);
+  filter: blur(10px);
+  will-change: opacity, transform, filter;
+}
+.wl-canvas-mount.is-in {
+  opacity: 1;
+  transform: scale(1);
+  filter: blur(0);
+  transition: opacity 0.85s ease, transform 1.15s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.85s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wl-canvas-mount {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    transition: none;
+  }
+}
+
+/*
  * The dragging cursor is set from JS (see useWallCylinder), not with :active.
  * The drag calls setPointerCapture, which redirects events away from the
  * element and makes the browser drop :active — so the closed hand never

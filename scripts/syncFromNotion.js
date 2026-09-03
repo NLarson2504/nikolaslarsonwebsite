@@ -126,7 +126,9 @@ const projects = [
     description:
       'A preventive pet-health app that turns everyday owner observations into early-warning signals. Short daily check-ins feed an algorithm trained on each pet’s personal baseline — adjusted for breed, age, and context — so it flags meaningful deviations instead of noisy one-off changes. It’s built as decision support to help owners decide when a vet visit is warranted and arrive prepared — not as a diagnosis.',
     platform: 'iOS',
-    screenshots: [S('dailypaws', 1), S('dailypaws', 2)],
+    // screenshot-2 is a social-feed capture that isn't product content (and
+    // shows identifiable people), so only the check-in home screen ships.
+    screenshots: [S('dailypaws', 1)],
     features: [
       'Short daily check-ins that build a personal health baseline',
       'Baseline adjusted for breed, age, and context',
